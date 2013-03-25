@@ -12,12 +12,14 @@ TEMPLATE = app
 SOURCES += main.cpp\
     mainwindow.cpp \
     renderwidget.cpp \
-    jsedit/jsedit.cpp
+    jsedit/jsedit.cpp \
+    project.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
     jsedit/jsedit.h \
-    main.h
+    main.h \
+    project.h
 
 FORMS    += mainwindow.ui
 

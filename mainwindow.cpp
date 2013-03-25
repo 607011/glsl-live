@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include "main.h"
 #include "mainwindow.h"
+#include "project.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -32,6 +33,9 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
     restoreSettings();
+
+    Project project;
+    project.load(":/projects/crosshatch.xml");
 }
 
 MainWindow::~MainWindow()
