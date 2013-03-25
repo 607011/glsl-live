@@ -16,7 +16,7 @@ class MainWindow;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
     explicit MainWindow(QWidget* parent = NULL);
     ~MainWindow();
@@ -26,8 +26,9 @@ protected:
     void resizeEvent(QResizeEvent*);
 
 private slots:
-    void vertexShaderChanged(void);
-    void fragmentShaderChanged(void);
+    void updateShaderSources(void);
+    void about(void);
+    void aboutQt(void);
 
 private: //methods
     void saveSettings(void);
@@ -41,6 +42,7 @@ private:
     RenderWidget* mRenderWidget;
     QString mVertexShaderFilename;
     QString mFragmentShaderFilename;
+    QString mImageFilename;
     JSEdit mVertexShaderEditor;
     JSEdit mFragmentShaderEditor;
 };

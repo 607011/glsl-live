@@ -2,12 +2,12 @@
 // All rights reserved.
 
 #include "renderwidget.h"
-#include <QFont>
-#include <QFile>
-#include <QTextStream>
+#include <QList>
 #include <QGLShader>
 #include <qmath.h>
 #include <QtCore/QDebug>
+#include <QMimeData>
+#include <QUrl>
 
 static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
 static const int PROGRAM_TEXCOORD_ATTRIBUTE = 1;
@@ -30,83 +30,152 @@ const QVector3D RenderWidget::mVertices[4] = {
 
 RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(parent)
+    , mVertexShader(NULL)
+    , mFragmentShader(NULL)
+    , mInitializedGL(false)
     , mShaderProgram(new QGLShaderProgram(this))
     , mTextureHandle(0)
-    , mImage(QImage(":/images/passbild.jpg"))
     , mTimerId(0)
 {
     mTime.start();
     setFocusPolicy(Qt::StrongFocus);
     setFocus(Qt::MouseFocusReason);
+    setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
+    setAcceptDrops(true);
     setMouseTracking(true);
 }
 
 RenderWidget::~RenderWidget()
 {
     stopCode();
+    mShaderProgram->removeAllShaders();
+    if (mVertexShader)
+        delete mVertexShader;
+    if (mFragmentShader)
+        delete mFragmentShader;
     delete mShaderProgram;
 }
 
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 {
-    mShaderProgram->addShaderFromSourceCode(QGLShader::Vertex, vs);
-    mShaderProgram->addShaderFromSourceCode(QGLShader::Fragment, fs);
-    mShaderProgram->link();
+    if (!mInitializedGL)
+        return;
+    linkProgram(vs, fs);
     if (mShaderProgram->isLinked()) {
-        qDebug() << "Linking Shader Program failed: " << mShaderProgram->log();
-        stopCode();
+        mVertexShaderSource = vs;
+        mFragmentShaderSource = fs;
     }
     else {
-        setupShaderProgram();
-        goLive();
+        linkProgram(mVertexShaderSource, mFragmentShaderSource);
     }
+    if (mShaderProgram->isLinked())
+        goLive();
+}
+
+void RenderWidget::setImage(const QImage& image)
+{
+    mImage = image.convertToFormat(QImage::Format_ARGB32);
+    glBindTexture(GL_TEXTURE_2D, mTextureHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mImage.width(), mImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, mImage.bits());
+    if (mShaderProgram->isLinked()) {
+        mShaderProgram->setUniformValue("uTexture", 0);
+        update();
+    }
+}
+
+bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
+{
+    bool ok = false;
+    if (!vs.isEmpty() && !fs.isEmpty()) {
+        mShaderProgram->removeAllShaders();
+        if (mVertexShader)
+            delete mVertexShader;
+        mVertexShader = new QGLShader(QGLShader::Vertex, this);
+        ok = mVertexShader->compileSourceCode(vs);
+        if (!ok) {
+            emit shaderError(mVertexShader->log());
+            return false;
+        }
+        mShaderProgram->addShader(mVertexShader);
+        if (mFragmentShader)
+            delete mFragmentShader;
+        mFragmentShader = new QGLShader(QGLShader::Fragment, this);
+        ok = mFragmentShader->compileSourceCode(fs);
+        if (!ok) {
+            emit shaderError(mFragmentShader->log());
+            return false;
+        }
+        mShaderProgram->addShader(mFragmentShader);
+    }
+    mShaderProgram->bind();
+    mShaderProgram->bindAttributeLocation("aVertex", PROGRAM_VERTEX_ATTRIBUTE);
+    mShaderProgram->bindAttributeLocation("aTexCoord", PROGRAM_TEXCOORD_ATTRIBUTE);
+    if (!vs.isEmpty() && !fs.isEmpty()) {
+        mShaderProgram->link();
+        if (!mShaderProgram->isLinked()) {
+            emit shaderError(mShaderProgram->log());
+        }
+    }
+    if (mShaderProgram->isLinked()) {
+        mShaderProgram->setUniformValue("uMouse", mMousePos);
+        mShaderProgram->setUniformValue("uResolution", mResolution);
+        mShaderProgram->setUniformValue("uTexture", 0);
+        emit linkingSuccessful();
+        update();
+    }
+    return ok;
+}
+
+void RenderWidget::resizeEvent(QResizeEvent* e)
+{
+    mResolution = QSizeF(e->size());
+    if (mShaderProgram->isLinked())
+        mShaderProgram->setUniformValue("uResolution", mResolution);
+    glViewport(0, 0, e->size().width(), e->size().height());
+    update();
+    e->ignore();
 }
 
 void RenderWidget::goLive()
 {
     stopCode();
-    mTimerId = startTimer(1000/60);
+    mTimerId = startTimer(1000/50);
+    update();
 }
 
 void RenderWidget::stopCode()
 {
-    if (mTimerId) {
+    if (mTimerId != 0) {
         killTimer(mTimerId);
         mTimerId = 0;
     }
 }
 
-void RenderWidget::setupShaderProgram()
-{
-    mShaderProgram->bind();
-    mShaderProgram->enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
-    mShaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
-    mShaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, mVertices);
-    mShaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, mTexCoords);
-    mShaderProgram->setUniformValue("uTexture", 0);
-}
-
 void RenderWidget::initializeGL(void)
 {
-    qDebug() << "RenderWidget::initializeGL()";
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    mShaderProgram->bindAttributeLocation("aVertex", PROGRAM_VERTEX_ATTRIBUTE);
-    mShaderProgram->bindAttributeLocation("aTexCoord", PROGRAM_TEXCOORD_ATTRIBUTE);
+    linkProgram();
+    mShaderProgram->enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
+    mShaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
+    mShaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, mVertices);
+    mShaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, mTexCoords);
 
     glGenTextures(1, &mTextureHandle);
     glBindTexture(GL_TEXTURE_2D, mTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mImage.width(), mImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, mImage.bits());
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mImage.width(), mImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, mImage.bits());
+    mInitializedGL = true;
 }
-
 
 void RenderWidget::paintGL(void)
 {
@@ -119,21 +188,66 @@ void RenderWidget::paintGL(void)
 void RenderWidget::timerEvent(QTimerEvent* e)
 {
     if (e->timerId() == mTimerId) {
-        updateGL();
+        update();
     }
+    e->accept();
 }
 
 void RenderWidget::mouseMoveEvent(QMouseEvent* e)
 {
     if (mShaderProgram->isLinked()) {
-        mShaderProgram->setUniformValue("uMouse", QPointF(e->pos()));
+        mMousePos = QPointF(e->pos());
+        mShaderProgram->setUniformValue("uMouse", mMousePos);
+        update();
+    }
+    e->accept();
+}
+
+void RenderWidget::resizeGL(int w, int h)
+{
+    glViewport(0, 0, w, h);
+}
+
+void RenderWidget::dragEnterEvent(QDragEnterEvent* e)
+{
+    const QMimeData* const d = e->mimeData();
+    if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|gif|ico|mng|tga|tiff?)$")))
+        e->acceptProposedAction();
+    else
+        e->ignore();
+}
+
+void RenderWidget::dragLeaveEvent(QDragLeaveEvent* e)
+{
+    e->accept();
+}
+
+void RenderWidget::dropEvent(QDropEvent* e)
+{
+    const QMimeData* const d = e->mimeData();
+    if (d->hasUrls()) {
+        QString fileUrl = d->urls().first().toString();
+        if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|gif|ico|mng|tga|tiff?)$")))
+#if defined(WIN32)
+            loadImage(fileUrl.remove("file:///"));
+#else
+            loadImage(fileUrl.remove("file://"));
+#endif
     }
 }
 
-void RenderWidget::resizeGL(int width, int height)
+bool RenderWidget::loadImage(const QString& fileName)
 {
-    if (mShaderProgram->isLinked()) {
-        mShaderProgram->setUniformValue("uWindowSize", size());
+    if (fileName.isEmpty()) {
+        emit shaderError(tr("ImageWidget::loadImage(): fileName is empty."));
+        return false;
     }
-    glViewport(0, 0, width, height);
+    QImage image(fileName);
+    if (image.isNull())
+        return false;
+    setImage(image);
+    mImageFileName = fileName;
+    emit imageDropped(mImage);
+    return true;
 }
+

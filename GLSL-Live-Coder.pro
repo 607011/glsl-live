@@ -1,5 +1,7 @@
+# Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
+# All rights reserved.
 
-QT       += core gui opengl
+QT       += core gui opengl xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -8,7 +10,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
+    mainwindow.cpp \
     renderwidget.cpp \
     jsedit/jsedit.cpp
 
@@ -25,5 +27,4 @@ RESOURCES += \
 
 OTHER_FILES += \
     shaders/fragmentshader.glsl \
-    shaders/vertexshader.glsl \
-    Passbild-Oliver-Lau.jpg
+    shaders/vertexshader.glsl

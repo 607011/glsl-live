@@ -1,0 +1,46 @@
+// Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
+// All rights reserved.
+
+varying vec4 vTexCoord;
+uniform sampler2D uTexture;
+uniform float uT;
+uniform vec2 uResolution;
+uniform vec2 uMouse;
+
+vec4 crosshatch(sampler2D tex, vec2 uv, vec2 resolution, float stitchSize, int invert)
+{
+  vec4 c = vec4(0.0);
+  vec2 cPos = uv * resolution;
+  vec2 tlPos = floor(cPos / vec2(stitchSize, stitchSize));
+  tlPos *= stitchSize;
+  int remX = int(mod(cPos.x, stitchSize));
+  int remY = int(mod(cPos.y, stitchSize));
+  if (remX == 0 && remY == 0)
+    tlPos = cPos;
+  vec2 blPos = tlPos;
+  blPos.y += (stitchSize - 1.0);
+  if ((remX == remY) || 
+     (((int(cPos.x) - int(blPos.x)) == (int(blPos.y) - int(cPos.y)))))
+  {
+    if (invert == 1)
+      c = vec4(0.2, 0.15, 0.05, 1.0);
+    else
+      c = texture2D(tex, tlPos * vec2(1.0, 1.0) / resolution) * 1.4;
+  }
+  else
+  {
+    if (invert == 1)
+      c = texture2D(tex, tlPos * vec2(1.0, 1.0) / resolution) * 1.4;
+    else
+      c = vec4(0.0, 0.0, 0.0, 1.0);
+  }
+  return c;
+}
+
+void main(void)
+{
+  vec4 color = crosshatch(uTexture, vTexCoord.st, uResolution, 5.0, 0);
+  float dx = 2.0 * distance(0.5, uMouse.x / uResolution.x);
+  float dy = 2.0 * distance(0.5, uMouse.y / uResolution.y);
+  gl_FragColor = vec4(dx, 0.5 + 0.5 * sin(5.0 * uT), dy, 1.0) * color;
+}

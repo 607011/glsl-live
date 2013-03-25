@@ -1,12 +1,11 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#include <QGridLayout>
 #include <QSettings>
+#include <QMessageBox>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -14,14 +13,20 @@ MainWindow::MainWindow(QWidget *parent)
     , mRenderWidget(new RenderWidget)
 {
     ui->setupUi(this);
+    setWindowTitle(tr("%1 %2").arg(AppName).arg(AppVersion));
+
     ui->horizontalLayout->addWidget(mRenderWidget);
     ui->vertexShaderHLayout->addWidget(&mVertexShaderEditor);
     ui->fragmentShaderHLayout->addWidget(&mFragmentShaderEditor);
-
     prepareEditor(mVertexShaderEditor);
     prepareEditor(mFragmentShaderEditor);
-    QObject::connect(&mVertexShaderEditor, SIGNAL(textChanged()), SLOT(vertexShaderChanged()));
-    QObject::connect(&mFragmentShaderEditor, SIGNAL(textChanged()), SLOT(fragmentShaderChanged()));
+    QObject::connect(&mVertexShaderEditor, SIGNAL(textChanged()), SLOT(updateShaderSources()));
+    QObject::connect(&mFragmentShaderEditor, SIGNAL(textChanged()), SLOT(updateShaderSources()));
+    QObject::connect(mRenderWidget, SIGNAL(shaderError(QString)), ui->logTextEdit, SLOT(append(QString)));
+    QObject::connect(mRenderWidget, SIGNAL(linkingSuccessful()), ui->logTextEdit, SLOT(clear()));
+    QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
+    QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
+    QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
 
     restoreSettings();
 }
@@ -35,23 +40,40 @@ void MainWindow::restoreSettings(void)
 {
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
-    mFragmentShaderFilename = settings.value("Options/FragmentShaderEditor/scriptFilename", ":/shaders/fragmentshader.glsl").toString();
-    loadFragmentShader(mFragmentShaderFilename);
-    mVertexShaderFilename = settings.value("Options/VertexShaderEditor/scriptFilename", ":/shaders/vertexshader.glsl").toString();
-    loadVertexShader(mVertexShaderFilename);
+    mVertexShaderFilename = settings.value("Options/VertexShaderEditor/sourceFilename", ":/shaders/vertexshader.glsl").toString();
+    QString vs = settings.value("Options/VertexShaderEditor/source").toString();
+    if (vs.isEmpty()) {
+        loadVertexShader(mVertexShaderFilename);
+    }
+    else {
+        mVertexShaderEditor.setPlainText(vs);
+    }
+    mFragmentShaderFilename = settings.value("Options/FragmentShaderEditor/sourceFilename", ":/shaders/fragmentshader.glsl").toString();
+    QString fs = settings.value("Options/FragmentShaderEditor/source").toString();
+    if (fs.isEmpty()) {
+        loadFragmentShader(mFragmentShaderFilename);
+    }
+    else {
+        mFragmentShaderEditor.setPlainText(fs);
+    }
+    mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(), mFragmentShaderEditor.toPlainText());
+    ui->toolBox->setCurrentIndex(settings.value("Options/Toolbox/currentIndex", 0).toInt());
+    mImageFilename = settings.value("Options/imageFilename", ":/images/toad.png").toString();
+    if (!mImageFilename.isEmpty())
+        mRenderWidget->setImage(QImage(mImageFilename));
 }
-
 
 void MainWindow::saveSettings(void)
 {
     QSettings settings(Company, AppName);
     settings.setValue("MainWindow/geometry", saveGeometry());
-    settings.setValue("Options/VertexShaderEditor/scriptFilename", mVertexShaderFilename);
-    settings.setValue("Options/VertexShaderEditor/script", mVertexShaderEditor.toPlainText());
-    settings.setValue("Options/FragmentShaderEditor/scriptFilename", mFragmentShaderFilename);
-    settings.setValue("Options/FragmentShaderEditor/script", mFragmentShaderEditor.toPlainText());
+    settings.setValue("MainWindow/Toolbox/currentIndex", ui->toolBox->currentIndex());
+    settings.setValue("Options/VertexShaderEditor/sourceFilename", mVertexShaderFilename);
+    settings.setValue("Options/VertexShaderEditor/source", mVertexShaderEditor.toPlainText());
+    settings.setValue("Options/FragmentShaderEditor/sourceFilename", mFragmentShaderFilename);
+    settings.setValue("Options/FragmentShaderEditor/source", mFragmentShaderEditor.toPlainText());
+    settings.setValue("Options/imageFilename", mImageFilename);
 }
-
 
 void MainWindow::closeEvent(QCloseEvent* e)
 {
@@ -98,15 +120,8 @@ void MainWindow::prepareEditor(JSEdit& editor) const
     editor.setColor(JSEdit::FoldIndicator, QColor("#555555"));
 }
 
-void MainWindow::vertexShaderChanged(void)
+void MainWindow::updateShaderSources(void)
 {
-    qDebug() << "MainWindow::vertexShaderChanged()";
-    mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(), mFragmentShaderEditor.toPlainText());
-}
-
-void MainWindow::fragmentShaderChanged(void)
-{
-    qDebug() << "MainWindow::fragmentShaderChanged()" << mFragmentShaderEditor.toPlainText();
     mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(), mFragmentShaderEditor.toPlainText());
 }
 
@@ -116,10 +131,9 @@ void MainWindow::loadVertexShader(const QString& filename)
         QFile file(filename);
         bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
         if (success) {
-            const QString& script = file.readAll();
-            mVertexShaderEditor.setPlainText(script);
-            file.close();
+            mVertexShaderEditor.setPlainText(file.readAll());
             mVertexShaderFilename = filename;
+            file.close();
         }
     }
 }
@@ -130,10 +144,34 @@ void MainWindow::loadFragmentShader(const QString& filename)
         QFile file(filename);
         bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
         if (success) {
-            const QString& script = file.readAll();
-            mFragmentShaderEditor.setPlainText(script);
-            file.close();
+            mFragmentShaderEditor.setPlainText(file.readAll());
             mFragmentShaderFilename = filename;
+            file.close();
         }
     }
+}
+
+void MainWindow::about(void)
+{
+    QMessageBox::about(this, tr("About %1 %2%3").arg(AppName).arg(AppVersionNoDebug).arg(AppMinorVersion),
+                       tr("<p><b>%1</b> is a live coding environment for OpenGL shaders. "
+                          "See <a href=\"%2\" title=\"%1 project homepage\">%2</a> for more info.</p>"
+                          "<p>Copyright &copy; 2013 %3 &lt;%4&gt;, Heise Zeitschriften Verlag.</p>"
+                          "<p>This program is free software: you can redistribute it and/or modify "
+                          "it under the terms of the GNU General Public License as published by "
+                          "the Free Software Foundation, either version 3 of the License, or "
+                          "(at your option) any later version.</p>"
+                          "<p>This program is distributed in the hope that it will be useful, "
+                          "but WITHOUT ANY WARRANTY; without even the implied warranty of "
+                          "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the "
+                          "GNU General Public License for more details.</p>"
+                          "You should have received a copy of the GNU General Public License "
+                          "along with this program. "
+                          "If not, see <a href=\"http://www.gnu.org/licenses/gpl-3.0\">http://www.gnu.org/licenses</a>.</p>")
+                       .arg(AppName).arg(AppUrl).arg(AppAuthor).arg(AppAuthorMail));
+}
+
+void MainWindow::aboutQt(void)
+{
+    QMessageBox::aboutQt(this);
 }

@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/images">
-        <file alias="passbild.jpg">Passbild-Oliver-Lau.jpg</file>
+        <file alias="lego-tactical-guy.jpg">images/Lego-Tactical-Guy.jpg</file>
+        <file alias="toad.png">images/Pilzmaennchen.png</file>
     </qresource>
 </RCC>

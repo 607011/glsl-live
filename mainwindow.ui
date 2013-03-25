@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>515</width>
-    <height>393</height>
+    <width>774</width>
+    <height>535</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,24 +15,60 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QToolBox" name="toolBox">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
       <property name="currentIndex">
        <number>0</number>
+      </property>
+      <property name="tabSpacing">
+       <number>3</number>
       </property>
       <widget class="QWidget" name="vertexShaderPage">
        <property name="geometry">
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>491</width>
-         <height>245</height>
+         <width>774</width>
+         <height>410</height>
         </rect>
        </property>
        <attribute name="label">
         <string>Vertex Shader</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_4">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item row="0" column="0">
          <layout class="QHBoxLayout" name="vertexShaderHLayout"/>
         </item>
@@ -43,16 +79,65 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>115</width>
-         <height>70</height>
+         <width>774</width>
+         <height>410</height>
         </rect>
        </property>
        <attribute name="label">
         <string>Fragment Shader</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item row="0" column="0">
          <layout class="QHBoxLayout" name="fragmentShaderHLayout"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="logPage">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>774</width>
+         <height>410</height>
+        </rect>
+       </property>
+       <attribute name="label">
+        <string>Log</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item row="0" column="0">
+         <widget class="QTextEdit" name="logTextEdit">
+          <property name="font">
+           <font>
+            <family>Courier New</family>
+            <italic>false</italic>
+           </font>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -65,10 +150,26 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>515</width>
-     <height>22</height>
+     <width>774</width>
+     <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionAbout"/>
+    <addaction name="actionAboutQt"/>
+   </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -79,6 +180,21 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionAboutQt">
+   <property name="text">
+    <string>About Qt</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

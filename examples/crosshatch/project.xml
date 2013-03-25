@@ -1,0 +1,30 @@
+<glsl-liver-coder-project>
+	<shaders>
+	   <vertex>vs.glsl</vertex>
+	   <fragment>fs.glsl</vertex>
+	</shaders>
+	<input>
+	  <image>
+	    <static>Pilzmaennchen.png</static>
+	    <webcam><!-- 0 --></webcam>
+	  </image>
+	</input>
+	<parameters>
+	  <parameter>
+	     <type>float</type>
+	     <name>stitchSize</name>
+	     <minValue>0.0</minValue>
+	     <maxValue>20.0</maxValue>
+	     <defaultValue>7.0</defaultValue>
+	     <ui>
+	        <type>slider</type>
+	        <direction>horizontal</direction>
+	     </ui>
+	  </parameter>
+	  <parameter>
+	     <name>invert</name>
+	     <type>bool</type>
+	     <defaultValue>true</defaultValue>
+	  </parameter>
+	</parameters>
+</glsl-liver-coder-project>
