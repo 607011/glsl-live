@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="passbild.jpg">Passbild-Oliver-Lau.jpg</file>
+    </qresource>
+</RCC>
