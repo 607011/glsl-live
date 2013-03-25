@@ -6,6 +6,7 @@
 
 #include <QMainWindow>
 #include <QResizeEvent>
+#include <QVBoxLayout>
 #include "renderwidget.h"
 #include "jsedit/jsedit.h"
 
@@ -29,6 +30,8 @@ private slots:
     void updateShaderSources(void);
     void about(void);
     void aboutQt(void);
+    void badShaderCode(const QString&);
+    void successfullyLinkedShader(void);
 
 private: //methods
     void saveSettings(void);
@@ -40,6 +43,7 @@ private: //methods
 private:
     Ui::MainWindow *ui;
     RenderWidget* mRenderWidget;
+    QVBoxLayout* mParametersLayout;
     QString mVertexShaderFilename;
     QString mFragmentShaderFilename;
     QString mImageFilename;

@@ -11,28 +11,33 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
     , mRenderWidget(new RenderWidget)
+    , mParametersLayout(new QVBoxLayout)
 {
     ui->setupUi(this);
     setWindowTitle(tr("%1 %2").arg(AppName).arg(AppVersion));
 
-    ui->horizontalLayout->addWidget(mRenderWidget);
+    ui->splitter->addWidget(mRenderWidget);
+    QWidget* paramWidget = new QWidget;
+    paramWidget->setLayout(mParametersLayout);
+    ui->splitter->addWidget(paramWidget);
     ui->vertexShaderHLayout->addWidget(&mVertexShaderEditor);
     ui->fragmentShaderHLayout->addWidget(&mFragmentShaderEditor);
     prepareEditor(mVertexShaderEditor);
     prepareEditor(mFragmentShaderEditor);
     QObject::connect(&mVertexShaderEditor, SIGNAL(textChanged()), SLOT(updateShaderSources()));
     QObject::connect(&mFragmentShaderEditor, SIGNAL(textChanged()), SLOT(updateShaderSources()));
-    QObject::connect(mRenderWidget, SIGNAL(shaderError(QString)), ui->logTextEdit, SLOT(append(QString)));
-    QObject::connect(mRenderWidget, SIGNAL(linkingSuccessful()), ui->logTextEdit, SLOT(clear()));
+    QObject::connect(mRenderWidget, SIGNAL(shaderError(QString)), SLOT(badShaderCode(QString)));
+    QObject::connect(mRenderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
-
     restoreSettings();
 }
 
 MainWindow::~MainWindow()
 {
+    delete mParametersLayout;
+    delete mRenderWidget;
     delete ui;
 }
 
@@ -40,6 +45,7 @@ void MainWindow::restoreSettings(void)
 {
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
+    ui->splitter->restoreGeometry(settings.value("MainWindow/splitter/geometry").toByteArray());
     mVertexShaderFilename = settings.value("Options/VertexShaderEditor/sourceFilename", ":/shaders/vertexshader.glsl").toString();
     QString vs = settings.value("Options/VertexShaderEditor/source").toString();
     if (vs.isEmpty()) {
@@ -68,6 +74,7 @@ void MainWindow::saveSettings(void)
     QSettings settings(Company, AppName);
     settings.setValue("MainWindow/geometry", saveGeometry());
     settings.setValue("MainWindow/Toolbox/currentIndex", ui->toolBox->currentIndex());
+    settings.setValue("MainWindow/splitter/geometry", saveGeometry());
     settings.setValue("Options/VertexShaderEditor/sourceFilename", mVertexShaderFilename);
     settings.setValue("Options/VertexShaderEditor/source", mVertexShaderEditor.toPlainText());
     settings.setValue("Options/FragmentShaderEditor/sourceFilename", mFragmentShaderFilename);
@@ -118,6 +125,18 @@ void MainWindow::prepareEditor(JSEdit& editor) const
     editor.setColor(JSEdit::BracketMatch,  QColor("#1AB0A6"));
     editor.setColor(JSEdit::BracketError,  QColor("#A82224"));
     editor.setColor(JSEdit::FoldIndicator, QColor("#555555"));
+}
+
+void MainWindow::badShaderCode(const QString& msg)
+{
+    ui->logTextEdit->append(msg);
+    ui->toolBox->setItemText(2, tr("Error log*"));
+}
+
+void MainWindow::successfullyLinkedShader()
+{
+    ui->logTextEdit->clear();
+    ui->toolBox->setItemText(2, tr("Error log"));
 }
 
 void MainWindow::updateShaderSources(void)
@@ -175,3 +194,4 @@ void MainWindow::aboutQt(void)
 {
     QMessageBox::aboutQt(this);
 }
+

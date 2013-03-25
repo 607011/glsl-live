@@ -27,4 +27,5 @@ RESOURCES += \
 
 OTHER_FILES += \
     shaders/fragmentshader.glsl \
-    shaders/vertexshader.glsl
+    shaders/vertexshader.glsl \
+    LICENSE.txt
