@@ -170,10 +170,9 @@ bool Project::load(const QString& filename)
     }
     QByteArray ba = file.readAll();
     QBuffer buffer(&ba);
-    buffer.open(QIODevice::ReadWrite);
+    buffer.open(QIODevice::ReadOnly);
     if (compressed)
-        qUncompress(ba);
-    qDebug() << buffer.size() << ba.size();
+        ba = qUncompress(ba);
     success = read(&buffer);
     if (!success)
         qWarning() << "Project.read(QIODevice* device) failed.";

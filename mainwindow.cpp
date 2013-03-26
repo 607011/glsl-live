@@ -164,6 +164,7 @@ void MainWindow::shaderChanged()
 {
     mProject.setDirty(true);
     updateShaderSources();
+    updateWindowTitle();
 }
 
 void MainWindow::newProject(void)
@@ -178,6 +179,7 @@ void MainWindow::newProject(void)
     mFragmentShaderEditor.setPlainText(mProject.fragmentShaderSource());
     mRenderWidget->setImage(mProject.image());
     updateShaderSources();
+    updateWindowTitle();
 }
 
 void MainWindow::openProject(void)
@@ -190,6 +192,7 @@ void MainWindow::openProject(void)
     const QString& filename = QFileDialog::getOpenFileName(this, tr("Load project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
     if (filename.isEmpty())
         return;
+    openProject(filename);
 }
 
 
@@ -198,11 +201,17 @@ void MainWindow::openProject(const QString& filename)
     Q_ASSERT(!filename.isEmpty());
     bool ok = mProject.load(filename);
     if (ok) {
+        mVertexShaderEditor.blockSignals(true);
         mVertexShaderEditor.setPlainText(mProject.vertexShaderSource());
+        mVertexShaderEditor.blockSignals(false);
+        mFragmentShaderEditor.blockSignals(true);
         mFragmentShaderEditor.setPlainText(mProject.fragmentShaderSource());
+        mFragmentShaderEditor.blockSignals(false);
         mRenderWidget->setImage(mProject.image());
+        updateShaderSources();
     }
     ui->statusBar->showMessage(ok? tr("Project loaded.") : tr("Loading failed."), 3000);
+    updateWindowTitle();
 }
 
 void MainWindow::saveProject(void)
@@ -216,6 +225,14 @@ void MainWindow::saveProject(void)
     saveProject(filename);
 }
 
+void MainWindow::saveProjectAs(void)
+{
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
+    if (filename.isNull())
+        return;
+    saveProject(filename);
+}
+
 void MainWindow::saveProject(const QString &filename)
 {
     mProject.setFilename(filename);
@@ -224,14 +241,7 @@ void MainWindow::saveProject(const QString &filename)
     mProject.setImage(mRenderWidget->image());
     bool ok = mProject.save();
     ui->statusBar->showMessage(ok? tr("Project saved.") : tr("Saving failed."), 3000);
-}
-
-void MainWindow::saveProjectAs(void)
-{
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
-    if (filename.isNull())
-        return;
-    saveProject(filename);
+    updateWindowTitle();
 }
 
 void MainWindow::updateShaderSources(void)
