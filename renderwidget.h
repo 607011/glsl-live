@@ -64,6 +64,10 @@ private:
     QString mPreliminaryFragmentShaderSource;
     QString mVertexShaderSource;
     QString mFragmentShaderSource;
+    int mULocT;
+    int mULocMouse;
+    int mULocResolution;
+    int mULocTexture;
 
 private: // methods
     void goLive(void);

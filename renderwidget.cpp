@@ -81,7 +81,7 @@ void RenderWidget::setImage(const QImage& image)
     glBindTexture(GL_TEXTURE_2D, mTextureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mImage.width(), mImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, mImage.bits());
     if (mShaderProgram->isLinked()) {
-        mShaderProgram->setUniformValue("uTexture", 0);
+        mShaderProgram->setUniformValue(mULocTexture, 0);
         update();
     }
 }
@@ -120,9 +120,13 @@ bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
         }
     }
     if (mShaderProgram->isLinked()) {
-        mShaderProgram->setUniformValue("uMouse", mMousePos);
-        mShaderProgram->setUniformValue("uResolution", mResolution);
-        mShaderProgram->setUniformValue("uTexture", 0);
+        mULocT = mShaderProgram->uniformLocation("uT");
+        mULocMouse = mShaderProgram->uniformLocation("uMouse");
+        mULocResolution = mShaderProgram->uniformLocation("uResolution");
+        mULocTexture = mShaderProgram->uniformLocation("uTexture");
+        mShaderProgram->setUniformValue(mULocMouse, mMousePos);
+        mShaderProgram->setUniformValue(mULocResolution, mResolution);
+        mShaderProgram->setUniformValue(mULocTexture, 0);
         emit linkingSuccessful();
         update();
     }
@@ -133,10 +137,8 @@ void RenderWidget::resizeEvent(QResizeEvent* e)
 {
     mResolution = QSizeF(e->size());
     if (mShaderProgram->isLinked())
-        mShaderProgram->setUniformValue("uResolution", mResolution);
+        mShaderProgram->setUniformValue(mULocResolution, mResolution);
     glViewport(0, 0, e->size().width(), e->size().height());
-    update();
-    e->ignore();
 }
 
 void RenderWidget::goLive()
@@ -186,7 +188,7 @@ void RenderWidget::paintGL(void)
         mFirstPaintEventPending = false;
     }
     if (mShaderProgram->isLinked()) {
-        mShaderProgram->setUniformValue("uT", 1e-3f * (GLfloat)mTime.elapsed());
+        mShaderProgram->setUniformValue(mULocT, 1e-3f * (GLfloat)mTime.elapsed());
     }
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
@@ -203,7 +205,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
 {
     if (mShaderProgram->isLinked()) {
         mMousePos = QPointF(e->pos());
-        mShaderProgram->setUniformValue("uMouse", mMousePos);
+        mShaderProgram->setUniformValue(mULocMouse, mMousePos);
         update();
     }
     e->accept();
