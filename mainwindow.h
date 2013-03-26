@@ -7,6 +7,8 @@
 #include <QMainWindow>
 #include <QResizeEvent>
 #include <QVBoxLayout>
+#include <QWidget>
+#include <QByteArray>
 #include "renderwidget.h"
 #include "project.h"
 #include "jsedit/jsedit.h"
@@ -39,6 +41,9 @@ private slots:
     void saveProject(void);
     void saveProject(const QString& filename);
     void saveProjectAs(void);
+    void valueChanged(int);
+    void valueChanged(double);
+    void valueChanged(bool);
 
 private: //methods
     void saveSettings(void);
@@ -47,18 +52,20 @@ private: //methods
     void loadVertexShader(const QString&);
     void loadFragmentShader(const QString&);
     void updateWindowTitle(void);
+    void clearParametersLayout(QVBoxLayout*);
     void updateShaderSources(void);
 
 private:
     Ui::MainWindow *ui;
     Project mProject;
     RenderWidget* mRenderWidget;
-    QVBoxLayout* mParametersLayout;
+    QWidget* mParamWidget;
     QString mVertexShaderFilename;
     QString mFragmentShaderFilename;
     QString mImageFilename;
     JSEdit mVertexShaderEditor;
     JSEdit mFragmentShaderEditor;
+    QByteArray mCurrentParameterHash;
 };
 
 #endif // __MAINWINDOW_H_

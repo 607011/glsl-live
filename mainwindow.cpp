@@ -8,6 +8,11 @@
 #include <QByteArray>
 #include <QTextStream>
 #include <QRegExp>
+#include <QCryptographicHash>
+#include <QSlider>
+#include <QDoubleSpinBox>
+#include <QCheckBox>
+#include <QSpacerItem>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -17,13 +22,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , mProject(NULL)
     , mRenderWidget(new RenderWidget)
-    , mParametersLayout(new QVBoxLayout)
+    , mParamWidget(new QWidget)
 {
     ui->setupUi(this);
     ui->splitter->addWidget(mRenderWidget);
-    QWidget* paramWidget = new QWidget;
-    paramWidget->setLayout(mParametersLayout);
-    ui->splitter->addWidget(paramWidget);
+    ui->splitter->addWidget(mParamWidget);
     ui->toolBox->setMinimumWidth(300);
     ui->vertexShaderHLayout->addWidget(&mVertexShaderEditor);
     ui->fragmentShaderHLayout->addWidget(&mFragmentShaderEditor);
@@ -48,7 +51,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete mParametersLayout;
     delete mRenderWidget;
     delete ui;
 }
@@ -136,21 +138,131 @@ void MainWindow::successfullyLinkedShader()
     ui->toolBox->setItemText(2, tr("Error log"));
 }
 
+void MainWindow::valueChanged(int v)
+{
+    qDebug() << "MainWindow::valueChanged(int) >>" << v;
+    if (sender()) {
+        const QString& name = sender()->property("name").toString();
+        qDebug() << "MainWindow::valueChanged(int): name =" << name;
+        mRenderWidget->setUniformValue(name, v);
+    }
+}
+
+void MainWindow::valueChanged(double v)
+{
+    qDebug() << "MainWindow::valueChanged(double) >>" << v;
+    if (sender()) {
+        const QString& name = sender()->property("name").toString();
+        qDebug() << "MainWindow::valueChanged(double): name =" << name;
+        mRenderWidget->setUniformValue(name, (float)v);
+    }
+}
+
+void MainWindow::valueChanged(bool v)
+{
+    qDebug() << "MainWindow::valueChanged(bool) >>" << v;
+    if (sender()) {
+        const QString& name = sender()->property("name").toString();
+        qDebug() << "MainWindow::valueChanged(bool): name =" << name;
+        mRenderWidget->setUniformValue(name, v);
+    }
+}
+
 void MainWindow::shaderChanged()
 {
     mProject.setDirty(true);
-    QByteArray ba = mFragmentShaderEditor.toPlainText().toLatin1();
+    QByteArray ba = mFragmentShaderEditor.toPlainText().toUtf8();
     QTextStream in(&ba);
-    QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\s*(.*)\\s*$");
+    QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)\\s*$");
+    // check if variables' definitions have changed in shader
+    QCryptographicHash hash(QCryptographicHash::Sha1);
     while (!in.atEnd()) {
         const QString& line = in.readLine();
         int pos = re0.indexIn(line);
-        if (pos > -1) {
-            qDebug() << re0.cap(1) << re0.cap(2) << re0.cap(3);
+        if (pos > -1)
+            hash.addData(line.toUtf8());
+    }
+    // if changes occured regenerate widgets
+    if (mCurrentParameterHash != hash.result()) {
+        qDebug() << hash.result().toHex();
+        QRegExp reFI("(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)");
+        QRegExp reB("(true|false)");
+        mCurrentParameterHash = hash.result();
+        QVBoxLayout* layout = new QVBoxLayout;
+        in.seek(0);
+        while (!in.atEnd()) {
+            const QString& line = in.readLine();
+            int pos = re0.indexIn(line);
+            if (pos > -1) {
+
+                const QString& type = re0.cap(1).toUtf8();
+                const QString& name = re0.cap(2).toUtf8();
+                const QString& minMaxDefault = re0.cap(3).toUtf8();
+                qDebug() << type << name << minMaxDefault;
+                pos = reFI.indexIn(minMaxDefault);
+                if (pos > -1) {
+                    const QString& minV = reFI.cap(1).toUtf8();
+                    const QString& maxV = reFI.cap(2).toUtf8();
+                    const QString& defaultV = reFI.cap(3).toUtf8();
+                    qDebug() << minV << maxV << defaultV;
+                    if (type == "int") {
+                        QSlider* slider = new QSlider(Qt::Horizontal);
+                        slider->setProperty("name", name);
+                        slider->setMinimumWidth(100);
+                        slider->setMinimum(minV.toInt());
+                        slider->setMaximum(maxV.toInt());
+                        slider->setValue(defaultV.toInt());
+                        layout->addWidget(slider);
+                        QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
+                    }
+                    else if (type == "float") {
+                        QDoubleSpinBox* spinbox = new QDoubleSpinBox;
+                        spinbox->setProperty("name", name);
+                        spinbox->setMinimum(minV.toDouble());
+                        spinbox->setMaximum(maxV.toDouble());
+                        spinbox->setValue(defaultV.toDouble());
+                        layout->addWidget(spinbox);
+                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
+                    }
+                    else
+                        qWarning() << "invalid type:" << type;
+                }
+                else {
+                    pos = reB.indexIn(minMaxDefault);
+                    if (pos > -1) {
+                        const QString& v = reB.cap(1).toUtf8();
+                        qDebug() << v;
+                        if (type == "bool") {
+                            bool b = (v == "true");
+                            QCheckBox* checkbox = new QCheckBox(name);
+                            checkbox->setProperty("name", name);
+                            checkbox->setCheckable(true);
+                            checkbox->setChecked(b);
+                            layout->addWidget(checkbox);
+                            QObject::connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
+                        }
+                        else
+                            qWarning() << "invalid type:" << type;
+                    }
+                }
+            }
         }
+        layout->addStretch(1);
+        if (mParamWidget->layout() != NULL)
+            clearParametersLayout(reinterpret_cast<QVBoxLayout*>(mParamWidget->layout()));
+        mParamWidget->setLayout(layout);
     }
     updateShaderSources();
     updateWindowTitle();
+}
+
+void MainWindow::clearParametersLayout(QVBoxLayout* layout)
+{
+    Q_ASSERT(layout != NULL);
+    QLayoutItem* child;
+    while ((child = layout->takeAt(0)) != NULL)
+        delete child;
+    delete layout;
 }
 
 void MainWindow::newProject(void)

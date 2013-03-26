@@ -82,10 +82,10 @@ bool Project::save(const QString& filename)
     out << "  </input>\n";
     out << "</glsl-live-coder-project>\n";
     if (compress) {
-        file.write(qCompress(d.toLatin1(), 9));
+        file.write(qCompress(d.toUtf8(), 9));
     }
     else {
-        file.write(d.toLatin1());
+        file.write(d.toUtf8());
     }
     file.close();
     mDirty = false;
@@ -235,7 +235,7 @@ void Project::readInputImageData()
     const QString& str = mXml.readElementText();
     if (!str.isEmpty()) {
         qDebug() << "Project::readImageData() >>" << str;
-        const QByteArray& imgData = QByteArray::fromBase64(str.toLatin1());
+        const QByteArray& imgData = QByteArray::fromBase64(str.toUtf8());
         qDebug() << "imgData.size() =" << imgData.size();
         bool ok = mImage.loadFromData(imgData);
         if (!ok)

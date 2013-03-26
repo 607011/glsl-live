@@ -259,3 +259,18 @@ bool RenderWidget::loadImage(const QString& fileName)
     return true;
 }
 
+void RenderWidget::setUniformValue(const QString& name, int value)
+{
+    mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+}
+
+void RenderWidget::setUniformValue(const QString& name, float value)
+{
+    mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+}
+
+void RenderWidget::setUniformValue(const QString& name, bool value)
+{
+    mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+}
+

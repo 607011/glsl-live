@@ -39,6 +39,9 @@ public:
     const QString& imageFileName(void) const { return mImageFileName; }
     bool loadImage(const QString& fileName);
     const QImage& image(void) const { return mImage; }
+    void setUniformValue(const QString& name, int value);
+    void setUniformValue(const QString& name, float value);
+    void setUniformValue(const QString& name, bool value);
 
 signals:
     void shaderError(QString);
