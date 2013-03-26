@@ -3,6 +3,7 @@
 
 #include <QSettings>
 #include <QMessageBox>
+#include <QFileDialog>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -15,8 +16,6 @@ MainWindow::MainWindow(QWidget *parent)
     , mParametersLayout(new QVBoxLayout)
 {
     ui->setupUi(this);
-    setWindowTitle(tr("%1 %2").arg(AppName).arg(AppVersion));
-
     ui->splitter->addWidget(mRenderWidget);
     QWidget* paramWidget = new QWidget;
     paramWidget->setLayout(mParametersLayout);
@@ -25,20 +24,22 @@ MainWindow::MainWindow(QWidget *parent)
     ui->fragmentShaderHLayout->addWidget(&mFragmentShaderEditor);
     prepareEditor(mVertexShaderEditor);
     prepareEditor(mFragmentShaderEditor);
-    QObject::connect(&mVertexShaderEditor, SIGNAL(textChanged()), SLOT(updateShaderSources()));
-    QObject::connect(&mFragmentShaderEditor, SIGNAL(textChanged()), SLOT(updateShaderSources()));
+    QObject::connect(&mVertexShaderEditor, SIGNAL(textChanged()), SLOT(shaderChanged()));
+    QObject::connect(&mFragmentShaderEditor, SIGNAL(textChanged()), SLOT(shaderChanged()));
     QObject::connect(mRenderWidget, SIGNAL(shaderError(QString)), SLOT(badShaderCode(QString)));
     QObject::connect(mRenderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
+    QObject::connect(ui->actionOpen, SIGNAL(triggered()), SLOT(openProject()));
+    QObject::connect(ui->actionSave, SIGNAL(triggered()), SLOT(saveProject()));
+    QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
+    QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     restoreSettings();
 }
 
 MainWindow::~MainWindow()
 {
-    if (mProject)
-        delete mProject;
     delete mParametersLayout;
     delete mRenderWidget;
     delete ui;
@@ -49,10 +50,11 @@ void MainWindow::restoreSettings(void)
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
     ui->splitter->restoreGeometry(settings.value("MainWindow/splitter/geometry").toByteArray());
-    mProjectFilename = settings.value("Project/filename").toString();
-    if (!mProjectFilename.isEmpty()) {
-        mProject = new Project(mProjectFilename);
+    const QString& projectFilename = settings.value("Project/filename").toString();
+    if (!projectFilename.isEmpty()) {
+        openProject(projectFilename);
     }
+#if 0
     mVertexShaderFilename = settings.value("Options/VertexShaderEditor/sourceFilename", ":/shaders/vertexshader.glsl").toString();
     QString vs = settings.value("Options/VertexShaderEditor/source").toString();
     if (vs.isEmpty()) {
@@ -74,9 +76,10 @@ void MainWindow::restoreSettings(void)
     mImageFilename = settings.value("Options/imageFilename", ":/images/toad.png").toString();
     if (!mImageFilename.isEmpty()) {
         mRenderWidget->setImage(QImage(mImageFilename));
-        if (mProject)
-            mProject->setImage(mRenderWidget->image());
+        mProject.setImage(mRenderWidget->image());
     }
+#endif
+    updateWindowTitle();
 }
 
 void MainWindow::saveSettings(void)
@@ -85,16 +88,23 @@ void MainWindow::saveSettings(void)
     settings.setValue("MainWindow/geometry", saveGeometry());
     settings.setValue("MainWindow/Toolbox/currentIndex", ui->toolBox->currentIndex());
     settings.setValue("MainWindow/splitter/geometry", saveGeometry());
+#if 0
     settings.setValue("Options/VertexShaderEditor/sourceFilename", mVertexShaderFilename);
     settings.setValue("Options/VertexShaderEditor/source", mVertexShaderEditor.toPlainText());
     settings.setValue("Options/FragmentShaderEditor/sourceFilename", mFragmentShaderFilename);
     settings.setValue("Options/FragmentShaderEditor/source", mFragmentShaderEditor.toPlainText());
     settings.setValue("Options/imageFilename", mImageFilename);
-    settings.setValue("Project/filename", mProjectFilename);
+#endif
+    settings.setValue("Project/filename", mProject.filename());
 }
 
 void MainWindow::closeEvent(QCloseEvent* e)
 {
+    if (mProject.isDirty()) {
+        bool ok = QMessageBox::question(this, tr("Save before exit?"), tr("Your project has changed. Do you want to save the changes before exiting?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
+        if (ok)
+            saveProject();
+    }
     saveSettings();
     e->accept();
 }
@@ -150,6 +160,80 @@ void MainWindow::successfullyLinkedShader()
     ui->toolBox->setItemText(2, tr("Error log"));
 }
 
+void MainWindow::shaderChanged()
+{
+    mProject.setDirty(true);
+    updateShaderSources();
+}
+
+void MainWindow::newProject(void)
+{
+    if (mProject.isDirty()) {
+        bool ok = QMessageBox::question(this, tr("Really create a new project?"), tr("Your project has changed. Do you want to save the changes before creating a new project?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
+        if (ok)
+            saveProject();
+    }
+    mProject.reset();
+    mVertexShaderEditor.setPlainText(mProject.vertexShaderSource());
+    mFragmentShaderEditor.setPlainText(mProject.fragmentShaderSource());
+    mRenderWidget->setImage(mProject.image());
+    updateShaderSources();
+}
+
+void MainWindow::openProject(void)
+{
+    if (mProject.isDirty()) {
+        bool ok = QMessageBox::question(this, tr("Really load another project?"), tr("Your project has changed. Do you want to save the changes before loading another project?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
+        if (ok)
+            saveProject();
+    }
+    const QString& filename = QFileDialog::getOpenFileName(this, tr("Load project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
+    if (filename.isEmpty())
+        return;
+}
+
+
+void MainWindow::openProject(const QString& filename)
+{
+    Q_ASSERT(!filename.isEmpty());
+    bool ok = mProject.load(filename);
+    if (ok) {
+        mVertexShaderEditor.setPlainText(mProject.vertexShaderSource());
+        mFragmentShaderEditor.setPlainText(mProject.fragmentShaderSource());
+        mRenderWidget->setImage(mProject.image());
+    }
+    ui->statusBar->showMessage(ok? tr("Project loaded.") : tr("Loading failed."), 3000);
+}
+
+void MainWindow::saveProject(void)
+{
+    QString filename = mProject.filename();
+    if (filename.isEmpty()) {
+        filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
+        if (filename.isNull())
+            return;
+    }
+    saveProject(filename);
+}
+
+void MainWindow::saveProject(const QString &filename)
+{
+    mProject.setFilename(filename);
+    mProject.setVertexShaderSource(mVertexShaderEditor.toPlainText());
+    mProject.setFragmentShaderSource(mFragmentShaderEditor.toPlainText());
+    mProject.setImage(mRenderWidget->image());
+    bool ok = mProject.save();
+    ui->statusBar->showMessage(ok? tr("Project saved.") : tr("Saving failed."), 3000);
+}
+
+void MainWindow::saveProjectAs(void)
+{
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
+    if (filename.isNull())
+        return;
+    saveProject(filename);
+}
+
 void MainWindow::updateShaderSources(void)
 {
     mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(), mFragmentShaderEditor.toPlainText());
@@ -161,9 +245,10 @@ void MainWindow::loadVertexShader(const QString& filename)
         QFile file(filename);
         bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
         if (success) {
-            mVertexShaderEditor.setPlainText(file.readAll());
+            const QString& source = file.readAll();
+            mVertexShaderEditor.setPlainText(source);
             mVertexShaderFilename = filename;
-            mProject->setVertexShaderSource(mVertexShaderEditor.toPlainText());
+            mProject.setVertexShaderSource(source);
             file.close();
         }
     }
@@ -175,12 +260,18 @@ void MainWindow::loadFragmentShader(const QString& filename)
         QFile file(filename);
         bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
         if (success) {
-            mFragmentShaderEditor.setPlainText(file.readAll());
+            const QString& source = file.readAll();
+            mFragmentShaderEditor.setPlainText(source);
             mFragmentShaderFilename = filename;
-            mProject->setFragmentShaderSource(mFragmentShaderEditor.toPlainText());
+            mProject.setFragmentShaderSource(source);
             file.close();
         }
     }
+}
+
+void MainWindow::updateWindowTitle()
+{
+    setWindowTitle(tr("%1 %2%3").arg(AppName).arg(AppVersion).arg(mProject.filename().isEmpty()? "" : tr(" - %1%2").arg(mProject.filename()).arg(mProject.isDirty()? "*" : "")));
 }
 
 void MainWindow::about(void)
@@ -207,4 +298,3 @@ void MainWindow::aboutQt(void)
 {
     QMessageBox::aboutQt(this);
 }
-

@@ -28,11 +28,17 @@ protected:
     void resizeEvent(QResizeEvent*);
 
 private slots:
-    void updateShaderSources(void);
     void about(void);
     void aboutQt(void);
     void badShaderCode(const QString&);
     void successfullyLinkedShader(void);
+    void shaderChanged(void);
+    void newProject(void);
+    void openProject(void);
+    void openProject(const QString& filename);
+    void saveProject(void);
+    void saveProject(const QString& filename);
+    void saveProjectAs(void);
 
 private: //methods
     void saveSettings(void);
@@ -40,11 +46,12 @@ private: //methods
     void prepareEditor(JSEdit& editor) const;
     void loadVertexShader(const QString&);
     void loadFragmentShader(const QString&);
+    void updateWindowTitle(void);
+    void updateShaderSources(void);
 
 private:
     Ui::MainWindow *ui;
-    Project* mProject;
-    QString mProjectFilename;
+    Project mProject;
     RenderWidget* mRenderWidget;
     QVBoxLayout* mParametersLayout;
     QString mVertexShaderFilename;

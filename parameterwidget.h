@@ -20,9 +20,10 @@ public:
         Boolean
     };
 
-    explicit ParameterWidget(QWidget* parent = NULL);
-    ParameterWidget(const ParameterWidget& o)
-        : mType(o.mType)
+    ParameterWidget(QWidget* parent = NULL);
+    ParameterWidget(const ParameterWidget& o, QWidget* parent = NULL)
+        : QWidget(parent)
+        , mType(o.mType)
         , mName(o.mName)
         , mMinValue(o.mMinValue)
         , mMaxValue(o.mMaxValue)
@@ -45,7 +46,7 @@ public:
     QVariant defaultValue(void) const { return mDefaultValue; }
 
 signals:
-    
+
 public slots:
 
 private:

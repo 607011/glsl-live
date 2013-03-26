@@ -14,6 +14,7 @@
 #include <QRgb>
 #include <QPointF>
 #include <QImage>
+#include <QEvent>
 #include <QTime>
 #include <QTimerEvent>
 #include <QMouseEvent>
@@ -21,7 +22,7 @@
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include <QResizeEvent>
-#include <QKeyEvent>
+#include <QShowEvent>
 #include <QCursor>
 
 class RenderWidget : public QGLWidget
@@ -44,11 +45,11 @@ signals:
     void linkingSuccessful(void);
     void imageDropped(const QImage&);
 
-
 private:
     static const QVector3D mVertices[4];
     static const QVector2D mTexCoords[4];
     bool mInitializedGL;
+    bool mFirstPaintEvent;
     QGLShader* mVertexShader;
     QGLShader* mFragmentShader;
     QGLShaderProgram* mShaderProgram;
@@ -57,9 +58,11 @@ private:
     QTime mTime;
     QString mImageFileName;
     QImage mImage;
-    int mTimerId;
+    int mLiveTimerId;
     QPointF mMousePos;
     QSizeF mResolution;
+    QString mPreliminaryVertexShaderSource;
+    QString mPreliminaryFragmentShaderSource;
     QString mVertexShaderSource;
     QString mFragmentShaderSource;
 

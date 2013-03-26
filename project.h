@@ -20,17 +20,46 @@ class Project : public QObject
 
 public:
     explicit Project(QString filename = QString(), QObject* parent = NULL);
+    void reset(void);
+    bool save(void);
     bool save(const QString& fileName);
     bool load(const QString& fileName);
     QString errorString(void) const;
+    bool isDirty(void) const { return mDirty; }
+    const QString& filename(void) const { return mFilename; }
+    const QString vertexShaderSource(void) const { return mVertexShaderSource; }
+    const QString fragmentShaderSource(void) const { return mFragmentShaderSource; }
+    const QImage& image(void) const { return mImage; }
 
-    void setVertexShaderSource(const QString& source) { mVertexShaderSource = source; }
-    void setFragmentShaderSource(const QString& source) { mFragmentShaderSource = source; }
-    void setImage(const QImage& image) { mImage = image; }
+    void setDirty(bool dirty = true)
+    {
+        mDirty = dirty;
+    }
+    void setVertexShaderSource(const QString& source)
+    {
+        mVertexShaderSource = source;
+        mDirty = true;
+    }
+    void setFragmentShaderSource(const QString& source)
+    {
+        mFragmentShaderSource = source;
+        mDirty = true;
+    }
+    void setImage(const QImage& image)
+    {
+        mImage = image;
+        mDirty = true;
+    }
+    void setFilename(const QString& filename)
+    {
+        mFilename = filename;
+        mDirty = true;
+    }
 
 signals:
 
 private: // variables
+    bool mDirty;
     QXmlStreamReader mXml;
     QString mVertexShaderSource;
     QString mFragmentShaderSource;
@@ -38,11 +67,10 @@ private: // variables
     int mWebcam;
     QQueue<ParameterWidget> mParameterWidgets;
     ParameterWidget mCurrentParameterWidget;
+    QString mFilename;
+    QSize mImageSize;
 
 private: // methods
-    const QString vertexShaderSource(void) const { return mVertexShaderSource; }
-    const QString fragmentShaderSource(void) const { return mFragmentShaderSource; }
-    const QImage& image(void) const { return mImage; }
     int webcam(void) const { return mWebcam; }
     const QQueue<ParameterWidget>& widgets(void) const { return mParameterWidgets; }
 
@@ -58,8 +86,6 @@ private: // methods
     void readParameterMinValue(void);
     void readParameterMaxValue(void);
     void readParameterDefaultValue(void);
-    void readParameterSlider(void);
-    void readParameterSliderDirection(void);
     void readShaderVertex(void);
     void readShaderFragment(void);
     void readInputImage(void);

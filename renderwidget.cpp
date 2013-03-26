@@ -33,9 +33,10 @@ RenderWidget::RenderWidget(QWidget* parent)
     , mVertexShader(NULL)
     , mFragmentShader(NULL)
     , mInitializedGL(false)
+    , mFirstPaintEvent(true)
     , mShaderProgram(new QGLShaderProgram(this))
     , mTextureHandle(0)
-    , mTimerId(0)
+    , mLiveTimerId(0)
 {
     mTime.start();
     setFocusPolicy(Qt::StrongFocus);
@@ -58,6 +59,8 @@ RenderWidget::~RenderWidget()
 
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 {
+    mPreliminaryVertexShaderSource = vs;
+    mPreliminaryFragmentShaderSource = fs;
     if (!mInitializedGL)
         return;
     linkProgram(vs, fs);
@@ -66,6 +69,7 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
         mFragmentShaderSource = fs;
     }
     else {
+        // fall back to previous code
         linkProgram(mVertexShaderSource, mFragmentShaderSource);
     }
     if (mShaderProgram->isLinked())
@@ -138,16 +142,15 @@ void RenderWidget::resizeEvent(QResizeEvent* e)
 
 void RenderWidget::goLive()
 {
-    stopCode();
-    mTimerId = startTimer(1000/50);
-    update();
+    if (mLiveTimerId == 0)
+        mLiveTimerId = startTimer(1000/50);
 }
 
 void RenderWidget::stopCode()
 {
-    if (mTimerId != 0) {
-        killTimer(mTimerId);
-        mTimerId = 0;
+    if (mLiveTimerId != 0) {
+        killTimer(mLiveTimerId);
+        mLiveTimerId = 0;
     }
 }
 
@@ -179,6 +182,12 @@ void RenderWidget::initializeGL(void)
 
 void RenderWidget::paintGL(void)
 {
+    if (mFirstPaintEvent) {
+        linkProgram(mPreliminaryVertexShaderSource, mPreliminaryFragmentShaderSource);
+        if (mShaderProgram->isLinked())
+            goLive();
+        mFirstPaintEvent = false;
+    }
     if (mShaderProgram->isLinked()) {
         mShaderProgram->setUniformValue("uT", 1e-3f * (GLfloat)mTime.elapsed());
     }
@@ -187,7 +196,7 @@ void RenderWidget::paintGL(void)
 
 void RenderWidget::timerEvent(QTimerEvent* e)
 {
-    if (e->timerId() == mTimerId) {
+    if (e->timerId() == mLiveTimerId) {
         update();
     }
     e->accept();
