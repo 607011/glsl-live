@@ -4,6 +4,7 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QFileInfo>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -210,7 +211,7 @@ void MainWindow::openProject(const QString& filename)
         mRenderWidget->setImage(mProject.image());
         updateShaderSources();
     }
-    ui->statusBar->showMessage(ok? tr("Project loaded.") : tr("Loading failed."), 3000);
+    ui->statusBar->showMessage(ok? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName()) : tr("Loading '%1' failed.").arg(QFileInfo(filename).fileName()), 3000);
     updateWindowTitle();
 }
 
@@ -240,7 +241,7 @@ void MainWindow::saveProject(const QString &filename)
     mProject.setFragmentShaderSource(mFragmentShaderEditor.toPlainText());
     mProject.setImage(mRenderWidget->image());
     bool ok = mProject.save();
-    ui->statusBar->showMessage(ok? tr("Project saved.") : tr("Saving failed."), 3000);
+    ui->statusBar->showMessage(ok? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName()) : tr("Saving failed."), 3000);
     updateWindowTitle();
 }
 

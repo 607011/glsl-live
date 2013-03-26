@@ -32,8 +32,7 @@ RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(parent)
     , mVertexShader(NULL)
     , mFragmentShader(NULL)
-    , mInitializedGL(false)
-    , mFirstPaintEvent(true)
+    , mFirstPaintEventPending(true)
     , mShaderProgram(new QGLShaderProgram(this))
     , mTextureHandle(0)
     , mLiveTimerId(0)
@@ -61,7 +60,7 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 {
     mPreliminaryVertexShaderSource = vs;
     mPreliminaryFragmentShaderSource = fs;
-    if (!mInitializedGL)
+    if (mFirstPaintEventPending)
         return;
     linkProgram(vs, fs);
     if (mShaderProgram->isLinked()) {
@@ -176,17 +175,15 @@ void RenderWidget::initializeGL(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mImage.width(), mImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, mImage.bits());
-
-    mInitializedGL = true;
 }
 
 void RenderWidget::paintGL(void)
 {
-    if (mFirstPaintEvent) {
+    if (mFirstPaintEventPending) {
         linkProgram(mPreliminaryVertexShaderSource, mPreliminaryFragmentShaderSource);
         if (mShaderProgram->isLinked())
             goLive();
-        mFirstPaintEvent = false;
+        mFirstPaintEventPending = false;
     }
     if (mShaderProgram->isLinked()) {
         mShaderProgram->setUniformValue("uT", 1e-3f * (GLfloat)mTime.elapsed());

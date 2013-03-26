@@ -48,8 +48,7 @@ signals:
 private:
     static const QVector3D mVertices[4];
     static const QVector2D mTexCoords[4];
-    bool mInitializedGL;
-    bool mFirstPaintEvent;
+    bool mFirstPaintEventPending;
     QGLShader* mVertexShader;
     QGLShader* mFragmentShader;
     QGLShaderProgram* mShaderProgram;
