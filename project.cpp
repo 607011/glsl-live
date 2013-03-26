@@ -9,11 +9,12 @@
 #include <QtCore/QDebug>
 #include <QByteArray>
 
-Project::Project(QObject* parent)
+Project::Project(QString filename, QObject* parent)
     : QObject(parent)
     , mWebcam(-1)
 {
-    /* ... */
+    if (!filename.isEmpty())
+        load(filename);
 }
 
 QString Project::errorString(void) const

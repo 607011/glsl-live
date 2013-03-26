@@ -8,6 +8,7 @@
 #include <QResizeEvent>
 #include <QVBoxLayout>
 #include "renderwidget.h"
+#include "project.h"
 #include "jsedit/jsedit.h"
 
 namespace Ui {
@@ -42,6 +43,8 @@ private: //methods
 
 private:
     Ui::MainWindow *ui;
+    Project* mProject;
+    QString mProjectFilename;
     RenderWidget* mRenderWidget;
     QVBoxLayout* mParametersLayout;
     QString mVertexShaderFilename;

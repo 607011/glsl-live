@@ -5,12 +5,12 @@
 #include <QMessageBox>
 #include "main.h"
 #include "mainwindow.h"
-#include "project.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , mProject(NULL)
     , mRenderWidget(new RenderWidget)
     , mParametersLayout(new QVBoxLayout)
 {
@@ -33,13 +33,12 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
     restoreSettings();
-
-    Project project;
-    project.load(":/projects/crosshatch.xml");
 }
 
 MainWindow::~MainWindow()
 {
+    if (mProject)
+        delete mProject;
     delete mParametersLayout;
     delete mRenderWidget;
     delete ui;
@@ -50,6 +49,10 @@ void MainWindow::restoreSettings(void)
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
     ui->splitter->restoreGeometry(settings.value("MainWindow/splitter/geometry").toByteArray());
+    mProjectFilename = settings.value("Project/filename").toString();
+    if (!mProjectFilename.isEmpty()) {
+        mProject = new Project(mProjectFilename);
+    }
     mVertexShaderFilename = settings.value("Options/VertexShaderEditor/sourceFilename", ":/shaders/vertexshader.glsl").toString();
     QString vs = settings.value("Options/VertexShaderEditor/source").toString();
     if (vs.isEmpty()) {
@@ -69,8 +72,11 @@ void MainWindow::restoreSettings(void)
     mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(), mFragmentShaderEditor.toPlainText());
     ui->toolBox->setCurrentIndex(settings.value("Options/Toolbox/currentIndex", 0).toInt());
     mImageFilename = settings.value("Options/imageFilename", ":/images/toad.png").toString();
-    if (!mImageFilename.isEmpty())
+    if (!mImageFilename.isEmpty()) {
         mRenderWidget->setImage(QImage(mImageFilename));
+        if (mProject)
+            mProject->setImage(mRenderWidget->image());
+    }
 }
 
 void MainWindow::saveSettings(void)
@@ -84,6 +90,7 @@ void MainWindow::saveSettings(void)
     settings.setValue("Options/FragmentShaderEditor/sourceFilename", mFragmentShaderFilename);
     settings.setValue("Options/FragmentShaderEditor/source", mFragmentShaderEditor.toPlainText());
     settings.setValue("Options/imageFilename", mImageFilename);
+    settings.setValue("Project/filename", mProjectFilename);
 }
 
 void MainWindow::closeEvent(QCloseEvent* e)
@@ -156,6 +163,7 @@ void MainWindow::loadVertexShader(const QString& filename)
         if (success) {
             mVertexShaderEditor.setPlainText(file.readAll());
             mVertexShaderFilename = filename;
+            mProject->setVertexShaderSource(mVertexShaderEditor.toPlainText());
             file.close();
         }
     }
@@ -169,6 +177,7 @@ void MainWindow::loadFragmentShader(const QString& filename)
         if (success) {
             mFragmentShaderEditor.setPlainText(file.readAll());
             mFragmentShaderFilename = filename;
+            mProject->setFragmentShaderSource(mFragmentShaderEditor.toPlainText());
             file.close();
         }
     }

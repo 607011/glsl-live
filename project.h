@@ -19,10 +19,14 @@ class Project : public QObject
     Q_OBJECT
 
 public:
-    explicit Project(QObject* parent = NULL);
+    explicit Project(QString filename = QString(), QObject* parent = NULL);
     bool save(const QString& fileName);
     bool load(const QString& fileName);
     QString errorString(void) const;
+
+    void setVertexShaderSource(const QString& source) { mVertexShaderSource = source; }
+    void setFragmentShaderSource(const QString& source) { mFragmentShaderSource = source; }
+    void setImage(const QImage& image) { mImage = image; }
 
 signals:
 
