@@ -1,8 +1,8 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#ifndef RENDERWIDGET_H
-#define RENDERWIDGET_H
+#ifndef __RENDERWIDGET_H_
+#define __RENDERWIDGET_H_
 
 #include <QGLWidget>
 #include <QGLFramebufferObject>
@@ -81,4 +81,4 @@ protected:
 
 };
 
-#endif // RENDERWIDGET_H
+#endif // __RENDERWIDGET_H_

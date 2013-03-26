@@ -1,6 +1,6 @@
 <glsl-live-coder-project version="0.1">
-	<shaders>
-	   <vertex><![CDATA[
+    <shaders>
+        <vertex><![CDATA[
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 	   
@@ -15,8 +15,7 @@ void main(void)
     gl_Position = aVertex;
 }
 	   ]]></vertex>
-	   <fragment><![CDATA[
-	   
+    <fragment><![CDATA[
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
@@ -62,31 +61,27 @@ void main(void)
   float dx = 2.0 * distance(0.5, uMouse.x / uResolution.x);
   float dy = 2.0 * distance(0.5, uMouse.y / uResolution.y);
   gl_FragColor = vec4(dx, 0.5 + 0.5 * sin(5.0 * uT), dy, 1.0) * color;
-}
-	   ]]></vertex>
-	</shaders>
-	<input>
-	  <image>
-	    <static></static>
-	    <webcam><!-- 0 --></webcam>
-	  </image>
-	</input>
-	<parameters>
-	  <parameter>
-	     <type>float</type>
-	     <name>stitchSize</name>
-	     <minValue>0.0</minValue>
-	     <maxValue>20.0</maxValue>
-	     <defaultValue>7.0</defaultValue>
-	     <ui>
-	        <type>slider</type>
-	        <direction>horizontal</direction>
-	     </ui>
-	  </parameter>
-	  <parameter>
-	     <name>invert</name>
-	     <type>bool</type>
-	     <defaultValue>true</defaultValue>
-	  </parameter>
-	</parameters>
+}]]>
+        </vertex>
+    </shaders>
+    <input>
+        <image>
+            <static></static>
+            <webcam><!-- 0 --></webcam>
+        </image>
+    </input>
+    <parameters>
+        <parameter>
+            <type>float</type>
+            <name>stitchSize</name>
+            <minValue>0.0</minValue>
+            <maxValue>20.0</maxValue>
+            <defaultValue>7.0</defaultValue>
+        </parameter>
+        <parameter>
+            <name>invert</name>
+            <type>bool</type>
+            <defaultValue>true</defaultValue>
+        </parameter>
+    </parameters>
 </glsl-live-coder-project>

@@ -1,8 +1,8 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef __MAINWINDOW_H_
+#define __MAINWINDOW_H_
 
 #include <QMainWindow>
 #include <QResizeEvent>
@@ -51,4 +51,4 @@ private:
     JSEdit mFragmentShaderEditor;
 };
 
-#endif // MAINWINDOW_H
+#endif // __MAINWINDOW_H_

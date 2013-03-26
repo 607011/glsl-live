@@ -13,13 +13,15 @@ SOURCES += main.cpp\
     mainwindow.cpp \
     renderwidget.cpp \
     jsedit/jsedit.cpp \
-    project.cpp
+    project.cpp \
+    parameterwidget.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
     jsedit/jsedit.h \
     main.h \
-    project.h
+    project.h \
+    parameterwidget.h
 
 FORMS    += mainwindow.ui
 
@@ -30,4 +32,5 @@ RESOURCES += \
 OTHER_FILES += \
     shaders/fragmentshader.glsl \
     shaders/vertexshader.glsl \
-    LICENSE.txt
+    LICENSE.txt \
+    examples/crosshatch.xml
