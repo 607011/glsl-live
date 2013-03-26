@@ -5,6 +5,9 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QByteArray>
+#include <QTextStream>
+#include <QRegExp>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -21,8 +24,12 @@ MainWindow::MainWindow(QWidget *parent)
     QWidget* paramWidget = new QWidget;
     paramWidget->setLayout(mParametersLayout);
     ui->splitter->addWidget(paramWidget);
+    ui->toolBox->setMinimumWidth(300);
     ui->vertexShaderHLayout->addWidget(&mVertexShaderEditor);
     ui->fragmentShaderHLayout->addWidget(&mFragmentShaderEditor);
+    ui->splitter->setStretchFactor(0, 3);
+    ui->splitter->setStretchFactor(1, 2);
+    ui->splitter->setStretchFactor(2, 1);
     prepareEditor(mVertexShaderEditor);
     prepareEditor(mFragmentShaderEditor);
     QObject::connect(&mVertexShaderEditor, SIGNAL(textChanged()), SLOT(shaderChanged()));
@@ -55,31 +62,6 @@ void MainWindow::restoreSettings(void)
     if (!projectFilename.isEmpty()) {
         openProject(projectFilename);
     }
-#if 0
-    mVertexShaderFilename = settings.value("Options/VertexShaderEditor/sourceFilename", ":/shaders/vertexshader.glsl").toString();
-    QString vs = settings.value("Options/VertexShaderEditor/source").toString();
-    if (vs.isEmpty()) {
-        loadVertexShader(mVertexShaderFilename);
-    }
-    else {
-        mVertexShaderEditor.setPlainText(vs);
-    }
-    mFragmentShaderFilename = settings.value("Options/FragmentShaderEditor/sourceFilename", ":/shaders/fragmentshader.glsl").toString();
-    QString fs = settings.value("Options/FragmentShaderEditor/source").toString();
-    if (fs.isEmpty()) {
-        loadFragmentShader(mFragmentShaderFilename);
-    }
-    else {
-        mFragmentShaderEditor.setPlainText(fs);
-    }
-    mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(), mFragmentShaderEditor.toPlainText());
-    ui->toolBox->setCurrentIndex(settings.value("Options/Toolbox/currentIndex", 0).toInt());
-    mImageFilename = settings.value("Options/imageFilename", ":/images/toad.png").toString();
-    if (!mImageFilename.isEmpty()) {
-        mRenderWidget->setImage(QImage(mImageFilename));
-        mProject.setImage(mRenderWidget->image());
-    }
-#endif
     updateWindowTitle();
 }
 
@@ -89,13 +71,6 @@ void MainWindow::saveSettings(void)
     settings.setValue("MainWindow/geometry", saveGeometry());
     settings.setValue("MainWindow/Toolbox/currentIndex", ui->toolBox->currentIndex());
     settings.setValue("MainWindow/splitter/geometry", saveGeometry());
-#if 0
-    settings.setValue("Options/VertexShaderEditor/sourceFilename", mVertexShaderFilename);
-    settings.setValue("Options/VertexShaderEditor/source", mVertexShaderEditor.toPlainText());
-    settings.setValue("Options/FragmentShaderEditor/sourceFilename", mFragmentShaderFilename);
-    settings.setValue("Options/FragmentShaderEditor/source", mFragmentShaderEditor.toPlainText());
-    settings.setValue("Options/imageFilename", mImageFilename);
-#endif
     settings.setValue("Project/filename", mProject.filename());
 }
 
@@ -164,6 +139,16 @@ void MainWindow::successfullyLinkedShader()
 void MainWindow::shaderChanged()
 {
     mProject.setDirty(true);
+    QByteArray ba = mFragmentShaderEditor.toPlainText().toLatin1();
+    QTextStream in(&ba);
+    QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\s*(.*)\\s*$");
+    while (!in.atEnd()) {
+        const QString& line = in.readLine();
+        int pos = re0.indexIn(line);
+        if (pos > -1) {
+            qDebug() << re0.cap(1) << re0.cap(2) << re0.cap(3);
+        }
+    }
     updateShaderSources();
     updateWindowTitle();
 }

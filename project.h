@@ -65,27 +65,17 @@ private: // variables
     QString mFragmentShaderSource;
     QImage mImage;
     int mWebcam;
-    QQueue<ParameterWidget> mParameterWidgets;
-    ParameterWidget mCurrentParameterWidget;
     QString mFilename;
     QSize mImageSize;
 
 private: // methods
     int webcam(void) const { return mWebcam; }
-    const QQueue<ParameterWidget>& widgets(void) const { return mParameterWidgets; }
 
     void read(void);
     bool read(QIODevice*);
 
     void readShaders(void);
     void readInput(void);
-    void readParameters(void);
-    void readParameter(void);
-    void readParameterType(void);
-    void readParameterName(void);
-    void readParameterMinValue(void);
-    void readParameterMaxValue(void);
-    void readParameterDefaultValue(void);
     void readShaderVertex(void);
     void readShaderFragment(void);
     void readInputImage(void);

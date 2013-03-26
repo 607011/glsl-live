@@ -80,67 +80,6 @@ bool Project::save(const QString& filename)
         out << "    </image>\n";
     }
     out << "  </input>\n";
-    out << "  <parameters>\n";
-    for (QQueue<ParameterWidget>::const_iterator p = mParameterWidgets.constBegin(); p != mParameterWidgets.constEnd(); ++p) {
-        out << "    <parameter>\n";
-        switch (p->type()) {
-        case ParameterWidget::Integer:
-            out << "      <type>int</type>";
-            break;
-        case ParameterWidget::Float:
-            out << "      <type>float</type>";
-            break;
-        case ParameterWidget::Boolean:
-            out << "      <type>bool</type>";
-            break;
-        case ParameterWidget::None:
-            // fall-through
-        default:
-            break;
-        }
-        switch (p->type()) {
-        case ParameterWidget::Integer:
-            out << "      <minValue>" << p->minValue().toInt() << "</minValue>";
-            break;
-        case ParameterWidget::Float:
-            out << "      <minValue>" << p->minValue().toFloat() << "</minValue>";
-            break;
-        case ParameterWidget::None:
-            // fall-through
-        default:
-            break;
-        }
-        switch (p->type()) {
-        case ParameterWidget::Integer:
-            out << "      <maxValue>" << p->maxValue().toInt() << "</maxValue>";
-            break;
-        case ParameterWidget::Float:
-            out << "      <maxValue>" << p->maxValue().toFloat() << "</maxValue>";
-            break;
-        case ParameterWidget::None:
-            // fall-through
-        default:
-            break;
-        }
-        switch (p->type()) {
-        case ParameterWidget::Integer:
-            out << "      <defaultValue>" << p->defaultValue().toInt() << "</defaultValue>";
-            break;
-        case ParameterWidget::Float:
-            out << "      <defaultValue>" << p->defaultValue().toFloat() << "</defaultValue>";
-            break;
-        case ParameterWidget::Boolean:
-            out << "      <defaultValue>" << p->defaultValue().toBool() << "</defaultValue>";
-            break;
-        case ParameterWidget::None:
-            // fall-through
-        default:
-            break;
-        }
-        out << "      <name>" << p->name() << "</name>";
-        out << "    </parameter>\n";
-    }
-    out << "  </parameters>\n";
     out << "</glsl-live-coder-project>\n";
     if (compress) {
         file.write(qCompress(d.toLatin1(), 9));
@@ -208,9 +147,6 @@ void Project::read(void)
         }
         else if (mXml.name() == "input") {
             readInput();
-        }
-        else if (mXml.name() == "parameters") {
-            readParameters();
         }
         else {
             mXml.skipCurrentElement();
@@ -323,79 +259,4 @@ void Project::readInputWebcam()
     }
     else
         mXml.raiseError(QObject::tr("empty webcam tag: %1").arg(str));
-}
-
-void Project::readParameters(void)
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "parameters");
-    qDebug() << "Project::readParameters()";
-    while (mXml.readNextStartElement()) {
-        if (mXml.name() == "parameter") {
-            readParameter();
-        }
-        else {
-            mXml.skipCurrentElement();
-        }
-    }
-}
-
-void Project::readParameter()
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "parameter");
-    while (mXml.readNextStartElement()) {
-        if (mXml.name() == "type") {
-            readParameterType();
-        }
-        else if (mXml.name() == "name") {
-            readParameterName();
-        }
-        else if (mXml.name() == "minValue") {
-            readParameterMinValue();
-        }
-        else if (mXml.name() == "maxValue") {
-            readParameterMaxValue();
-        }
-        else if (mXml.name() == "defaultValue") {
-            readParameterDefaultValue();
-        }
-        else {
-            mXml.skipCurrentElement();
-        }
-    }
-}
-
-void Project::readParameterType(void)
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "type");
-    const QString& str = mXml.readElementText();
-    if (!str.isEmpty()) {
-        qDebug() << "Project::readParameterType()";
-    }
-    else
-        mXml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
-
-}
-
-void Project::readParameterName(void)
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "name");
-
-}
-
-void Project::readParameterMinValue(void)
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "minValue");
-
-}
-
-void Project::readParameterMaxValue(void)
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "maxValue");
-
-}
-
-void Project::readParameterDefaultValue(void)
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "defaultValue");
-
 }
