@@ -197,23 +197,33 @@ void MainWindow::shaderChanged()
                     const QString& maxV = reFI.cap(2).toUtf8();
                     const QString& defaultV = reFI.cap(3).toUtf8();
                     if (type == "int") {
+                        QVBoxLayout* innerLayout = new QVBoxLayout;
+                        QGroupBox* groupbox = new QGroupBox(name);
+                        groupbox->setLayout(innerLayout);
+                        groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                         QSlider* slider = new QSlider(Qt::Horizontal);
+                        innerLayout->addWidget(slider);
+                        QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
                         slider->setProperty("name", name);
                         slider->setMinimumWidth(100);
                         slider->setMinimum(minV.toInt());
                         slider->setMaximum(maxV.toInt());
                         slider->setValue(defaultV.toInt());
-                        layout->addWidget(slider);
-                        QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
+                        layout->addWidget(groupbox);
                     }
                     else if (type == "float") {
+                        QVBoxLayout* innerLayout = new QVBoxLayout;
+                        QGroupBox* groupbox = new QGroupBox(name);
+                        groupbox->setLayout(innerLayout);
+                        groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                         QDoubleSpinBox* spinbox = new QDoubleSpinBox;
+                        innerLayout->addWidget(spinbox);
+                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
                         spinbox->setProperty("name", name);
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
                         spinbox->setValue(defaultV.toDouble());
-                        layout->addWidget(spinbox);
-                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
+                        layout->addWidget(groupbox);
                     }
                     else
                         qWarning() << "invalid type:" << type;
@@ -225,11 +235,11 @@ void MainWindow::shaderChanged()
                         if (type == "bool") {
                             bool b = (v == "true");
                             QCheckBox* checkbox = new QCheckBox(name);
+                            QObject::connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
                             checkbox->setProperty("name", name);
                             checkbox->setCheckable(true);
                             checkbox->setChecked(b);
                             layout->addWidget(checkbox);
-                            QObject::connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
                         }
                         else
                             qWarning() << "invalid type:" << type;
@@ -239,19 +249,32 @@ void MainWindow::shaderChanged()
         }
         layout->addStretch(1);
         if (mParamWidget->layout() != NULL)
-            clearParametersLayout(reinterpret_cast<QVBoxLayout*>(mParamWidget->layout()));
+            clearLayout(mParamWidget->layout());
         mParamWidget->setLayout(layout);
     }
     updateShaderSources();
     updateWindowTitle();
 }
 
-void MainWindow::clearParametersLayout(QVBoxLayout* layout)
+void MainWindow::clearLayout(QLayout* layout)
 {
     Q_ASSERT(layout != NULL);
-    QLayoutItem* child;
-    while ((child = layout->takeAt(0)) != NULL)
-        delete child;
+    QLayoutItem* item;
+    while ((item = layout->takeAt(0)) != NULL) {
+        QLayout* subLayout = item->layout();
+        QWidget* widget = item->widget();
+        if (subLayout) {
+            subLayout->removeItem(item);
+            clearLayout(subLayout);
+        }
+        else if (widget) {
+            widget->hide();
+            delete widget;
+        }
+        else {
+            delete item;
+        }
+    }
     delete layout;
 }
 

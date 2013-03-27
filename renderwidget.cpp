@@ -261,16 +261,22 @@ bool RenderWidget::loadImage(const QString& fileName)
 
 void RenderWidget::setUniformValue(const QString& name, int value)
 {
-    mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+    qDebug() << "RenderWidget::setUniformValue(const QString& name, int value)" << mShaderProgram->isLinked();
+    if (mShaderProgram->isLinked())
+        mShaderProgram->setUniformValue(name.toUtf8().data(), value);
 }
 
 void RenderWidget::setUniformValue(const QString& name, float value)
 {
-    mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+    qDebug() << "RenderWidget::setUniformValue(const QString& name, float value)" << mShaderProgram->isLinked();
+    if (mShaderProgram->isLinked())
+        mShaderProgram->setUniformValue(name.toUtf8().data(), value);
 }
 
 void RenderWidget::setUniformValue(const QString& name, bool value)
 {
-    mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+    qDebug() << "RenderWidget::setUniformValue(const QString& name, bool value)" << mShaderProgram->isLinked();
+    if (mShaderProgram->isLinked())
+        mShaderProgram->setUniformValue(name.toUtf8().data(), value);
 }
 

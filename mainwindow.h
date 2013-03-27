@@ -52,7 +52,7 @@ private: //methods
     void loadVertexShader(const QString&);
     void loadFragmentShader(const QString&);
     void updateWindowTitle(void);
-    void clearParametersLayout(QVBoxLayout*);
+    void clearLayout(QLayout*);
     void updateShaderSources(void);
 
 private:
