@@ -117,18 +117,17 @@ void MainWindow::prepareEditor(JSEdit& editor) const
     editor.setCodeFoldingEnabled(true);
     editor.setStyleSheet("background-color: rgba(20, 20, 20, 200)");
     editor.setColor(JSEdit::Background,    QColor(20, 20, 20, 200));
-    editor.setColor(JSEdit::Normal,        QColor("#FFFFFF"));
-    editor.setColor(JSEdit::Comment,       QColor("#666666"));
-    editor.setColor(JSEdit::Number,        QColor("#DBF76C"));
-    editor.setColor(JSEdit::String,        QColor("#5ED363"));
-    editor.setColor(JSEdit::Operator,      QColor("#FF7729"));
-    editor.setColor(JSEdit::Identifier,    QColor("#FFFFFF"));
-    editor.setColor(JSEdit::Keyword,       QColor("#FDE15D"));
-    editor.setColor(JSEdit::BuiltIn,       QColor("#9CB6D4"));
-    editor.setColor(JSEdit::Cursor,        QColor("#1E346B"));
-    editor.setColor(JSEdit::Marker,        QColor("#DBF76C"));
-    editor.setColor(JSEdit::BracketMatch,  QColor("#1AB0A6"));
-    editor.setColor(JSEdit::BracketError,  QColor("#A82224"));
+    editor.setColor(JSEdit::Normal,        QColor("#eeeeee"));
+    editor.setColor(JSEdit::Comment,       QColor("#baaab0"));
+    editor.setColor(JSEdit::Number,        QColor("#e0f060"));
+    editor.setColor(JSEdit::Operator,      QColor("#f08030"));
+    editor.setColor(JSEdit::Identifier,    QColor("#eeeeee"));
+    editor.setColor(JSEdit::Keyword,       QColor("#60d040"));
+    editor.setColor(JSEdit::BuiltIn,       QColor("#9cb6d4"));
+    editor.setColor(JSEdit::Cursor,        QColor("#1e346b"));
+    editor.setColor(JSEdit::Marker,        QColor("#e0f060"));
+    editor.setColor(JSEdit::BracketMatch,  QColor("#1ab0a6"));
+    editor.setColor(JSEdit::BracketError,  QColor("#a82224"));
     editor.setColor(JSEdit::FoldIndicator, QColor("#555555"));
 }
 

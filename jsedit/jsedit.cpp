@@ -74,181 +74,114 @@ JSHighlighter::JSHighlighter(QTextDocument *parent)
     m_colors[JSEdit::BuiltIn]    = QColor("#008080");
     m_colors[JSEdit::Marker]     = QColor("#ffff00");
 
-    m_keywords << "break";
-    m_keywords << "case";
-    m_keywords << "catch";
-    m_keywords << "class";
-    m_keywords << "continue";
-    m_keywords << "const";
-    m_keywords << "default";
-    m_keywords << "delete";
-    m_keywords << "do";
-    m_keywords << "else";
-    m_keywords << "finally";
     m_keywords << "for";
-    m_keywords << "function";
-    m_keywords << "if";
-    m_keywords << "in";
-    m_keywords << "instanceof";
-    m_keywords << "new";
-    m_keywords << "return";
-    m_keywords << "switch";
-    m_keywords << "this";
-    m_keywords << "throw";
-    m_keywords << "try";
-    m_keywords << "typeof";
-    m_keywords << "var";
-    m_keywords << "void";
+    m_keywords << "break";
+    m_keywords << "continue";
+    m_keywords << "do";
     m_keywords << "while";
-    m_keywords << "with";
+    m_keywords << "if";
+    m_keywords << "else";
+    m_keywords << "return";
+    m_keywords << "discard";
 
     m_keywords << "true";
     m_keywords << "false";
-    m_keywords << "null";
 
-    // built-in and other popular objects + properties
-    m_knownIds << "Object";
-    m_knownIds << "prototype";
-    m_knownIds << "create";
-    m_knownIds << "defineProperty";
-    m_knownIds << "defineProperties";
-    m_knownIds << "getOwnPropertyDescriptor";
-    m_knownIds << "keys";
-    m_knownIds << "getOwnPropertyNames";
-    m_knownIds << "constructor";
-    m_knownIds << "__parent__";
-    m_knownIds << "__proto__";
-    m_knownIds << "__defineGetter__";
-    m_knownIds << "__defineSetter__";
-    m_knownIds << "eval";
-    m_knownIds << "hasOwnProperty";
-    m_knownIds << "isPrototypeOf";
-    m_knownIds << "__lookupGetter__";
-    m_knownIds << "__lookupSetter__";
-    m_knownIds << "__noSuchMethod__";
-    m_knownIds << "propertyIsEnumerable";
-    m_knownIds << "toSource";
-    m_knownIds << "toLocaleString";
-    m_knownIds << "toString";
-    m_knownIds << "unwatch";
-    m_knownIds << "valueOf";
-    m_knownIds << "watch";
-
-    m_knownIds << "Function";
-    m_knownIds << "arguments";
-    m_knownIds << "arity";
-    m_knownIds << "caller";
-    m_knownIds << "constructor";
-    m_knownIds << "length";
-    m_knownIds << "name";
-    m_knownIds << "apply";
-    m_knownIds << "bind";
-    m_knownIds << "call";
-
-    m_knownIds << "String";
-    m_knownIds << "fromCharCode";
-    m_knownIds << "length";
-    m_knownIds << "charAt";
-    m_knownIds << "charCodeAt";
-    m_knownIds << "concat";
-    m_knownIds << "indexOf";
-    m_knownIds << "lastIndexOf";
-    m_knownIds << "localCompare";
-    m_knownIds << "match";
-    m_knownIds << "quote";
-    m_knownIds << "replace";
-    m_knownIds << "search";
-    m_knownIds << "slice";
-    m_knownIds << "split";
-    m_knownIds << "substr";
-    m_knownIds << "substring";
-    m_knownIds << "toLocaleLowerCase";
-    m_knownIds << "toLocaleUpperCase";
-    m_knownIds << "toLowerCase";
-    m_knownIds << "toUpperCase";
-    m_knownIds << "trim";
-    m_knownIds << "trimLeft";
-    m_knownIds << "trimRight";
-
-    m_knownIds << "Array";
-    m_knownIds << "isArray";
-    m_knownIds << "index";
-    m_knownIds << "input";
-    m_knownIds << "pop";
-    m_knownIds << "push";
-    m_knownIds << "reverse";
-    m_knownIds << "shift";
-    m_knownIds << "sort";
-    m_knownIds << "splice";
-    m_knownIds << "unshift";
-    m_knownIds << "concat";
-    m_knownIds << "join";
-    m_knownIds << "filter";
-    m_knownIds << "forEach";
-    m_knownIds << "every";
-    m_knownIds << "map";
-    m_knownIds << "some";
-    m_knownIds << "reduce";
-    m_knownIds << "reduceRight";
-
-    m_knownIds << "RegExp";
-    m_knownIds << "global";
-    m_knownIds << "ignoreCase";
-    m_knownIds << "lastIndex";
-    m_knownIds << "multiline";
-    m_knownIds << "source";
-    m_knownIds << "exec";
-    m_knownIds << "test";
-
-    m_knownIds << "JSON";
-    m_knownIds << "parse";
-    m_knownIds << "stringify";
-
-    m_knownIds << "decodeURI";
-    m_knownIds << "decodeURIComponent";
-    m_knownIds << "encodeURI";
-    m_knownIds << "encodeURIComponent";
-    m_knownIds << "eval";
-    m_knownIds << "isFinite";
-    m_knownIds << "isNaN";
-    m_knownIds << "parseFloat";
-    m_knownIds << "parseInt";
-    m_knownIds << "Infinity";
-    m_knownIds << "NaN";
-    m_knownIds << "undefined";
-
-    m_knownIds << "Math";
-    m_knownIds << "E";
-    m_knownIds << "LN2";
-    m_knownIds << "LN10";
-    m_knownIds << "LOG2E";
-    m_knownIds << "LOG10E";
-    m_knownIds << "PI";
-    m_knownIds << "SQRT1_2";
-    m_knownIds << "SQRT2";
-    m_knownIds << "abs";
-    m_knownIds << "acos";
-    m_knownIds << "asin";
-    m_knownIds << "atan";
-    m_knownIds << "atan2";
-    m_knownIds << "ceil";
-    m_knownIds << "cos";
-    m_knownIds << "exp";
-    m_knownIds << "floor";
-    m_knownIds << "log";
-    m_knownIds << "max";
-    m_knownIds << "min";
-    m_knownIds << "pow";
-    m_knownIds << "random";
-    m_knownIds << "round";
+    m_knownIds << "radians";
+    m_knownIds << "degrees";
     m_knownIds << "sin";
-    m_knownIds << "sqrt";
+    m_knownIds << "cos";
     m_knownIds << "tan";
+    m_knownIds << "asin";
+    m_knownIds << "acos";
+    m_knownIds << "atan";
+    m_knownIds << "pow";
+    m_knownIds << "exp";
+    m_knownIds << "log";
+    m_knownIds << "log2";
+    m_knownIds << "sqrt";
+    m_knownIds << "inversesqrt";
 
-    m_knownIds << "document";
-    m_knownIds << "window";
-    m_knownIds << "navigator";
-    m_knownIds << "userAgent";
+    m_knownIds << "abs";
+    m_knownIds << "sign";
+    m_knownIds << "floor";
+    m_knownIds << "ceil";
+    m_knownIds << "fract";
+    m_knownIds << "mod";
+    m_knownIds << "min";
+    m_knownIds << "max";
+    m_knownIds << "clamp";
+    m_knownIds << "mix";
+    m_knownIds << "step";
+    m_knownIds << "smoothstep";
+
+    m_knownIds << "length";
+    m_knownIds << "distance";
+    m_knownIds << "dot";
+    m_knownIds << "cross";
+    m_knownIds << "normalize";
+    m_knownIds << "faceforward";
+    m_knownIds << "reflect";
+    m_knownIds << "refract";
+
+    m_knownIds << "matrixCompMult";
+
+    m_knownIds << "lessThan";
+    m_knownIds << "lessThanEqual";
+    m_knownIds << "greaterThan";
+    m_knownIds << "greaterThanEqual";
+    m_knownIds << "equal";
+    m_knownIds << "notEqual";
+    m_knownIds << "any";
+    m_knownIds << "all";
+    m_knownIds << "not";
+
+    m_knownIds << "texture2DLod";
+    m_knownIds << "texture2DProjLod";
+    m_knownIds << "texture2DCubeLod";
+    m_knownIds << "texture2D";
+    m_knownIds << "texture2DProj";
+    m_knownIds << "textureCube";
+
+    m_knownIds << "gl_Position";
+    m_knownIds << "gl_FragCoord";
+    m_knownIds << "gl_PointSize";
+    m_knownIds << "gl_FragColor";
+    m_knownIds << "gl_FragData";
+    m_knownIds << "gl_FrontFacing";
+
+    m_keywords << "attribute";
+    m_keywords << "uniform";
+    m_keywords << "varying";
+    m_keywords << "const";
+    m_keywords << "lowp";
+    m_keywords << "mediump";
+    m_keywords << "highp";
+
+    m_keywords << "in";
+    m_keywords << "out";
+    m_keywords << "inout";
+
+    m_knownIds << "bvec2";
+    m_knownIds << "bvec3";
+    m_knownIds << "bvec4";
+    m_knownIds << "ivec2";
+    m_knownIds << "ivec3";
+    m_knownIds << "ivec4";
+    m_knownIds << "vec2";
+    m_knownIds << "vec3";
+    m_knownIds << "vec4";
+    m_knownIds << "mat2";
+    m_knownIds << "mat3";
+    m_knownIds << "mat4";
+    m_knownIds << "void";
+    m_knownIds << "float";
+    m_knownIds << "int";
+    m_knownIds << "bool";
+    m_knownIds << "sampler2D";
+    m_knownIds << "samplerCube";
+    m_knownIds << "struct";
+
 }
 
 void JSHighlighter::setColor(JSEdit::ColorComponent component, const QColor &color)
@@ -674,7 +607,7 @@ JSEdit::JSEdit(QWidget *parent)
 
 #if defined(Q_OS_MAC)
     QFont textFont = font();
-    textFont.setPointSize(12);
+    textFont.setPointSize(10);
     textFont.setFamily("Monaco");
     setFont(textFont);
 #elif defined(Q_OS_UNIX)
