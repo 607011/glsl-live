@@ -146,7 +146,7 @@ void MainWindow::successfullyLinkedShader()
 void MainWindow::valueChanged(int v)
 {
     if (sender()) {
-        const QString& name = sender()->property("name").toString();
+        const QString& name = sender()->objectName();
         mRenderWidget->setUniformValue(name, v);
     }
 }
@@ -154,7 +154,7 @@ void MainWindow::valueChanged(int v)
 void MainWindow::valueChanged(double v)
 {
     if (sender()) {
-        const QString& name = sender()->property("name").toString();
+        const QString& name = sender()->objectName();
         mRenderWidget->setUniformValue(name, v);
     }
 }
@@ -162,7 +162,7 @@ void MainWindow::valueChanged(double v)
 void MainWindow::valueChanged(bool v)
 {
     if (sender()) {
-        const QString& name = sender()->property("name").toString();
+        const QString& name = sender()->objectName();
         mRenderWidget->setUniformValue(name, v);
     }
 }
@@ -207,13 +207,13 @@ void MainWindow::parseShadersForParameters()
                         QSlider* slider = new QSlider(Qt::Horizontal);
                         innerLayout->addWidget(slider);
                         QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
-                        slider->setProperty("name", name);
+                        slider->setObjectName(name);
                         slider->setMinimum(minV.toInt());
                         slider->setMaximum(maxV.toInt());
                         slider->setValue(defaultV.toInt());
                         QSpinBox* spinbox = new QSpinBox;
                         innerLayout->addWidget(spinbox);
-                        spinbox->setProperty("name", name);
+                        spinbox->setObjectName(name);
                         spinbox->setMinimum(minV.toInt());
                         spinbox->setMaximum(maxV.toInt());
                         spinbox->setValue(defaultV.toInt());
@@ -227,14 +227,14 @@ void MainWindow::parseShadersForParameters()
                         groupbox->setLayout(innerLayout);
                         groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                         DoubleSlider* slider = new DoubleSlider(minV.toDouble(), maxV.toDouble(), Qt::Horizontal);
-                        slider->setProperty("name", name);
+                        slider->setObjectName(name);
                         slider->setDoubleValue(defaultV.toDouble());
                         innerLayout->addWidget(slider);
                         QDoubleSpinBox* spinbox = new QDoubleSpinBox;
                         innerLayout->addWidget(spinbox);
                         QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
                         QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
-                        spinbox->setProperty("name", name);
+                        spinbox->setObjectName(name);
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
                         spinbox->setValue(defaultV.toDouble());
@@ -251,7 +251,7 @@ void MainWindow::parseShadersForParameters()
                             bool b = (v == "true");
                             QCheckBox* checkbox = new QCheckBox(name);
                             QObject::connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
-                            checkbox->setProperty("name", name);
+                            checkbox->setObjectName(name);
                             checkbox->setCheckable(true);
                             checkbox->setChecked(b);
                             layout->addWidget(checkbox);
