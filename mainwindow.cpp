@@ -98,7 +98,7 @@ void MainWindow::resizeEvent(QResizeEvent* e)
     e->accept();
 }
 
-void MainWindow::prepareEditor(GLSLEdit& editor) const
+void MainWindow::prepareEditor(GLSLEdit& editor)
 {
     editor.setTabStopWidth(2);
     editor.setWordWrapMode(QTextOption::NoWrap);
@@ -137,7 +137,7 @@ void MainWindow::badShaderCode(const QString& msg)
     ui->toolBox->setItemText(2, tr("Error log*"));
 }
 
-void MainWindow::successfullyLinkedShader()
+void MainWindow::successfullyLinkedShader(void)
 {
     ui->logTextEdit->clear();
     ui->toolBox->setItemText(2, tr("Error log"));
@@ -344,7 +344,9 @@ void MainWindow::openProject(const QString& filename)
         shaderChanged();
         mProject.setDirty(false);
     }
-    ui->statusBar->showMessage(ok? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName()) : tr("Loading '%1' failed.").arg(QFileInfo(filename).fileName()), 3000);
+    ui->statusBar->showMessage(ok
+                               ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())
+                               : tr("Loading '%1' failed.").arg(QFileInfo(filename).fileName()), 3000);
     updateWindowTitle();
 }
 
@@ -374,13 +376,16 @@ void MainWindow::saveProject(const QString &filename)
     mProject.setFragmentShaderSource(mFragmentShaderEditor.toPlainText());
     mProject.setImage(mRenderWidget->image());
     bool ok = mProject.save();
-    ui->statusBar->showMessage(ok? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName()) : tr("Saving failed."), 3000);
+    ui->statusBar->showMessage(ok
+                               ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
+                               : tr("Saving failed."), 3000);
     updateWindowTitle();
 }
 
 void MainWindow::updateShaderSources(void)
 {
-    mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(), mFragmentShaderEditor.toPlainText());
+    mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(),
+                                    mFragmentShaderEditor.toPlainText());
 }
 
 void MainWindow::loadVertexShader(const QString& filename)

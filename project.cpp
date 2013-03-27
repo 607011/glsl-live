@@ -24,8 +24,18 @@ void Project::reset()
     mDirty = false;
     mWebcam = -1;
     mImage = QImage();
-    mVertexShaderSource = QString();
-    mFragmentShaderSource = QString();
+
+    QFile vf(":/shaders/vertexshader.glsl");
+    vf.open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream vin(&vf);
+    mVertexShaderSource = vin.readAll();
+    vf.close();
+
+    QFile ff(":/shaders/fragmentshader.glsl");
+    ff.open(QIODevice::ReadOnly | QIODevice::Text);
+    QTextStream fin(&ff);
+    mFragmentShaderSource = fin.readAll();
+    ff.close();
 }
 
 bool Project::save(void)
