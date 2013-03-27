@@ -10,9 +10,11 @@
 #include <QRegExp>
 #include <QCryptographicHash>
 #include <QSlider>
+#include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QGroupBox>
+#include <QTimer>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -64,8 +66,9 @@ void MainWindow::restoreSettings(void)
     if (!projectFilename.isEmpty()) {
         openProject(projectFilename);
     }
-    updateWindowTitle();
     shaderChanged();
+    mProject.setDirty(false);
+    updateWindowTitle();
 }
 
 void MainWindow::saveSettings(void)
@@ -151,7 +154,7 @@ void MainWindow::valueChanged(double v)
 {
     if (sender()) {
         const QString& name = sender()->property("name").toString();
-        mRenderWidget->setUniformValue(name, (float)v);
+        mRenderWidget->setUniformValue(name, v);
     }
 }
 
@@ -163,9 +166,8 @@ void MainWindow::valueChanged(bool v)
     }
 }
 
-void MainWindow::shaderChanged()
+void MainWindow::parseShadersForParameters()
 {
-    mProject.setDirty(true);
     QByteArray ba = mVertexShaderEditor.toPlainText().toUtf8()
             .append("\n")
             .append(mFragmentShaderEditor.toPlainText().toUtf8());
@@ -175,8 +177,7 @@ void MainWindow::shaderChanged()
     QCryptographicHash hash(QCryptographicHash::Sha1);
     while (!in.atEnd()) {
         const QString& line = in.readLine();
-        int pos = re0.indexIn(line);
-        if (pos > -1)
+        if (re0.indexIn(line) > -1)
             hash.addData(line.toUtf8());
     }
     // if changes occured regenerate widgets
@@ -185,22 +186,18 @@ void MainWindow::shaderChanged()
         QRegExp reB("(true|false)");
         mCurrentParameterHash = hash.result();
         QVBoxLayout* layout = new QVBoxLayout;
-        in.seek(0);
         mRenderWidget->clearUniforms();
+        in.seek(0);
         while (!in.atEnd()) {
             const QString& line = in.readLine();
-            int pos = re0.indexIn(line);
-            if (pos > -1) {
+            if (re0.indexIn(line) > -1) {
                 const QString& type = re0.cap(1).toUtf8();
                 const QString& name = re0.cap(2).toUtf8();
                 const QString& minMaxDefault = re0.cap(3).toUtf8();
-                qDebug() << name << type << minMaxDefault;
-                pos = reFI.indexIn(minMaxDefault);
-                if (pos > -1) {
+                if (reFI.indexIn(minMaxDefault) > -1) {
                     const QString& minV = reFI.cap(1).toUtf8();
                     const QString& maxV = reFI.cap(3).toUtf8();
                     const QString& defaultV = reFI.cap(5).toUtf8();
-                    qDebug() << minV << maxV << defaultV;
                     if (type == "int") {
                         QVBoxLayout* innerLayout = new QVBoxLayout;
                         QGroupBox* groupbox = new QGroupBox(name);
@@ -210,10 +207,17 @@ void MainWindow::shaderChanged()
                         innerLayout->addWidget(slider);
                         QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
                         slider->setProperty("name", name);
-                        slider->setMinimumWidth(100);
                         slider->setMinimum(minV.toInt());
                         slider->setMaximum(maxV.toInt());
                         slider->setValue(defaultV.toInt());
+                        QSpinBox* spinbox = new QSpinBox;
+                        innerLayout->addWidget(spinbox);
+                        spinbox->setProperty("name", name);
+                        spinbox->setMinimum(minV.toInt());
+                        spinbox->setMaximum(maxV.toInt());
+                        spinbox->setValue(defaultV.toInt());
+                        QObject::connect(slider, SIGNAL(valueChanged(int)), spinbox, SLOT(setValue(int)));
+                        QObject::connect(spinbox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
                         layout->addWidget(groupbox);
                     }
                     else if (type == "float") {
@@ -234,8 +238,7 @@ void MainWindow::shaderChanged()
                         qWarning() << "invalid type:" << type;
                 }
                 else {
-                    pos = reB.indexIn(minMaxDefault);
-                    if (pos > -1) {
+                    if (reB.indexIn(minMaxDefault) > -1) {
                         const QString& v = reB.cap(1).toUtf8();
                         if (type == "bool") {
                             bool b = (v == "true");
@@ -257,7 +260,13 @@ void MainWindow::shaderChanged()
             clearLayout(mParamWidget->layout());
         mParamWidget->setLayout(layout);
     }
-    updateShaderSources();
+}
+
+void MainWindow::shaderChanged(void)
+{
+    QTimer::singleShot(500, this, SLOT(parseShadersForParameters()));
+    QTimer::singleShot(500, this, SLOT(updateShaderSources()));
+    mProject.setDirty(true);
     updateWindowTitle();
 }
 
@@ -325,9 +334,10 @@ void MainWindow::openProject(const QString& filename)
         mFragmentShaderEditor.blockSignals(false);
         mRenderWidget->setImage(mProject.image());
         updateShaderSources();
+        shaderChanged();
+        mProject.setDirty(false);
     }
     ui->statusBar->showMessage(ok? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName()) : tr("Loading '%1' failed.").arg(QFileInfo(filename).fileName()), 3000);
-    shaderChanged();
     updateWindowTitle();
 }
 
@@ -335,7 +345,7 @@ void MainWindow::saveProject(void)
 {
     QString filename = mProject.filename();
     if (filename.isEmpty()) {
-        filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
+        filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
         if (filename.isNull())
             return;
     }
@@ -344,7 +354,7 @@ void MainWindow::saveProject(void)
 
 void MainWindow::saveProjectAs(void)
 {
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
+    QString filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
     if (filename.isNull())
         return;
     saveProject(filename);
@@ -398,7 +408,14 @@ void MainWindow::loadFragmentShader(const QString& filename)
 
 void MainWindow::updateWindowTitle()
 {
-    setWindowTitle(tr("%1 %2%3").arg(AppName).arg(AppVersion).arg(mProject.filename().isEmpty()? "" : tr(" - %1%2").arg(mProject.filename()).arg(mProject.isDirty()? "*" : "")));
+    setWindowTitle(tr("%1 %2%3")
+                   .arg(AppName)
+                   .arg(AppVersion)
+                   .arg(mProject.filename().isEmpty()
+                        ? ""
+                        : tr(" - %1%2")
+                          .arg(mProject.filename())
+                          .arg(mProject.isDirty()? "*" : "")));
 }
 
 void MainWindow::about(void)

@@ -34,7 +34,9 @@ private slots:
     void aboutQt(void);
     void badShaderCode(const QString&);
     void successfullyLinkedShader(void);
+    void parseShadersForParameters();
     void shaderChanged(void);
+    void updateShaderSources(void);
     void newProject(void);
     void openProject(void);
     void openProject(const QString& filename);
@@ -53,7 +55,6 @@ private: //methods
     void loadFragmentShader(const QString&);
     void updateWindowTitle(void);
     void clearLayout(QLayout*);
-    void updateShaderSources(void);
 
 private:
     Ui::MainWindow *ui;

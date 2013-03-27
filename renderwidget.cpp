@@ -108,8 +108,12 @@ void RenderWidget::updateUniforms()
         case QVariant::Bool:
             mShaderProgram->setUniformValue(key.toUtf8().data(), value.toBool());
             break;
+        default:
+            qWarning() << "RenderWidget::updateUniforms(): invalid value type in mUniforms";
+            break;
         }
     }
+    update();
 }
 
 bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
@@ -181,7 +185,6 @@ void RenderWidget::stopCode()
 
 void RenderWidget::initializeGL(void)
 {
-    qDebug() << "RenderWidget::initializeGL()";
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
@@ -207,7 +210,6 @@ void RenderWidget::initializeGL(void)
 void RenderWidget::paintGL(void)
 {
     if (mFirstPaintEventPending) {
-        qDebug() << "first call to RenderWidget::paintGL()";
         linkProgram(mPreliminaryVertexShaderSource, mPreliminaryFragmentShaderSource);
         if (mShaderProgram->isLinked())
             goLive();
