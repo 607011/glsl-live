@@ -166,7 +166,9 @@ void MainWindow::valueChanged(bool v)
 void MainWindow::shaderChanged()
 {
     mProject.setDirty(true);
-    QByteArray ba = mFragmentShaderEditor.toPlainText().toUtf8();
+    QByteArray ba = mVertexShaderEditor.toPlainText().toUtf8()
+            .append("\n")
+            .append(mFragmentShaderEditor.toPlainText().toUtf8());
     QTextStream in(&ba);
     QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)\\s*$");
     // check if variables' definitions have changed in shader
@@ -179,7 +181,7 @@ void MainWindow::shaderChanged()
     }
     // if changes occured regenerate widgets
     if (mCurrentParameterHash != hash.result()) {
-        QRegExp reFI("(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)");
+        QRegExp reFI("([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)\\s*,\\s*([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)\\s*,\\s*([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)");
         QRegExp reB("(true|false)");
         mCurrentParameterHash = hash.result();
         QVBoxLayout* layout = new QVBoxLayout;
@@ -189,14 +191,16 @@ void MainWindow::shaderChanged()
             const QString& line = in.readLine();
             int pos = re0.indexIn(line);
             if (pos > -1) {
-                const QString& name = re0.cap(2).toUtf8();
                 const QString& type = re0.cap(1).toUtf8();
+                const QString& name = re0.cap(2).toUtf8();
                 const QString& minMaxDefault = re0.cap(3).toUtf8();
+                qDebug() << name << type << minMaxDefault;
                 pos = reFI.indexIn(minMaxDefault);
                 if (pos > -1) {
                     const QString& minV = reFI.cap(1).toUtf8();
-                    const QString& maxV = reFI.cap(2).toUtf8();
-                    const QString& defaultV = reFI.cap(3).toUtf8();
+                    const QString& maxV = reFI.cap(3).toUtf8();
+                    const QString& defaultV = reFI.cap(5).toUtf8();
+                    qDebug() << minV << maxV << defaultV;
                     if (type == "int") {
                         QVBoxLayout* innerLayout = new QVBoxLayout;
                         QGroupBox* groupbox = new QGroupBox(name);
@@ -323,6 +327,7 @@ void MainWindow::openProject(const QString& filename)
         updateShaderSources();
     }
     ui->statusBar->showMessage(ok? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName()) : tr("Loading '%1' failed.").arg(QFileInfo(filename).fileName()), 3000);
+    shaderChanged();
     updateWindowTitle();
 }
 
