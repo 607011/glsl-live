@@ -18,6 +18,9 @@
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "doubleslider.h"
+
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -225,13 +228,20 @@ void MainWindow::parseShadersForParameters()
                         QGroupBox* groupbox = new QGroupBox(name);
                         groupbox->setLayout(innerLayout);
                         groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
+                        DoubleSlider* slider = new DoubleSlider(minV.toDouble(), maxV.toDouble(), Qt::Horizontal);
+                        slider->setProperty("name", name);
+                        slider->setDoubleValue(defaultV.toDouble());
+                        innerLayout->addWidget(slider);
+//                        QObject::connect(slider, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
                         QDoubleSpinBox* spinbox = new QDoubleSpinBox;
+                        QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
                         innerLayout->addWidget(spinbox);
                         QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
                         spinbox->setProperty("name", name);
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
                         spinbox->setValue(defaultV.toDouble());
+                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), slider, SLOT(setDoubleValue(double)));
                         layout->addWidget(groupbox);
                     }
                     else

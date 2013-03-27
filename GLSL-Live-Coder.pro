@@ -19,7 +19,8 @@ HEADERS  += mainwindow.h \
     renderwidget.h \
     jsedit/jsedit.h \
     main.h \
-    project.h
+    project.h \
+    doubleslider.h
 
 FORMS    += mainwindow.ui
 
