@@ -12,7 +12,7 @@
 #include <QSlider>
 #include <QDoubleSpinBox>
 #include <QCheckBox>
-#include <QSpacerItem>
+#include <QGroupBox>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -65,6 +65,7 @@ void MainWindow::restoreSettings(void)
         openProject(projectFilename);
     }
     updateWindowTitle();
+    shaderChanged();
 }
 
 void MainWindow::saveSettings(void)
@@ -140,30 +141,24 @@ void MainWindow::successfullyLinkedShader()
 
 void MainWindow::valueChanged(int v)
 {
-    qDebug() << "MainWindow::valueChanged(int) >>" << v;
     if (sender()) {
         const QString& name = sender()->property("name").toString();
-        qDebug() << "MainWindow::valueChanged(int): name =" << name;
         mRenderWidget->setUniformValue(name, v);
     }
 }
 
 void MainWindow::valueChanged(double v)
 {
-    qDebug() << "MainWindow::valueChanged(double) >>" << v;
     if (sender()) {
         const QString& name = sender()->property("name").toString();
-        qDebug() << "MainWindow::valueChanged(double): name =" << name;
         mRenderWidget->setUniformValue(name, (float)v);
     }
 }
 
 void MainWindow::valueChanged(bool v)
 {
-    qDebug() << "MainWindow::valueChanged(bool) >>" << v;
     if (sender()) {
         const QString& name = sender()->property("name").toString();
-        qDebug() << "MainWindow::valueChanged(bool): name =" << name;
         mRenderWidget->setUniformValue(name, v);
     }
 }
@@ -184,7 +179,6 @@ void MainWindow::shaderChanged()
     }
     // if changes occured regenerate widgets
     if (mCurrentParameterHash != hash.result()) {
-        qDebug() << hash.result().toHex();
         QRegExp reFI("(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)");
         QRegExp reB("(true|false)");
         mCurrentParameterHash = hash.result();
@@ -194,17 +188,14 @@ void MainWindow::shaderChanged()
             const QString& line = in.readLine();
             int pos = re0.indexIn(line);
             if (pos > -1) {
-
-                const QString& type = re0.cap(1).toUtf8();
                 const QString& name = re0.cap(2).toUtf8();
+                const QString& type = re0.cap(1).toUtf8();
                 const QString& minMaxDefault = re0.cap(3).toUtf8();
-                qDebug() << type << name << minMaxDefault;
                 pos = reFI.indexIn(minMaxDefault);
                 if (pos > -1) {
                     const QString& minV = reFI.cap(1).toUtf8();
                     const QString& maxV = reFI.cap(2).toUtf8();
                     const QString& defaultV = reFI.cap(3).toUtf8();
-                    qDebug() << minV << maxV << defaultV;
                     if (type == "int") {
                         QSlider* slider = new QSlider(Qt::Horizontal);
                         slider->setProperty("name", name);
@@ -231,7 +222,6 @@ void MainWindow::shaderChanged()
                     pos = reB.indexIn(minMaxDefault);
                     if (pos > -1) {
                         const QString& v = reB.cap(1).toUtf8();
-                        qDebug() << v;
                         if (type == "bool") {
                             bool b = (v == "true");
                             QCheckBox* checkbox = new QCheckBox(name);

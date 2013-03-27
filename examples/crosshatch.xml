@@ -23,7 +23,8 @@ uniform float uT;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
 uniform float uStitchSize; // 0, 20, 7
-uniform bool uInvert; // false
+uniform bool uInvert; // true
+uniform int uSpeed; // 1, 10, 5
 
 vec4 crosshatch(sampler2D tex, vec2 uv, vec2 resolution, float stitchSize, bool invert)
 {
@@ -60,7 +61,7 @@ void main(void)
   float lightness = d.x;
   float pulsestrength =  d.y;
   vec4 color = crosshatch(uTexture, vTexCoord.st, uResolution, uStitchSize, uInvert);
-  gl_FragColor = lightness * vec4(1.0, 0.5 + pulsestrength * sin(5.0 * uT), 1.0, 1.0) * color;
+  gl_FragColor = lightness * vec4(1.0, 0.5 + pulsestrength * sin(float(uSpeed) * uT), 1.0, 1.0) * color;
 }
     ]]></fragment>
   </shaders>
