@@ -21,7 +21,6 @@
 #include "doubleslider.h"
 
 
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -232,10 +231,9 @@ void MainWindow::parseShadersForParameters()
                         slider->setProperty("name", name);
                         slider->setDoubleValue(defaultV.toDouble());
                         innerLayout->addWidget(slider);
-//                        QObject::connect(slider, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
                         QDoubleSpinBox* spinbox = new QDoubleSpinBox;
-                        QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
                         innerLayout->addWidget(spinbox);
+                        QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
                         QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
                         spinbox->setProperty("name", name);
                         spinbox->setMinimum(minV.toDouble());
@@ -274,8 +272,8 @@ void MainWindow::parseShadersForParameters()
 
 void MainWindow::shaderChanged(void)
 {
-    QTimer::singleShot(500, this, SLOT(parseShadersForParameters()));
-    QTimer::singleShot(500, this, SLOT(updateShaderSources()));
+    QTimer::singleShot(250, this, SLOT(parseShadersForParameters()));
+    QTimer::singleShot(250, this, SLOT(updateShaderSources()));
     mProject.setDirty(true);
     updateWindowTitle();
 }
