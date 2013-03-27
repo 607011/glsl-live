@@ -1,3 +1,6 @@
+// Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
+// All rights reserved.
+
 #ifndef __DOUBLESLIDER_H_
 #define __DOUBLESLIDER_H_
 

@@ -32,4 +32,5 @@ OTHER_FILES += \
     shaders/fragmentshader.glsl \
     shaders/vertexshader.glsl \
     LICENSE.txt \
-    examples/crosshatch.xml
+    examples/crosshatch.xml \
+    TODO.txt

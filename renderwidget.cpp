@@ -44,6 +44,7 @@ RenderWidget::RenderWidget(QWidget* parent)
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
     setAcceptDrops(true);
     setMouseTracking(true);
+
 }
 
 RenderWidget::~RenderWidget()
@@ -94,7 +95,7 @@ void RenderWidget::updateUniforms()
     mShaderProgram->setUniformValue(mULocMouse, mMousePos);
     mShaderProgram->setUniformValue(mULocResolution, mResolution);
     mShaderProgram->setUniformValue(mULocTexture, 0);
-    QList<QString> keys = mUniforms.keys();
+    const QList<QString>& keys = mUniforms.keys();
     for (QList<QString>::const_iterator k = keys.constBegin(); k != keys.constEnd(); ++k) {
         const QString& key = *k;
         const QVariant& value = mUniforms[key];
@@ -120,6 +121,7 @@ bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
 {
     bool ok = false;
     if (!vs.isEmpty() && !fs.isEmpty()) {
+        mShaderProgram->release();
         mShaderProgram->removeAllShaders();
         if (mVertexShader)
             delete mVertexShader;

@@ -1,5 +1,5 @@
 /*
-    GLSL Live Coder - Live Coding with the GL Shading Language
+    GLSL Live Coder - Live Coding in the GL Shading Language
     Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 
     This program is free software: you can redistribute it and/or modify
