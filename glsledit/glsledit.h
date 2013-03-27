@@ -35,9 +35,9 @@
 #include <QPlainTextEdit>
 #include <QScopedPointer>
 
-class JSEditPrivate;
+class GLSLEditPrivate;
 
-class JSEdit: public QPlainTextEdit
+class GLSLEdit: public QPlainTextEdit
 {
     Q_OBJECT
     Q_PROPERTY(bool bracketsMatchingEnabled READ isBracketsMatchingEnabled WRITE setBracketsMatchingEnabled)
@@ -66,8 +66,8 @@ public:
         FoldIndicator
     } ColorComponent;
 
-    JSEdit(QWidget *parent = 0);
-    ~JSEdit();
+    GLSLEdit(QWidget *parent = 0);
+    ~GLSLEdit();
 
     void setColor(ColorComponent component, const QColor &color);
 
@@ -103,9 +103,9 @@ private slots:
     void updateSidebar(const QRect &rect, int d);
 
 private:
-    QScopedPointer<JSEditPrivate> d_ptr;
-    Q_DECLARE_PRIVATE(JSEdit);
-    Q_DISABLE_COPY(JSEdit);
+    QScopedPointer<GLSLEditPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(GLSLEdit);
+    Q_DISABLE_COPY(GLSLEdit);
 };
 
 #endif // OFILABS_JSEDIT

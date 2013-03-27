@@ -12,12 +12,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
     mainwindow.cpp \
     renderwidget.cpp \
-    jsedit/jsedit.cpp \
+    glsledit/glsledit.cpp \
     project.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
-    jsedit/jsedit.h \
+    glsledit/glsledit.h \
     main.h \
     project.h \
     doubleslider.h

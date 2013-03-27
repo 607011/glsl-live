@@ -11,7 +11,7 @@
 #include <QByteArray>
 #include "renderwidget.h"
 #include "project.h"
-#include "jsedit/jsedit.h"
+#include "glsledit/glsledit.h"
 
 namespace Ui {
 class MainWindow;
@@ -50,7 +50,7 @@ private slots:
 private: //methods
     void saveSettings(void);
     void restoreSettings(void);
-    void prepareEditor(JSEdit& editor) const;
+    void prepareEditor(GLSLEdit& editor) const;
     void loadVertexShader(const QString&);
     void loadFragmentShader(const QString&);
     void updateWindowTitle(void);
@@ -64,8 +64,8 @@ private:
     QString mVertexShaderFilename;
     QString mFragmentShaderFilename;
     QString mImageFilename;
-    JSEdit mVertexShaderEditor;
-    JSEdit mFragmentShaderEditor;
+    GLSLEdit mVertexShaderEditor;
+    GLSLEdit mFragmentShaderEditor;
     QByteArray mCurrentParameterHash;
 };
 

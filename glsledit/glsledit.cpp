@@ -28,21 +28,21 @@
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "jsedit.h"
+#include "glsledit.h"
 
 #include <QtGui>
 
-class JSBlockData: public QTextBlockUserData
+class GLSLBlockData: public QTextBlockUserData
 {
 public:
     QList<int> bracketPositions;
 };
 
-class JSHighlighter : public QSyntaxHighlighter
+class GLSLHighlighter : public QSyntaxHighlighter
 {
 public:
-    JSHighlighter(QTextDocument *parent = 0);
-    void setColor(JSEdit::ColorComponent component, const QColor &color);
+    GLSLHighlighter(QTextDocument *parent = 0);
+    void setColor(GLSLEdit::ColorComponent component, const QColor &color);
     void mark(const QString &str, Qt::CaseSensitivity caseSensitivity);
 
     QStringList keywords() const;
@@ -54,25 +54,25 @@ protected:
 private:
     QSet<QString> m_keywords;
     QSet<QString> m_knownIds;
-    QHash<JSEdit::ColorComponent, QColor> m_colors;
+    QHash<GLSLEdit::ColorComponent, QColor> m_colors;
     QString m_markString;
     Qt::CaseSensitivity m_markCaseSensitivity;
 };
 
-JSHighlighter::JSHighlighter(QTextDocument *parent)
+GLSLHighlighter::GLSLHighlighter(QTextDocument *parent)
     : QSyntaxHighlighter(parent)
     , m_markCaseSensitivity(Qt::CaseInsensitive)
 {
     // default color scheme
-    m_colors[JSEdit::Normal]     = QColor("#000000");
-    m_colors[JSEdit::Comment]    = QColor("#808080");
-    m_colors[JSEdit::Number]     = QColor("#008000");
-    m_colors[JSEdit::String]     = QColor("#800000");
-    m_colors[JSEdit::Operator]   = QColor("#808000");
-    m_colors[JSEdit::Identifier] = QColor("#000020");
-    m_colors[JSEdit::Keyword]    = QColor("#000080");
-    m_colors[JSEdit::BuiltIn]    = QColor("#008080");
-    m_colors[JSEdit::Marker]     = QColor("#ffff00");
+    m_colors[GLSLEdit::Normal]     = QColor("#000000");
+    m_colors[GLSLEdit::Comment]    = QColor("#808080");
+    m_colors[GLSLEdit::Number]     = QColor("#008000");
+    m_colors[GLSLEdit::String]     = QColor("#800000");
+    m_colors[GLSLEdit::Operator]   = QColor("#808000");
+    m_colors[GLSLEdit::Identifier] = QColor("#000020");
+    m_colors[GLSLEdit::Keyword]    = QColor("#000080");
+    m_colors[GLSLEdit::BuiltIn]    = QColor("#008080");
+    m_colors[GLSLEdit::Marker]     = QColor("#ffff00");
 
     m_keywords << "for";
     m_keywords << "break";
@@ -184,13 +184,13 @@ JSHighlighter::JSHighlighter(QTextDocument *parent)
 
 }
 
-void JSHighlighter::setColor(JSEdit::ColorComponent component, const QColor &color)
+void GLSLHighlighter::setColor(GLSLEdit::ColorComponent component, const QColor &color)
 {
     m_colors[component] = color;
     rehighlight();
 }
 
-void JSHighlighter::highlightBlock(const QString &text)
+void GLSLHighlighter::highlightBlock(const QString &text)
 {
     // parsing state
     enum {
@@ -239,13 +239,13 @@ void JSHighlighter::highlightBlock(const QString &text)
                 state = Comment;
             } else if (ch == '/' && next == '/') {
                 i = text.length();
-                setFormat(start, text.length(), m_colors[JSEdit::Comment]);
+                setFormat(start, text.length(), m_colors[GLSLEdit::Comment]);
             } else if (ch == '/' && next != '*') {
                 ++i;
                 state = Regex;
             } else {
                 if (!QString("(){}[]").contains(ch))
-                    setFormat(start, 1, m_colors[JSEdit::Operator]);
+                    setFormat(start, 1, m_colors[GLSLEdit::Operator]);
                 if (ch =='{' || ch == '}') {
                     bracketPositions += i;
                     if (ch == '{')
@@ -260,7 +260,7 @@ void JSHighlighter::highlightBlock(const QString &text)
 
         case Number:
             if (ch.isSpace() || !ch.isDigit()) {
-                setFormat(start, i - start, m_colors[JSEdit::Number]);
+                setFormat(start, i - start, m_colors[GLSLEdit::Number]);
                 state = Start;
             } else {
                 ++i;
@@ -271,9 +271,9 @@ void JSHighlighter::highlightBlock(const QString &text)
             if (ch.isSpace() || !(ch.isDigit() || ch.isLetter() || ch == '_')) {
                 QString token = text.mid(start, i - start).trimmed();
                 if (m_keywords.contains(token))
-                    setFormat(start, i - start, m_colors[JSEdit::Keyword]);
+                    setFormat(start, i - start, m_colors[GLSLEdit::Keyword]);
                 else if (m_knownIds.contains(token))
-                    setFormat(start, i - start, m_colors[JSEdit::BuiltIn]);
+                    setFormat(start, i - start, m_colors[GLSLEdit::BuiltIn]);
                 state = Start;
             } else {
                 ++i;
@@ -285,7 +285,7 @@ void JSHighlighter::highlightBlock(const QString &text)
                 QChar prev = (i > 0) ? text.at(i - 1) : QChar();
                 if (prev != '\\') {
                     ++i;
-                    setFormat(start, i - start, m_colors[JSEdit::String]);
+                    setFormat(start, i - start, m_colors[GLSLEdit::String]);
                     state = Start;
                 } else {
                     ++i;
@@ -299,7 +299,7 @@ void JSHighlighter::highlightBlock(const QString &text)
             if (ch == '*' && next == '/') {
                 ++i;
                 ++i;
-                setFormat(start, i - start, m_colors[JSEdit::Comment]);
+                setFormat(start, i - start, m_colors[GLSLEdit::Comment]);
                 state = Start;
             } else {
                 ++i;
@@ -311,7 +311,7 @@ void JSHighlighter::highlightBlock(const QString &text)
                 QChar prev = (i > 0) ? text.at(i - 1) : QChar();
                 if (prev != '\\') {
                     ++i;
-                    setFormat(start, i - start, m_colors[JSEdit::String]);
+                    setFormat(start, i - start, m_colors[GLSLEdit::String]);
                     state = Start;
                 } else {
                     ++i;
@@ -328,7 +328,7 @@ void JSHighlighter::highlightBlock(const QString &text)
     }
 
     if (state == Comment)
-        setFormat(start, text.length(), m_colors[JSEdit::Comment]);
+        setFormat(start, text.length(), m_colors[GLSLEdit::Comment]);
     else
         state = Start;
 
@@ -336,8 +336,8 @@ void JSHighlighter::highlightBlock(const QString &text)
         int pos = 0;
         int len = m_markString.length();
         QTextCharFormat markerFormat;
-        markerFormat.setBackground(m_colors[JSEdit::Marker]);
-        markerFormat.setForeground(m_colors[JSEdit::Normal]);
+        markerFormat.setBackground(m_colors[GLSLEdit::Marker]);
+        markerFormat.setForeground(m_colors[GLSLEdit::Normal]);
         for (;;) {
             pos = text.indexOf(m_markString, pos, m_markCaseSensitivity);
             if (pos < 0)
@@ -348,9 +348,9 @@ void JSHighlighter::highlightBlock(const QString &text)
     }
 
     if (!bracketPositions.isEmpty()) {
-        JSBlockData *blockData = reinterpret_cast<JSBlockData*>(currentBlock().userData());
+        GLSLBlockData *blockData = reinterpret_cast<GLSLBlockData*>(currentBlock().userData());
         if (!blockData) {
-            blockData = new JSBlockData;
+            blockData = new GLSLBlockData;
             currentBlock().setUserData(blockData);
         }
         blockData->bracketPositions = bracketPositions;
@@ -360,19 +360,19 @@ void JSHighlighter::highlightBlock(const QString &text)
     setCurrentBlockState(blockState);
 }
 
-void JSHighlighter::mark(const QString &str, Qt::CaseSensitivity caseSensitivity)
+void GLSLHighlighter::mark(const QString &str, Qt::CaseSensitivity caseSensitivity)
 {
     m_markString = str;
     m_markCaseSensitivity = caseSensitivity;
     rehighlight();
 }
 
-QStringList JSHighlighter::keywords() const
+QStringList GLSLHighlighter::keywords() const
 {
     return m_keywords.toList();
 }
 
-void JSHighlighter::setKeywords(const QStringList &keywords)
+void GLSLHighlighter::setKeywords(const QStringList &keywords)
 {
     m_keywords = QSet<QString>::fromList(keywords);
     rehighlight();
@@ -390,7 +390,7 @@ Q_DECLARE_TYPEINFO(BlockInfo, Q_PRIMITIVE_TYPE);
 class SidebarWidget : public QWidget
 {
 public:
-    SidebarWidget(JSEdit *editor);
+    SidebarWidget(GLSLEdit *editor);
     QVector<BlockInfo> lineNumbers;
     QColor backgroundColor;
     QColor lineNumberColor;
@@ -405,7 +405,7 @@ protected:
     void paintEvent(QPaintEvent *event);
 };
 
-SidebarWidget::SidebarWidget(JSEdit *editor)
+SidebarWidget::SidebarWidget(GLSLEdit *editor)
     : QWidget(editor)
     , foldIndicatorWidth(0)
 {
@@ -431,7 +431,7 @@ void SidebarWidget::mousePressEvent(QMouseEvent *event)
                 }
         }
         if (lineNo >= 0) {
-            JSEdit *editor = qobject_cast<JSEdit*>(parent());
+            GLSLEdit *editor = qobject_cast<GLSLEdit*>(parent());
             if (editor)
                 editor->toggleFold(lineNo);
         }
@@ -497,11 +497,11 @@ void SidebarWidget::paintEvent(QPaintEvent *event)
 static int findClosingMatch(const QTextDocument *doc, int cursorPosition)
 {
     QTextBlock block = doc->findBlock(cursorPosition);
-    JSBlockData *blockData = reinterpret_cast<JSBlockData*>(block.userData());
+    GLSLBlockData *blockData = reinterpret_cast<GLSLBlockData*>(block.userData());
     if (!blockData->bracketPositions.isEmpty()) {
         int depth = 1;
         while (block.isValid()) {
-            blockData = reinterpret_cast<JSBlockData*>(block.userData());
+            blockData = reinterpret_cast<GLSLBlockData*>(block.userData());
             if (blockData && !blockData->bracketPositions.isEmpty()) {
                 for (int c = 0; c < blockData->bracketPositions.count(); ++c) {
                     int absPos = block.position() + blockData->bracketPositions.at(c);
@@ -524,11 +524,11 @@ static int findClosingMatch(const QTextDocument *doc, int cursorPosition)
 static int findOpeningMatch(const QTextDocument *doc, int cursorPosition)
 {
     QTextBlock block = doc->findBlock(cursorPosition);
-    JSBlockData *blockData = reinterpret_cast<JSBlockData*>(block.userData());
+    GLSLBlockData *blockData = reinterpret_cast<GLSLBlockData*>(block.userData());
     if (!blockData->bracketPositions.isEmpty()) {
         int depth = 1;
         while (block.isValid()) {
-            blockData = reinterpret_cast<JSBlockData*>(block.userData());
+            blockData = reinterpret_cast<GLSLBlockData*>(block.userData());
             if (blockData && !blockData->bracketPositions.isEmpty()) {
                 for (int c = blockData->bracketPositions.count() - 1; c >= 0; --c) {
                     int absPos = block.position() + blockData->bracketPositions.at(c);
@@ -565,12 +565,12 @@ void JSDocLayout::forceUpdate()
     emit documentSizeChanged(documentSize());
 }
 
-class JSEditPrivate
+class GLSLEditPrivate
 {
 public:
-    JSEdit *editor;
+    GLSLEdit *editor;
     JSDocLayout *layout;
-    JSHighlighter *highlighter;
+    GLSLHighlighter *highlighter;
     SidebarWidget *sidebar;
     bool showLineNumbers;
     bool textWrap;
@@ -583,13 +583,13 @@ public:
     bool codeFolding : 1;
 };
 
-JSEdit::JSEdit(QWidget *parent)
+GLSLEdit::GLSLEdit(QWidget *parent)
     : QPlainTextEdit(parent)
-    , d_ptr(new JSEditPrivate)
+    , d_ptr(new GLSLEditPrivate)
 {
     d_ptr->editor = this;
     d_ptr->layout = new JSDocLayout(document());
-    d_ptr->highlighter = new JSHighlighter(document());
+    d_ptr->highlighter = new GLSLHighlighter(document());
     d_ptr->sidebar = new SidebarWidget(this);
     d_ptr->showLineNumbers = true;
     d_ptr->textWrap = true;
@@ -617,14 +617,14 @@ JSEdit::JSEdit(QWidget *parent)
 #endif
 }
 
-JSEdit::~JSEdit()
+GLSLEdit::~GLSLEdit()
 {
     delete d_ptr->layout;
 }
 
-void JSEdit::setColor(ColorComponent component, const QColor &color)
+void GLSLEdit::setColor(ColorComponent component, const QColor &color)
 {
-    Q_D(JSEdit);
+    Q_D(GLSLEdit);
 
     if (component == Background) {
         QPalette pal = palette();
@@ -660,55 +660,55 @@ void JSEdit::setColor(ColorComponent component, const QColor &color)
     }
 }
 
-QStringList JSEdit::keywords() const
+QStringList GLSLEdit::keywords() const
 {
     return d_ptr->highlighter->keywords();
 }
 
-void JSEdit::setKeywords(const QStringList &keywords)
+void GLSLEdit::setKeywords(const QStringList &keywords)
 {
     d_ptr->highlighter->setKeywords(keywords);
 }
 
-bool JSEdit::isLineNumbersVisible() const
+bool GLSLEdit::isLineNumbersVisible() const
 {
     return d_ptr->showLineNumbers;
 }
 
-void JSEdit::setLineNumbersVisible(bool visible)
+void GLSLEdit::setLineNumbersVisible(bool visible)
 {
     d_ptr->showLineNumbers = visible;
     updateSidebar();
 }
 
-bool JSEdit::isTextWrapEnabled() const
+bool GLSLEdit::isTextWrapEnabled() const
 {
     return d_ptr->textWrap;
 }
 
-void JSEdit::setTextWrapEnabled(bool enable)
+void GLSLEdit::setTextWrapEnabled(bool enable)
 {
     d_ptr->textWrap = enable;
     setLineWrapMode(enable ? WidgetWidth : NoWrap);
 }
 
-bool JSEdit::isBracketsMatchingEnabled() const
+bool GLSLEdit::isBracketsMatchingEnabled() const
 {
     return d_ptr->bracketsMatching;
 }
 
-void JSEdit::setBracketsMatchingEnabled(bool enable)
+void GLSLEdit::setBracketsMatchingEnabled(bool enable)
 {
     d_ptr->bracketsMatching = enable;
     updateCursor();
 }
 
-bool JSEdit::isCodeFoldingEnabled() const
+bool GLSLEdit::isCodeFoldingEnabled() const
 {
     return d_ptr->codeFolding;
 }
 
-void JSEdit::setCodeFoldingEnabled(bool enable)
+void GLSLEdit::setCodeFoldingEnabled(bool enable)
 {
     d_ptr->codeFolding = enable;
     updateSidebar();
@@ -718,7 +718,7 @@ static int findClosingConstruct(const QTextBlock &block)
 {
     if (!block.isValid())
         return -1;
-    JSBlockData *blockData = reinterpret_cast<JSBlockData*>(block.userData());
+    GLSLBlockData *blockData = reinterpret_cast<GLSLBlockData*>(block.userData());
     if (!blockData)
         return -1;
     if (blockData->bracketPositions.isEmpty())
@@ -736,7 +736,7 @@ static int findClosingConstruct(const QTextBlock &block)
     return -1;
 }
 
-bool JSEdit::isFoldable(int line) const
+bool GLSLEdit::isFoldable(int line) const
 {
     int matchPos = findClosingConstruct(document()->findBlockByNumber(line - 1));
     if (matchPos >= 0) {
@@ -747,7 +747,7 @@ bool JSEdit::isFoldable(int line) const
     return false;
 }
 
-bool JSEdit::isFolded(int line) const
+bool GLSLEdit::isFolded(int line) const
 {
     QTextBlock block = document()->findBlockByNumber(line - 1);
     if (!block.isValid())
@@ -758,7 +758,7 @@ bool JSEdit::isFolded(int line) const
     return !block.isVisible();
 }
 
-void JSEdit::fold(int line)
+void GLSLEdit::fold(int line)
 {
     QTextBlock startBlock = document()->findBlockByNumber(line - 1);
     int endPos = findClosingConstruct(startBlock);
@@ -781,7 +781,7 @@ void JSEdit::fold(int line)
     layout->forceUpdate();
 }
 
-void JSEdit::unfold(int line)
+void GLSLEdit::unfold(int line)
 {
     QTextBlock startBlock = document()->findBlockByNumber(line - 1);
     int endPos = findClosingConstruct(startBlock);
@@ -802,7 +802,7 @@ void JSEdit::unfold(int line)
     layout->forceUpdate();
 }
 
-void JSEdit::toggleFold(int line)
+void GLSLEdit::toggleFold(int line)
 {
     if (isFolded(line))
         unfold(line);
@@ -810,13 +810,13 @@ void JSEdit::toggleFold(int line)
         fold(line);
 }
 
-void JSEdit::resizeEvent(QResizeEvent *e)
+void GLSLEdit::resizeEvent(QResizeEvent *e)
 {
     QPlainTextEdit::resizeEvent(e);
     updateSidebar();
 }
 
-void JSEdit::wheelEvent(QWheelEvent *e)
+void GLSLEdit::wheelEvent(QWheelEvent *e)
 {
     if (e->modifiers() == Qt::ControlModifier) {
         int steps = e->delta() / 20;
@@ -834,9 +834,9 @@ void JSEdit::wheelEvent(QWheelEvent *e)
 }
 
 
-void JSEdit::updateCursor()
+void GLSLEdit::updateCursor()
 {
-    Q_D(JSEdit);
+    Q_D(GLSLEdit);
 
     if (isReadOnly()) {
         setExtraSelections(QList<QTextEdit::ExtraSelection>());
@@ -903,16 +903,16 @@ void JSEdit::updateCursor()
     }
 }
 
-void JSEdit::updateSidebar(const QRect &rect, int d)
+void GLSLEdit::updateSidebar(const QRect &rect, int d)
 {
     Q_UNUSED(rect)
     if (d != 0)
         updateSidebar();
 }
 
-void JSEdit::updateSidebar()
+void GLSLEdit::updateSidebar()
 {
-    Q_D(JSEdit);
+    Q_D(GLSLEdit);
 
     if (!d->showLineNumbers && !d->codeFolding) {
         d->sidebar->hide();
@@ -967,7 +967,7 @@ void JSEdit::updateSidebar()
     d->sidebar->update();
 }
 
-void JSEdit::mark(const QString &str, Qt::CaseSensitivity sens)
+void GLSLEdit::mark(const QString &str, Qt::CaseSensitivity sens)
 {
     d_ptr->highlighter->mark(str, sens);
 }

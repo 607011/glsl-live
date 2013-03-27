@@ -98,7 +98,7 @@ void MainWindow::resizeEvent(QResizeEvent* e)
     e->accept();
 }
 
-void MainWindow::prepareEditor(JSEdit& editor) const
+void MainWindow::prepareEditor(GLSLEdit& editor) const
 {
     editor.setTabStopWidth(2);
     editor.setWordWrapMode(QTextOption::NoWrap);
@@ -116,19 +116,19 @@ void MainWindow::prepareEditor(JSEdit& editor) const
     editor.setBracketsMatchingEnabled(true);
     editor.setCodeFoldingEnabled(true);
     editor.setStyleSheet("background-color: rgba(20, 20, 20, 200)");
-    editor.setColor(JSEdit::Background,    QColor(20, 20, 20, 200));
-    editor.setColor(JSEdit::Normal,        QColor("#eeeeee"));
-    editor.setColor(JSEdit::Comment,       QColor("#baaab0"));
-    editor.setColor(JSEdit::Number,        QColor("#e0f060"));
-    editor.setColor(JSEdit::Operator,      QColor("#f08030"));
-    editor.setColor(JSEdit::Identifier,    QColor("#eeeeee"));
-    editor.setColor(JSEdit::Keyword,       QColor("#60d040"));
-    editor.setColor(JSEdit::BuiltIn,       QColor("#9cb6d4"));
-    editor.setColor(JSEdit::Cursor,        QColor("#1e346b"));
-    editor.setColor(JSEdit::Marker,        QColor("#e0f060"));
-    editor.setColor(JSEdit::BracketMatch,  QColor("#1ab0a6"));
-    editor.setColor(JSEdit::BracketError,  QColor("#a82224"));
-    editor.setColor(JSEdit::FoldIndicator, QColor("#555555"));
+    editor.setColor(GLSLEdit::Background,    QColor(20, 20, 20, 200));
+    editor.setColor(GLSLEdit::Normal,        QColor("#eeeeee"));
+    editor.setColor(GLSLEdit::Comment,       QColor("#baaab0"));
+    editor.setColor(GLSLEdit::Number,        QColor("#e0f060"));
+    editor.setColor(GLSLEdit::Operator,      QColor("#f08030"));
+    editor.setColor(GLSLEdit::Identifier,    QColor("#eeeeee"));
+    editor.setColor(GLSLEdit::Keyword,       QColor("#60d040"));
+    editor.setColor(GLSLEdit::BuiltIn,       QColor("#9cb6d4"));
+    editor.setColor(GLSLEdit::Cursor,        QColor("#1e346b"));
+    editor.setColor(GLSLEdit::Marker,        QColor("#e0f060"));
+    editor.setColor(GLSLEdit::BracketMatch,  QColor("#1ab0a6"));
+    editor.setColor(GLSLEdit::BracketError,  QColor("#a82224"));
+    editor.setColor(GLSLEdit::FoldIndicator, QColor("#555555"));
 }
 
 void MainWindow::badShaderCode(const QString& msg)
