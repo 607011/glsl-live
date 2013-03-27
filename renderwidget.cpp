@@ -30,9 +30,9 @@ const QVector3D RenderWidget::mVertices[4] = {
 
 RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(parent)
+    , mFirstPaintEventPending(true)
     , mVertexShader(NULL)
     , mFragmentShader(NULL)
-    , mFirstPaintEventPending(true)
     , mShaderProgram(new QGLShaderProgram(this))
     , mTextureHandle(0)
     , mLiveTimerId(0)

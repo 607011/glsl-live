@@ -28,11 +28,6 @@ void Project::reset()
     mFragmentShaderSource = QString();
 }
 
-QString Project::errorString(void) const
-{
-    return QObject::tr("%1 (line %2, column %3)").arg(mXml.errorString()).arg(mXml.lineNumber()).arg(mXml.columnNumber());
-}
-
 bool Project::save(void)
 {
     Q_ASSERT(!mFilename.isEmpty());
@@ -43,7 +38,6 @@ bool Project::save(void)
 bool Project::save(const QString& filename)
 {
     Q_ASSERT(!filename.isEmpty());
-    qDebug() << "Project::save()";
     QFile file(filename);
     int flags = QIODevice::WriteOnly;
     bool compress = filename.endsWith("z");
@@ -96,7 +90,6 @@ bool Project::load(const QString& filename)
 {
     Q_ASSERT(!filename.isEmpty());
     mFilename = filename;
-    qDebug() << "Project::load(" << mFilename << ")";
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
     if (!compressed)
@@ -123,7 +116,6 @@ bool Project::load(const QString& filename)
 bool Project::read(QIODevice* device)
 {
     Q_ASSERT(device != NULL);
-    qDebug() << "Project::read(QIODevice* device)";
     mXml.setDevice(device);
     if (mXml.readNextStartElement()) {
         if (mXml.name() == "glsl-live-coder-project" && mXml.attributes().value("version").toString().startsWith("0.")) {
@@ -138,10 +130,8 @@ bool Project::read(QIODevice* device)
 
 void Project::read(void)
 {
-    qDebug() << "Project::read()";
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "glsl-live-coder-project");
     while (mXml.readNextStartElement()) {
-        qDebug() << ">" << mXml.name();
         if (mXml.name() == "shaders") {
             readShaders();
         }
@@ -157,9 +147,7 @@ void Project::read(void)
 void Project::readShaders(void)
 {
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "shaders");
-    qDebug() << "Project::readShaders()";
     while (mXml.readNextStartElement()) {
-        qDebug() << ">>" << mXml.name();
         if (mXml.name() == "vertex") {
             readShaderVertex();
         }
@@ -177,12 +165,11 @@ void Project::readShaderVertex()
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "vertex");
     const QString& str = mXml.readElementText();
     if (!str.isEmpty()) {
-        qDebug() << "Project::readShaderVertex() >>" << str;
         mVertexShaderSource = str;
     }
-    else
+    else {
         mXml.raiseError(QObject::tr("empty vertex shader: %1").arg(str));
-
+    }
 }
 
 void Project::readShaderFragment()
@@ -190,19 +177,17 @@ void Project::readShaderFragment()
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "fragment");
     const QString& str = mXml.readElementText();
     if (!str.isEmpty()) {
-        qDebug() << "Project::readShaderFragment() >>" << str;
         mFragmentShaderSource = str;
     }
-    else
+    else {
         mXml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
+    }
 }
 
 void Project::readInput(void)
 {
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "input");
-    qDebug() << "Project::readInput()";
     while (mXml.readNextStartElement()) {
-        qDebug() << ">>" << mXml.name();
         if (mXml.name() == "image") {
             readInputImage();
         }
@@ -215,12 +200,8 @@ void Project::readInput(void)
 void Project::readInputImage()
 {
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "image");
-    qDebug() << "Project::readImage()";
     while (mXml.readNextStartElement()) {
         if (mXml.name() == "static") {
-            mImageSize.setWidth(mXml.attributes().value("width").toString().toInt());
-            mImageSize.setHeight(mXml.attributes().value("height").toString().toInt());
-            qDebug() << "mImageSize =" << mImageSize;
             readInputImageData();
         }
         else {
@@ -234,16 +215,14 @@ void Project::readInputImageData()
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "static");
     const QString& str = mXml.readElementText();
     if (!str.isEmpty()) {
-        qDebug() << "Project::readImageData() >>" << str;
         const QByteArray& imgData = QByteArray::fromBase64(str.toUtf8());
-        qDebug() << "imgData.size() =" << imgData.size();
         bool ok = mImage.loadFromData(imgData);
         if (!ok)
             qWarning() << "mImage.loadFromData() failed.";
-        qDebug() << "mImage.size() =" << mImage.size();
     }
-    else
+    else {
         mXml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
+    }
 }
 
 void Project::readInputWebcam()
@@ -251,12 +230,12 @@ void Project::readInputWebcam()
     Q_ASSERT(mXml.isStartElement() && mXml.name() == "webcam");
     const QString& str = mXml.readElementText();
     if (!str.isEmpty()) {
-        qDebug() << "Project::readInputWebcam() >>" << str;
         bool ok = false;
         mWebcam = str.toInt(&ok);
         if (!ok)
             mXml.raiseError(QObject::tr("invalid webcam: %1").arg(str));
     }
-    else
+    else {
         mXml.raiseError(QObject::tr("empty webcam tag: %1").arg(str));
+    }
 }

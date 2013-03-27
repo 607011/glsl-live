@@ -13,15 +13,13 @@ SOURCES += main.cpp\
     mainwindow.cpp \
     renderwidget.cpp \
     jsedit/jsedit.cpp \
-    project.cpp \
-    parameterwidget.cpp
+    project.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
     jsedit/jsedit.h \
     main.h \
-    project.h \
-    parameterwidget.h
+    project.h
 
 FORMS    += mainwindow.ui
 

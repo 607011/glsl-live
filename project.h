@@ -12,8 +12,6 @@
 #include <QXmlStreamReader>
 #include <QQueue>
 
-#include "parameterwidget.h"
-
 class Project : public QObject
 {
     Q_OBJECT
@@ -24,12 +22,13 @@ public:
     bool save(void);
     bool save(const QString& fileName);
     bool load(const QString& fileName);
-    QString errorString(void) const;
+    QString errorString(void) const { return QObject::tr("%1 (line %2, column %3)").arg(mXml.errorString()).arg(mXml.lineNumber()).arg(mXml.columnNumber()); }
     bool isDirty(void) const { return mDirty; }
     const QString& filename(void) const { return mFilename; }
     const QString vertexShaderSource(void) const { return mVertexShaderSource; }
     const QString fragmentShaderSource(void) const { return mFragmentShaderSource; }
     const QImage& image(void) const { return mImage; }
+    int webcam(void) const { return mWebcam; }
 
     void setDirty(bool dirty = true)
     {
@@ -69,8 +68,6 @@ private: // variables
     QSize mImageSize;
 
 private: // methods
-    int webcam(void) const { return mWebcam; }
-
     void read(void);
     bool read(QIODevice*);
 
