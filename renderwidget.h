@@ -14,7 +14,6 @@
 #include <QRgb>
 #include <QPointF>
 #include <QImage>
-#include <QEvent>
 #include <QTime>
 #include <QTimerEvent>
 #include <QMouseEvent>
@@ -22,8 +21,8 @@
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include <QResizeEvent>
-#include <QShowEvent>
-#include <QCursor>
+#include <QMap>
+#include <QVariant>
 
 class RenderWidget : public QGLWidget
 {
@@ -40,8 +39,10 @@ public:
     bool loadImage(const QString& fileName);
     const QImage& image(void) const { return mImage; }
     void setUniformValue(const QString& name, int value);
-    void setUniformValue(const QString& name, float value);
+    void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);
+    void updateUniforms();
+    void clearUniforms(void) { mUniforms.clear(); }
 
 signals:
     void shaderError(QString);
@@ -71,6 +72,7 @@ private:
     int mULocMouse;
     int mULocResolution;
     int mULocTexture;
+    QMap<QString, QVariant> mUniforms;
 
 private: // methods
     void goLive(void);

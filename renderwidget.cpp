@@ -8,6 +8,7 @@
 #include <QtCore/QDebug>
 #include <QMimeData>
 #include <QUrl>
+#include <QList>
 
 static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
 static const int PROGRAM_TEXCOORD_ATTRIBUTE = 1;
@@ -86,6 +87,31 @@ void RenderWidget::setImage(const QImage& image)
     }
 }
 
+void RenderWidget::updateUniforms()
+{
+    if (!mShaderProgram->isLinked())
+        return;
+    mShaderProgram->setUniformValue(mULocMouse, mMousePos);
+    mShaderProgram->setUniformValue(mULocResolution, mResolution);
+    mShaderProgram->setUniformValue(mULocTexture, 0);
+    QList<QString> keys = mUniforms.keys();
+    for (QList<QString>::const_iterator k = keys.constBegin(); k != keys.constEnd(); ++k) {
+        const QString& key = *k;
+        const QVariant& value = mUniforms[key];
+        switch (value.type()) {
+        case QVariant::Int:
+            mShaderProgram->setUniformValue(key.toUtf8().data(), value.toInt());
+            break;
+        case QVariant::Double:
+            mShaderProgram->setUniformValue(key.toUtf8().data(), (float)value.toDouble());
+            break;
+        case QVariant::Bool:
+            mShaderProgram->setUniformValue(key.toUtf8().data(), value.toBool());
+            break;
+        }
+    }
+}
+
 bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
 {
     bool ok = false;
@@ -124,9 +150,7 @@ bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
         mULocMouse = mShaderProgram->uniformLocation("uMouse");
         mULocResolution = mShaderProgram->uniformLocation("uResolution");
         mULocTexture = mShaderProgram->uniformLocation("uTexture");
-        mShaderProgram->setUniformValue(mULocMouse, mMousePos);
-        mShaderProgram->setUniformValue(mULocResolution, mResolution);
-        mShaderProgram->setUniformValue(mULocTexture, 0);
+        updateUniforms();
         emit linkingSuccessful();
         update();
     }
@@ -263,22 +287,19 @@ bool RenderWidget::loadImage(const QString& fileName)
 
 void RenderWidget::setUniformValue(const QString& name, int value)
 {
-    qDebug() << "RenderWidget::setUniformValue(const QString& name, int value)" << mShaderProgram->isLinked();
-    if (mShaderProgram->isLinked())
-        mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+    mUniforms[name] = value;
+    updateUniforms();
 }
 
-void RenderWidget::setUniformValue(const QString& name, float value)
+void RenderWidget::setUniformValue(const QString& name, double value)
 {
-    qDebug() << "RenderWidget::setUniformValue(const QString& name, float value)" << mShaderProgram->isLinked();
-    if (mShaderProgram->isLinked())
-        mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+    mUniforms[name] = value;
+    updateUniforms();
 }
 
 void RenderWidget::setUniformValue(const QString& name, bool value)
 {
-    qDebug() << "RenderWidget::setUniformValue(const QString& name, bool value)" << mShaderProgram->isLinked();
-    if (mShaderProgram->isLinked())
-        mShaderProgram->setUniformValue(name.toUtf8().data(), value);
+    mUniforms[name] = value;
+    updateUniforms();
 }
 

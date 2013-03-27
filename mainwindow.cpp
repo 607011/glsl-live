@@ -184,6 +184,7 @@ void MainWindow::shaderChanged()
         mCurrentParameterHash = hash.result();
         QVBoxLayout* layout = new QVBoxLayout;
         in.seek(0);
+        mRenderWidget->clearUniforms();
         while (!in.atEnd()) {
             const QString& line = in.readLine();
             int pos = re0.indexIn(line);
