@@ -15,34 +15,124 @@
 #include <QCheckBox>
 #include <QGroupBox>
 #include <QTimer>
+#include <QByteArray>
+#include <QWidget>
+#include <QString>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "doubleslider.h"
+#include "project.h"
+#include "renderwidget.h"
+#include "glsledit/glsledit.h"
 
 
-MainWindow::MainWindow(QWidget *parent)
+static void prepareEditor(GLSLEdit* editor)
+{
+    editor->setTabStopWidth(2);
+    editor->setWordWrapMode(QTextOption::NoWrap);
+    QFont monospace;
+#if defined(Q_OS_MAC)
+    monospace.setPointSize(10);
+    monospace.setFamily("Monaco");
+#else
+    monospace.setPointSize(8);
+    monospace.setFamily("Monospace");
+#endif
+    monospace.setStyleHint(QFont::TypeWriter);
+    editor->setFont(monospace);
+    editor->setTextWrapEnabled(true);
+    editor->setBracketsMatchingEnabled(true);
+    editor->setCodeFoldingEnabled(true);
+    editor->setStyleSheet("background-color: rgba(20, 20, 20, 200)");
+    editor->setColor(GLSLEdit::Background,    QColor(20, 20, 20, 200));
+    editor->setColor(GLSLEdit::Normal,        QColor("#eeeeee"));
+    editor->setColor(GLSLEdit::Comment,       QColor("#baaab0"));
+    editor->setColor(GLSLEdit::Number,        QColor("#e0f060"));
+    editor->setColor(GLSLEdit::Operator,      QColor("#f08030"));
+    editor->setColor(GLSLEdit::Identifier,    QColor("#eeeeee"));
+    editor->setColor(GLSLEdit::Keyword,       QColor("#60d040"));
+    editor->setColor(GLSLEdit::BuiltIn,       QColor("#9cb6d4"));
+    editor->setColor(GLSLEdit::Cursor,        QColor("#1e346b"));
+    editor->setColor(GLSLEdit::Marker,        QColor("#e0f060"));
+    editor->setColor(GLSLEdit::BracketMatch,  QColor("#1ab0a6"));
+    editor->setColor(GLSLEdit::BracketError,  QColor("#a82224"));
+    editor->setColor(GLSLEdit::FoldIndicator, QColor("#555555"));
+}
+
+
+static void clearLayout(QLayout* layout)
+{
+    Q_ASSERT(layout != NULL);
+    QLayoutItem* item;
+    while ((item = layout->takeAt(0)) != NULL) {
+        QLayout* subLayout = item->layout();
+        QWidget* widget = item->widget();
+        if (subLayout) {
+            subLayout->removeItem(item);
+            clearLayout(subLayout);
+        }
+        else if (widget) {
+            widget->hide();
+            delete widget;
+        }
+        else {
+            delete item;
+        }
+    }
+    delete layout;
+}
+
+
+class MainWindowPrivate {
+public:
+    explicit MainWindowPrivate(void)
+        : renderWidget(new RenderWidget)
+        , paramWidget(new QWidget)
+        , vertexShaderEditor(new GLSLEdit)
+        , fragmentShaderEditor(new GLSLEdit)
+    { /* ... */ }
+
+    Project project;
+    RenderWidget* renderWidget;
+    QWidget* paramWidget;
+    QString vertexShaderFilename;
+    QString fragmentShaderFilename;
+    QString imageFilename;
+    GLSLEdit* vertexShaderEditor;
+    GLSLEdit* fragmentShaderEditor;
+    QByteArray currentParameterHash;
+
+    virtual ~MainWindowPrivate()
+    {
+        delete renderWidget;
+        delete paramWidget;
+        delete vertexShaderEditor;
+        delete fragmentShaderEditor;
+    }
+};
+
+
+MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , mProject(NULL)
-    , mRenderWidget(new RenderWidget)
-    , mParamWidget(new QWidget)
+    , d_ptr(new MainWindowPrivate)
 {
     ui->setupUi(this);
-    ui->splitter->addWidget(mRenderWidget);
-    ui->splitter->addWidget(mParamWidget);
+    ui->splitter->addWidget(d_ptr->renderWidget);
+    ui->splitter->addWidget(d_ptr->paramWidget);
     ui->toolBox->setMinimumWidth(300);
-    ui->vertexShaderHLayout->addWidget(&mVertexShaderEditor);
-    ui->fragmentShaderHLayout->addWidget(&mFragmentShaderEditor);
+    ui->vertexShaderHLayout->addWidget(d_ptr->vertexShaderEditor);
+    ui->fragmentShaderHLayout->addWidget(d_ptr->fragmentShaderEditor);
     ui->splitter->setStretchFactor(0, 3);
     ui->splitter->setStretchFactor(1, 2);
     ui->splitter->setStretchFactor(2, 1);
-    prepareEditor(mVertexShaderEditor);
-    prepareEditor(mFragmentShaderEditor);
-    QObject::connect(&mVertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
-    QObject::connect(&mFragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
-    QObject::connect(mRenderWidget, SIGNAL(shaderError(QString)), SLOT(badShaderCode(QString)));
-    QObject::connect(mRenderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
+    prepareEditor(d_ptr->vertexShaderEditor);
+    prepareEditor(d_ptr->fragmentShaderEditor);
+    QObject::connect(d_ptr->vertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
+    QObject::connect(d_ptr->fragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
+    QObject::connect(d_ptr->renderWidget, SIGNAL(shaderError(QString)), SLOT(badShaderCode(QString)));
+    QObject::connect(d_ptr->renderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
@@ -51,13 +141,12 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
-    QObject::connect(ui->actionResizeWindowToOriginalImageSize, SIGNAL(triggered()), mRenderWidget, SLOT(resizeToOriginalImageSize()));
+    QObject::connect(ui->actionResizeWindowToOriginalImageSize, SIGNAL(triggered()), d_ptr->renderWidget, SLOT(resizeToOriginalImageSize()));
     restoreSettings();
 }
 
 MainWindow::~MainWindow()
 {
-    delete mRenderWidget;
     delete ui;
 }
 
@@ -71,7 +160,7 @@ void MainWindow::restoreSettings(void)
         openProject(projectFilename);
     }
     processShaderChange();
-    mProject.setDirty(false);
+    d_ptr->project.setDirty(false);
     updateWindowTitle();
 }
 
@@ -81,51 +170,18 @@ void MainWindow::saveSettings(void)
     settings.setValue("MainWindow/geometry", saveGeometry());
     settings.setValue("MainWindow/Toolbox/currentIndex", ui->toolBox->currentIndex());
     settings.setValue("MainWindow/splitter/geometry", saveGeometry());
-    settings.setValue("Project/filename", mProject.filename());
+    settings.setValue("Project/filename", d_ptr->project.filename());
 }
 
 void MainWindow::closeEvent(QCloseEvent* e)
 {
-    if (mProject.isDirty()) {
+    if (d_ptr->project.isDirty()) {
         bool ok = QMessageBox::question(this, tr("Save before exit?"), tr("Your project has changed. Do you want to save the changes before exiting?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
         if (ok)
             saveProject();
     }
     saveSettings();
     e->accept();
-}
-
-void MainWindow::prepareEditor(GLSLEdit& editor)
-{
-    editor.setTabStopWidth(2);
-    editor.setWordWrapMode(QTextOption::NoWrap);
-    QFont monospace;
-#if defined(Q_OS_MAC)
-    monospace.setPointSize(10);
-    monospace.setFamily("Monaco");
-#else
-    monospace.setPointSize(8);
-    monospace.setFamily("Monospace");
-#endif
-    monospace.setStyleHint(QFont::TypeWriter);
-    editor.setFont(monospace);
-    editor.setTextWrapEnabled(true);
-    editor.setBracketsMatchingEnabled(true);
-    editor.setCodeFoldingEnabled(true);
-    editor.setStyleSheet("background-color: rgba(20, 20, 20, 200)");
-    editor.setColor(GLSLEdit::Background,    QColor(20, 20, 20, 200));
-    editor.setColor(GLSLEdit::Normal,        QColor("#eeeeee"));
-    editor.setColor(GLSLEdit::Comment,       QColor("#baaab0"));
-    editor.setColor(GLSLEdit::Number,        QColor("#e0f060"));
-    editor.setColor(GLSLEdit::Operator,      QColor("#f08030"));
-    editor.setColor(GLSLEdit::Identifier,    QColor("#eeeeee"));
-    editor.setColor(GLSLEdit::Keyword,       QColor("#60d040"));
-    editor.setColor(GLSLEdit::BuiltIn,       QColor("#9cb6d4"));
-    editor.setColor(GLSLEdit::Cursor,        QColor("#1e346b"));
-    editor.setColor(GLSLEdit::Marker,        QColor("#e0f060"));
-    editor.setColor(GLSLEdit::BracketMatch,  QColor("#1ab0a6"));
-    editor.setColor(GLSLEdit::BracketError,  QColor("#a82224"));
-    editor.setColor(GLSLEdit::FoldIndicator, QColor("#555555"));
 }
 
 void MainWindow::badShaderCode(const QString& msg)
@@ -144,7 +200,7 @@ void MainWindow::valueChanged(int v)
 {
     if (sender()) {
         const QString& name = sender()->objectName();
-        mRenderWidget->setUniformValue(name, v);
+        d_ptr->renderWidget->setUniformValue(name, v);
     }
 }
 
@@ -152,7 +208,7 @@ void MainWindow::valueChanged(double v)
 {
     if (sender()) {
         const QString& name = sender()->objectName();
-        mRenderWidget->setUniformValue(name, v);
+        d_ptr->renderWidget->setUniformValue(name, v);
     }
 }
 
@@ -160,7 +216,7 @@ void MainWindow::valueChanged(bool v)
 {
     if (sender()) {
         const QString& name = sender()->objectName();
-        mRenderWidget->setUniformValue(name, v);
+        d_ptr->renderWidget->setUniformValue(name, v);
     }
 }
 
@@ -169,14 +225,14 @@ void MainWindow::saveImageSnapshot(void)
     const QString& filename = QFileDialog::getSaveFileName(this, tr("Save image snapshot"), QString(), tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
     if (filename.isNull())
         return;
-    mRenderWidget->resultImage().save(filename);
+    d_ptr->renderWidget->resultImage().save(filename);
 }
 
 void MainWindow::parseShadersForParameters()
 {
-    QByteArray ba = mVertexShaderEditor.toPlainText().toUtf8()
+    QByteArray ba = d_ptr->vertexShaderEditor->toPlainText().toUtf8()
             .append("\n")
-            .append(mFragmentShaderEditor.toPlainText().toUtf8());
+            .append(d_ptr->fragmentShaderEditor->toPlainText().toUtf8());
     QTextStream in(&ba);
     QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)\\s*$");
     // check if variables' definitions have changed in shader
@@ -187,12 +243,12 @@ void MainWindow::parseShadersForParameters()
             hash.addData(line.toUtf8());
     }
     // if changes occured regenerate widgets
-    if (mCurrentParameterHash != hash.result()) {
+    if (d_ptr->currentParameterHash != hash.result()) {
         QRegExp reFI("([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)\\s*,\\s*([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)\\s*,\\s*([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)");
         QRegExp reB("(true|false)");
-        mCurrentParameterHash = hash.result();
+        d_ptr->currentParameterHash = hash.result();
         QVBoxLayout* layout = new QVBoxLayout;
-        mRenderWidget->clearUniforms();
+        d_ptr->renderWidget->clearUniforms();
         in.seek(0);
         while (!in.atEnd()) {
             const QString& line = in.readLine();
@@ -239,6 +295,7 @@ void MainWindow::parseShadersForParameters()
                         innerLayout->addWidget(spinbox);
                         QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
                         QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
+                        spinbox->setDecimals(9);
                         spinbox->setObjectName(name);
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
@@ -268,9 +325,9 @@ void MainWindow::parseShadersForParameters()
             }
         }
         layout->addStretch(1);
-        if (mParamWidget->layout() != NULL)
-            clearLayout(mParamWidget->layout());
-        mParamWidget->setLayout(layout);
+        if (d_ptr->paramWidget->layout() != NULL)
+            clearLayout(d_ptr->paramWidget->layout());
+        d_ptr->paramWidget->setLayout(layout);
     }
 }
 
@@ -278,50 +335,28 @@ void MainWindow::processShaderChange(void)
 {
     parseShadersForParameters();
     updateShaderSources();
-    mProject.setDirty(true);
+    d_ptr->project.setDirty(true);
     updateWindowTitle();
-}
-
-void MainWindow::clearLayout(QLayout* layout)
-{
-    Q_ASSERT(layout != NULL);
-    QLayoutItem* item;
-    while ((item = layout->takeAt(0)) != NULL) {
-        QLayout* subLayout = item->layout();
-        QWidget* widget = item->widget();
-        if (subLayout) {
-            subLayout->removeItem(item);
-            clearLayout(subLayout);
-        }
-        else if (widget) {
-            widget->hide();
-            delete widget;
-        }
-        else {
-            delete item;
-        }
-    }
-    delete layout;
 }
 
 void MainWindow::newProject(void)
 {
-    if (mProject.isDirty()) {
+    if (d_ptr->project.isDirty()) {
         bool ok = QMessageBox::question(this, tr("Really create a new project?"), tr("Your project has changed. Do you want to save the changes before creating a new project?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
         if (ok)
             saveProject();
     }
-    mProject.reset();
-    mVertexShaderEditor.setPlainText(mProject.vertexShaderSource());
-    mFragmentShaderEditor.setPlainText(mProject.fragmentShaderSource());
-    mRenderWidget->setImage(mProject.image());
+    d_ptr->project.reset();
+    d_ptr->vertexShaderEditor->setPlainText(d_ptr->project.vertexShaderSource());
+    d_ptr->fragmentShaderEditor->setPlainText(d_ptr->project.fragmentShaderSource());
+    d_ptr->renderWidget->setImage(d_ptr->project.image());
     updateShaderSources();
     updateWindowTitle();
 }
 
 void MainWindow::openProject(void)
 {
-    if (mProject.isDirty()) {
+    if (d_ptr->project.isDirty()) {
         bool ok = QMessageBox::question(this, tr("Really load another project?"), tr("Your project has changed. Do you want to save the changes before loading another project?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
         if (ok)
             saveProject();
@@ -336,18 +371,18 @@ void MainWindow::openProject(void)
 void MainWindow::openProject(const QString& filename)
 {
     Q_ASSERT(!filename.isEmpty());
-    bool ok = mProject.load(filename);
+    bool ok = d_ptr->project.load(filename);
     if (ok) {
-        mVertexShaderEditor.blockSignals(true);
-        mVertexShaderEditor.setPlainText(mProject.vertexShaderSource());
-        mVertexShaderEditor.blockSignals(false);
-        mFragmentShaderEditor.blockSignals(true);
-        mFragmentShaderEditor.setPlainText(mProject.fragmentShaderSource());
-        mFragmentShaderEditor.blockSignals(false);
-        mRenderWidget->setImage(mProject.image());
+        d_ptr->vertexShaderEditor->blockSignals(true);
+        d_ptr->vertexShaderEditor->setPlainText(d_ptr->project.vertexShaderSource());
+        d_ptr->vertexShaderEditor->blockSignals(false);
+        d_ptr->fragmentShaderEditor->blockSignals(true);
+        d_ptr->fragmentShaderEditor->setPlainText(d_ptr->project.fragmentShaderSource());
+        d_ptr->fragmentShaderEditor->blockSignals(false);
+        d_ptr->renderWidget->setImage(d_ptr->project.image());
         updateShaderSources();
         processShaderChange();
-        mProject.setDirty(false);
+        d_ptr->project.setDirty(false);
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())
@@ -357,7 +392,7 @@ void MainWindow::openProject(const QString& filename)
 
 void MainWindow::saveProject(void)
 {
-    QString filename = mProject.filename();
+    QString filename = d_ptr->project.filename();
     if (filename.isEmpty()) {
         filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
         if (filename.isNull())
@@ -376,11 +411,11 @@ void MainWindow::saveProjectAs(void)
 
 void MainWindow::saveProject(const QString &filename)
 {
-    mProject.setFilename(filename);
-    mProject.setVertexShaderSource(mVertexShaderEditor.toPlainText());
-    mProject.setFragmentShaderSource(mFragmentShaderEditor.toPlainText());
-    mProject.setImage(mRenderWidget->image());
-    bool ok = mProject.save();
+    d_ptr->project.setFilename(filename);
+    d_ptr->project.setVertexShaderSource(d_ptr->vertexShaderEditor->toPlainText());
+    d_ptr->project.setFragmentShaderSource(d_ptr->fragmentShaderEditor->toPlainText());
+    d_ptr->project.setImage(d_ptr->renderWidget->image());
+    bool ok = d_ptr->project.save();
     ui->statusBar->showMessage(ok
                                ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
                                : tr("Saving failed."), 3000);
@@ -389,8 +424,8 @@ void MainWindow::saveProject(const QString &filename)
 
 void MainWindow::updateShaderSources(void)
 {
-    mRenderWidget->setShaderSources(mVertexShaderEditor.toPlainText(),
-                                    mFragmentShaderEditor.toPlainText());
+    d_ptr->renderWidget->setShaderSources(d_ptr->vertexShaderEditor->toPlainText(),
+                                           d_ptr->fragmentShaderEditor->toPlainText());
 }
 
 void MainWindow::loadVertexShader(const QString& filename)
@@ -400,9 +435,9 @@ void MainWindow::loadVertexShader(const QString& filename)
         bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
         if (success) {
             const QString& source = file.readAll();
-            mVertexShaderEditor.setPlainText(source);
-            mVertexShaderFilename = filename;
-            mProject.setVertexShaderSource(source);
+            d_ptr->vertexShaderEditor->setPlainText(source);
+            d_ptr->vertexShaderFilename = filename;
+            d_ptr->project.setVertexShaderSource(source);
             file.close();
         }
     }
@@ -415,9 +450,9 @@ void MainWindow::loadFragmentShader(const QString& filename)
         bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
         if (success) {
             const QString& source = file.readAll();
-            mFragmentShaderEditor.setPlainText(source);
-            mFragmentShaderFilename = filename;
-            mProject.setFragmentShaderSource(source);
+            d_ptr->fragmentShaderEditor->setPlainText(source);
+            d_ptr->fragmentShaderFilename = filename;
+            d_ptr->project.setFragmentShaderSource(source);
             file.close();
         }
     }
@@ -428,11 +463,11 @@ void MainWindow::updateWindowTitle()
     setWindowTitle(tr("%1 %2%3")
                    .arg(AppName)
                    .arg(AppVersion)
-                   .arg(mProject.filename().isEmpty()
+                   .arg(d_ptr->project.filename().isEmpty()
                         ? ""
                         : tr(" - %1%2")
-                          .arg(mProject.filename())
-                          .arg(mProject.isDirty()? "*" : "")));
+                          .arg(d_ptr->project.filename())
+                          .arg(d_ptr->project.isDirty()? "*" : "")));
 }
 
 void MainWindow::about(void)

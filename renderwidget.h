@@ -23,6 +23,9 @@
 #include <QResizeEvent>
 #include <QMap>
 #include <QVariant>
+#include <QScopedPointer>
+
+class RenderWidgetPrivate;
 
 class RenderWidget : public QGLWidget
 {
@@ -35,14 +38,14 @@ public:
 
     void setShaderSources(const QString& vs, const QString& fs);
     void setImage(const QImage&);
-    const QString& imageFileName(void) const { return mImageFileName; }
+    const QString& imageFileName(void) const;
     bool loadImage(const QString& fileName);
-    const QImage& image(void) const { return mImage; }
+    const QImage& image(void) const;
     void setUniformValue(const QString& name, int value);
     void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);
     void updateUniforms();
-    void clearUniforms(void) { mUniforms.clear(); }
+    void clearUniforms(void);
     QImage resultImage(void);
 
 public slots:
@@ -54,31 +57,10 @@ signals:
     void imageDropped(const QImage&);
 
 private:
-    static const QVector3D mVertices[4];
-    static const QVector2D mTexCoords[4];
-    bool mFirstPaintEventPending;
-    QGLShader* mVertexShader;
-    QGLShader* mFragmentShader;
-    QGLShaderProgram* mShaderProgram;
-    QGLFramebufferObject* mFBO;
-    GLuint* mResultImageData;
-    GLuint mInputTextureHandle;
-    GLenum mGLerror;
-    QTime mTime;
-    QString mImageFileName;
-    QImage mImage;
-    int mLiveTimerId;
-    QPointF mMousePos;
-    QSizeF mResolution;
-    QString mPreliminaryVertexShaderSource;
-    QString mPreliminaryFragmentShaderSource;
-    QString mVertexShaderSource;
-    QString mFragmentShaderSource;
-    int mULocT;
-    int mULocMouse;
-    int mULocResolution;
-    int mULocTexture;
-    QMap<QString, QVariant> mUniforms;
+    QScopedPointer<RenderWidgetPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(RenderWidget)
+    Q_DISABLE_COPY(RenderWidget)
+
 
 private: // methods
     void goLive(void);

@@ -6,16 +6,14 @@
 
 #include <QMainWindow>
 #include <QResizeEvent>
-#include <QVBoxLayout>
-#include <QWidget>
-#include <QByteArray>
-#include "renderwidget.h"
-#include "project.h"
-#include "glsledit/glsledit.h"
+#include <QScopedPointer>
+#include <QString>
 
 namespace Ui {
 class MainWindow;
 }
+
+class MainWindowPrivate;
 
 class MainWindow : public QMainWindow
 {
@@ -50,23 +48,16 @@ private slots:
 private: //methods
     void saveSettings(void);
     void restoreSettings(void);
-    void prepareEditor(GLSLEdit& editor);
     void loadVertexShader(const QString&);
     void loadFragmentShader(const QString&);
     void updateWindowTitle(void);
-    void clearLayout(QLayout*);
 
 private:
     Ui::MainWindow *ui;
-    Project mProject;
-    RenderWidget* mRenderWidget;
-    QWidget* mParamWidget;
-    QString mVertexShaderFilename;
-    QString mFragmentShaderFilename;
-    QString mImageFilename;
-    GLSLEdit mVertexShaderEditor;
-    GLSLEdit mFragmentShaderEditor;
-    QByteArray mCurrentParameterHash;
+
+    QScopedPointer<MainWindowPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(MainWindow)
+    Q_DISABLE_COPY(MainWindow)
 };
 
 #endif // __MAINWINDOW_H_
