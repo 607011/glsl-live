@@ -27,7 +27,6 @@ public:
 
 protected:
     void closeEvent(QCloseEvent*);
-    void resizeEvent(QResizeEvent*);
 
 private slots:
     void about(void);
@@ -46,6 +45,7 @@ private slots:
     void valueChanged(int);
     void valueChanged(double);
     void valueChanged(bool);
+    void saveImageSnapshot(void);
 
 private: //methods
     void saveSettings(void);

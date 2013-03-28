@@ -35,7 +35,9 @@ RenderWidget::RenderWidget(QWidget* parent)
     , mVertexShader(NULL)
     , mFragmentShader(NULL)
     , mShaderProgram(new QGLShaderProgram(this))
-    , mTextureHandle(0)
+    , mFBO(NULL)
+    , mResultImageData(NULL)
+    , mInputTextureHandle(0)
     , mLiveTimerId(0)
 {
     mTime.start();
@@ -55,6 +57,10 @@ RenderWidget::~RenderWidget()
         delete mVertexShader;
     if (mFragmentShader)
         delete mFragmentShader;
+    if (mResultImageData)
+        delete [] mResultImageData;
+    if (mFBO)
+        delete mFBO;
     delete mShaderProgram;
 }
 
@@ -77,15 +83,51 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
         goLive();
 }
 
+void RenderWidget::makeImageFBO(void)
+{
+    if (context()->isValid()) {
+        if (mFBO == NULL || mFBO->size() != mImage.size()) {
+            if (mFBO)
+                qDebug() << mFBO->size() << mImage.size();
+            if (mResultImageData)
+                delete [] mResultImageData;
+            mResultImageData = new GLuint[mImage.width() * mImage.height()];
+            if (mFBO)
+                delete mFBO;
+            mFBO = new QGLFramebufferObject(mImage.size());
+            qDebug() << mFBO->size();
+        }
+    }
+}
+
 void RenderWidget::setImage(const QImage& image)
 {
     mImage = image.convertToFormat(QImage::Format_ARGB32);
-    glBindTexture(GL_TEXTURE_2D, mTextureHandle);
+    glBindTexture(GL_TEXTURE_2D, mInputTextureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mImage.width(), mImage.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, mImage.bits());
     if (mShaderProgram->isLinked()) {
-        mShaderProgram->setUniformValue(mULocTexture, 0);
+        mShaderProgram->setUniformValue(mULocTexture, (GLuint)0);
         update();
     }
+    makeImageFBO();
+}
+
+QImage RenderWidget::resultImage(void)
+{
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    // glViewport(0, 0, mImage.width(), mImage.height());
+    // makeImageFBO();
+    mFBO->bind();
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glReadPixels(0, 0, mImage.width(), mImage.height(), GL_BGRA, GL_UNSIGNED_BYTE, mResultImageData);
+    mFBO->release();
+    glPopAttrib();
+    return QImage(reinterpret_cast<uchar*>(mResultImageData), mImage.width(), mImage.height(), QImage::Format_RGB32);
+}
+
+void RenderWidget::resizeToOriginalImageSize()
+{
+    resize(mImage.size());
 }
 
 void RenderWidget::updateUniforms()
@@ -200,8 +242,8 @@ void RenderWidget::initializeGL(void)
     mShaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, mVertices);
     mShaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, mTexCoords);
 
-    glGenTextures(1, &mTextureHandle);
-    glBindTexture(GL_TEXTURE_2D, mTextureHandle);
+    glGenTextures(1, &mInputTextureHandle);
+    glBindTexture(GL_TEXTURE_2D, mInputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);

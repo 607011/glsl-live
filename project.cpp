@@ -23,7 +23,7 @@ void Project::reset()
 {
     mDirty = false;
     mWebcam = -1;
-    mImage = QImage();
+    mImage = QImage(":/images/toad.png");
 
     QFile vf(":/shaders/vertexshader.glsl");
     vf.open(QIODevice::ReadOnly | QIODevice::Text);

@@ -50,6 +50,8 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(ui->actionSave, SIGNAL(triggered()), SLOT(saveProject()));
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
+    QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
+    QObject::connect(ui->actionResizeWindowToOriginalImageSize, SIGNAL(triggered()), mRenderWidget, SLOT(resizeToOriginalImageSize()));
     restoreSettings();
 }
 
@@ -90,11 +92,6 @@ void MainWindow::closeEvent(QCloseEvent* e)
             saveProject();
     }
     saveSettings();
-    e->accept();
-}
-
-void MainWindow::resizeEvent(QResizeEvent* e)
-{
     e->accept();
 }
 
@@ -165,6 +162,14 @@ void MainWindow::valueChanged(bool v)
         const QString& name = sender()->objectName();
         mRenderWidget->setUniformValue(name, v);
     }
+}
+
+void MainWindow::saveImageSnapshot(void)
+{
+    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save image snapshot"), QString(), tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
+    if (filename.isNull())
+        return;
+    mRenderWidget->resultImage().save(filename);
 }
 
 void MainWindow::parseShadersForParameters()
@@ -363,7 +368,7 @@ void MainWindow::saveProject(void)
 
 void MainWindow::saveProjectAs(void)
 {
-    QString filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
+    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
     if (filename.isNull())
         return;
     saveProject(filename);

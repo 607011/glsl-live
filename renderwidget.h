@@ -43,6 +43,10 @@ public:
     void setUniformValue(const QString& name, bool value);
     void updateUniforms();
     void clearUniforms(void) { mUniforms.clear(); }
+    QImage resultImage(void);
+
+public slots:
+    void resizeToOriginalImageSize(void);
 
 signals:
     void shaderError(QString);
@@ -56,7 +60,9 @@ private:
     QGLShader* mVertexShader;
     QGLShader* mFragmentShader;
     QGLShaderProgram* mShaderProgram;
-    GLuint mTextureHandle;
+    QGLFramebufferObject* mFBO;
+    GLuint* mResultImageData;
+    GLuint mInputTextureHandle;
     GLenum mGLerror;
     QTime mTime;
     QString mImageFileName;
@@ -78,6 +84,7 @@ private: // methods
     void goLive(void);
     void stopCode(void);
     bool linkProgram(const QString& vs = QString(), const QString& fs = QString());
+    void makeImageFBO(void);
 
 protected:
     void resizeEvent(QResizeEvent*);
