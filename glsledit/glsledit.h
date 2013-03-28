@@ -98,6 +98,7 @@ public slots:
     void setCodeFoldingEnabled(bool enable);
     void setLineNumbersVisible(bool visible);
     void setTextWrapEnabled(bool enable);
+    void delayTextChange(void);
 
     void fold(int line);
     void unfold(int line);
@@ -107,14 +108,13 @@ protected:
     void resizeEvent(QResizeEvent*);
     void wheelEvent(QWheelEvent*);
     void keyPressEvent(QKeyEvent*);
-    void keyReleaseEvent(QKeyEvent*);
 
 private slots:
     void updateCursor(void);
     void updateSidebar(const QRect& rect, int d);
 
 private:
-    QTimer mKeyTimer;
+    QTimer mTextChangedTimer;
     QScopedPointer<GLSLEditPrivate> d_ptr;
     Q_DECLARE_PRIVATE(GLSLEdit)
     Q_DISABLE_COPY(GLSLEdit)

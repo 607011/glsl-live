@@ -75,6 +75,7 @@ protected:
     void paintGL(void);
     void timerEvent(QTimerEvent*);
     void mouseMoveEvent(QMouseEvent*);
+    void mousePressEvent(QMouseEvent*);
     void dragEnterEvent(QDragEnterEvent*);
     void dragLeaveEvent(QDragLeaveEvent*);
     void dropEvent(QDropEvent*);

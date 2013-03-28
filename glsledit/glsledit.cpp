@@ -30,11 +30,6 @@
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "glsledit.h"
-#include "glslhighlighter.h"
-#include "glsldoclayout.h"
-#include "sidebarwidget.h"
-
 #include <QTimer>
 #include <QList>
 #include <QSet>
@@ -46,6 +41,13 @@
 #include <QSyntaxHighlighter>
 #include <QPainter>
 #include <QColor>
+#include <QtCore/QDebug>
+
+#include "glsledit.h"
+#include "glslhighlighter.h"
+#include "glsldoclayout.h"
+#include "sidebarwidget.h"
+
 
 static int findClosingMatch(const QTextDocument* doc, int cursorPosition)
 {
@@ -137,12 +139,13 @@ GLSLEdit::GLSLEdit(QWidget* parent)
 
     document()->setDocumentLayout(d_ptr->layout);
 
-    QObject::connect(this, SIGNAL(cursorPositionChanged()), this, SLOT(updateCursor()));
-    QObject::connect(this, SIGNAL(blockCountChanged(int)), this, SLOT(updateSidebar()));
-    QObject::connect(this, SIGNAL(updateRequest(QRect, int)), this, SLOT(updateSidebar(QRect, int)));
+    connect(this, SIGNAL(cursorPositionChanged()), SLOT(updateCursor()));
+    connect(this, SIGNAL(blockCountChanged(int)), SLOT(updateSidebar()));
+    connect(this, SIGNAL(updateRequest(QRect, int)), SLOT(updateSidebar(QRect, int)));
 
-    mKeyTimer.setSingleShot(true);
-    QObject::connect(&mKeyTimer, SIGNAL(timeout()), SIGNAL(textChangedDelayed()));
+    mTextChangedTimer.setSingleShot(true);
+    connect(&mTextChangedTimer, SIGNAL(timeout()), SIGNAL(textChangedDelayed()));
+    connect(this, SIGNAL(textChanged()), SLOT(delayTextChange()));
 
 #if defined(Q_OS_MAC)
     QFont textFont = font();
@@ -161,10 +164,9 @@ GLSLEdit::~GLSLEdit()
     delete d_ptr->layout;
 }
 
-void GLSLEdit::setColor(ColorComponent component, const QColor &color)
+void GLSLEdit::setColor(ColorComponent component, const QColor& color)
 {
     Q_D(GLSLEdit);
-
     if (component == Background) {
         QPalette pal = palette();
         pal.setColor(QPalette::Base, color);
@@ -372,16 +374,15 @@ void GLSLEdit::wheelEvent(QWheelEvent *e)
     QPlainTextEdit::wheelEvent(e);
 }
 
-void GLSLEdit::keyPressEvent(QKeyEvent* e)
+void GLSLEdit::delayTextChange(void)
 {
-    mKeyTimer.stop();
-    QPlainTextEdit::keyPressEvent(e);
+    mTextChangedTimer.start(500);
 }
 
-void GLSLEdit::keyReleaseEvent(QKeyEvent* e)
+void GLSLEdit::keyPressEvent(QKeyEvent* e)
 {
-    mKeyTimer.start(200);
-    QPlainTextEdit::keyReleaseEvent(e);
+    mTextChangedTimer.stop();
+    QPlainTextEdit::keyPressEvent(e);
 }
 
 void GLSLEdit::updateCursor(void)
@@ -390,8 +391,8 @@ void GLSLEdit::updateCursor(void)
 
     if (isReadOnly()) {
         setExtraSelections(QList<QTextEdit::ExtraSelection>());
-    } else {
-
+    }
+    else {
         d->matchPositions.clear();
         d->errorPositions.clear();
 
@@ -455,7 +456,7 @@ void GLSLEdit::updateCursor(void)
 
 void GLSLEdit::updateSidebar(const QRect& rect, int d)
 {
-    Q_UNUSED(rect)
+    Q_UNUSED(rect);
     if (d != 0)
         updateSidebar();
 }
