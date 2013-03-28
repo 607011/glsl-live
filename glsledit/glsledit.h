@@ -4,6 +4,8 @@
   Copyright (C) 2011 Ariya Hidayat <ariya.hidayat@gmail.com>
   Copyright (C) 2010 Ariya Hidayat <ariya.hidayat@gmail.com>
 
+  Modified March 2013 by ola@ct.de
+
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
 
@@ -28,12 +30,16 @@
   THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef OFILABS_JSEDIT
-#define OFILABS_JSEDIT
+#ifndef __GLSLEDIT_H_
+#define __GLSLEDIT_H_
 
 #include <QColor>
 #include <QPlainTextEdit>
 #include <QScopedPointer>
+#include <QKeyEvent>
+#include <QResizeEvent>
+#include <QWheelEvent>
+#include <QTimer>
 
 class GLSLEditPrivate;
 
@@ -66,24 +72,27 @@ public:
         FoldIndicator
     } ColorComponent;
 
-    GLSLEdit(QWidget *parent = 0);
+    GLSLEdit(QWidget* parent = NULL);
     ~GLSLEdit();
 
-    void setColor(ColorComponent component, const QColor &color);
+    void setColor(ColorComponent component, const QColor& color);
 
-    QStringList keywords() const;
-    void setKeywords(const QStringList &keywords);
+    QStringList keywords(void) const;
+    void setKeywords(const QStringList& keywords);
 
-    bool isBracketsMatchingEnabled() const;
-    bool isCodeFoldingEnabled() const;
-    bool isLineNumbersVisible() const;
-    bool isTextWrapEnabled() const;
+    bool isBracketsMatchingEnabled(void) const;
+    bool isCodeFoldingEnabled(void) const;
+    bool isLineNumbersVisible(void) const;
+    bool isTextWrapEnabled(void) const;
 
     bool isFoldable(int line) const;
     bool isFolded(int line) const;
 
+signals:
+    void textChangedDelayed(void);
+
 public slots:
-    void updateSidebar();
+    void updateSidebar(void);
     void mark(const QString &str, Qt::CaseSensitivity sens = Qt::CaseInsensitive);
     void setBracketsMatchingEnabled(bool enable);
     void setCodeFoldingEnabled(bool enable);
@@ -95,17 +104,20 @@ public slots:
     void toggleFold(int line);
 
 protected:
-    void resizeEvent(QResizeEvent *e);
-    void wheelEvent(QWheelEvent *e);
+    void resizeEvent(QResizeEvent*);
+    void wheelEvent(QWheelEvent*);
+    void keyPressEvent(QKeyEvent*);
+    void keyReleaseEvent(QKeyEvent*);
 
 private slots:
-    void updateCursor();
-    void updateSidebar(const QRect &rect, int d);
+    void updateCursor(void);
+    void updateSidebar(const QRect& rect, int d);
 
 private:
+    QTimer mKeyTimer;
     QScopedPointer<GLSLEditPrivate> d_ptr;
-    Q_DECLARE_PRIVATE(GLSLEdit);
-    Q_DISABLE_COPY(GLSLEdit);
+    Q_DECLARE_PRIVATE(GLSLEdit)
+    Q_DISABLE_COPY(GLSLEdit)
 };
 
-#endif // OFILABS_JSEDIT
+#endif // __GLSLEDIT_H_

@@ -13,14 +13,20 @@ SOURCES += main.cpp\
     mainwindow.cpp \
     renderwidget.cpp \
     glsledit/glsledit.cpp \
-    project.cpp
+    project.cpp \
+    glsledit/glslhighlighter.cpp \
+    glsledit/sidebarwidget.cpp \
+    glsledit/glsldoclayout.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
     glsledit/glsledit.h \
     main.h \
     project.h \
-    doubleslider.h
+    doubleslider.h \
+    glsledit/glslhighlighter.h \
+    glsledit/sidebarwidget.h \
+    glsledit/glsldoclayout.h
 
 FORMS    += mainwindow.ui
 

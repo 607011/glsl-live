@@ -39,8 +39,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->splitter->setStretchFactor(2, 1);
     prepareEditor(mVertexShaderEditor);
     prepareEditor(mFragmentShaderEditor);
-    QObject::connect(&mVertexShaderEditor, SIGNAL(textChanged()), SLOT(shaderChanged()));
-    QObject::connect(&mFragmentShaderEditor, SIGNAL(textChanged()), SLOT(shaderChanged()));
+    QObject::connect(&mVertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
+    QObject::connect(&mFragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(mRenderWidget, SIGNAL(shaderError(QString)), SLOT(badShaderCode(QString)));
     QObject::connect(mRenderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
@@ -70,7 +70,7 @@ void MainWindow::restoreSettings(void)
     if (!projectFilename.isEmpty()) {
         openProject(projectFilename);
     }
-    shaderChanged();
+    processShaderChange();
     mProject.setDirty(false);
     updateWindowTitle();
 }
@@ -274,10 +274,10 @@ void MainWindow::parseShadersForParameters()
     }
 }
 
-void MainWindow::shaderChanged(void)
+void MainWindow::processShaderChange(void)
 {
-    QTimer::singleShot(250, this, SLOT(parseShadersForParameters()));
-    QTimer::singleShot(250, this, SLOT(updateShaderSources()));
+    parseShadersForParameters();
+    updateShaderSources();
     mProject.setDirty(true);
     updateWindowTitle();
 }
@@ -346,7 +346,7 @@ void MainWindow::openProject(const QString& filename)
         mFragmentShaderEditor.blockSignals(false);
         mRenderWidget->setImage(mProject.image());
         updateShaderSources();
-        shaderChanged();
+        processShaderChange();
         mProject.setDirty(false);
     }
     ui->statusBar->showMessage(ok

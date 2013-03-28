@@ -34,7 +34,7 @@ private slots:
     void badShaderCode(const QString&);
     void successfullyLinkedShader(void);
     void parseShadersForParameters();
-    void shaderChanged(void);
+    void processShaderChange(void);
     void updateShaderSources(void);
     void newProject(void);
     void openProject(void);
