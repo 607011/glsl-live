@@ -34,6 +34,7 @@ public:
         : firstPaintEventPending(true)
         , vertexShader(NULL)
         , fragmentShader(NULL)
+        , shaderProgram(NULL)
         , fbo(NULL)
         , resultImageData(NULL)
         , inputTextureHandle(0)
@@ -64,20 +65,53 @@ public:
     int uLocTexture;
     QMap<QString, QVariant> uniforms;
 
+    void makeShaderProgram(QObject* parent = NULL)
+    {
+        deleteShaderProgram();
+        shaderProgram = new QGLShaderProgram(parent);
+    }
+
+    void makeShaders(QObject* parent = NULL)
+    {
+        deleteShaders();
+        vertexShader = new QGLShader(QGLShader::Vertex, parent);
+        fragmentShader = new QGLShader(QGLShader::Fragment, parent);
+        if (shaderProgram) {
+            shaderProgram->addShader(vertexShader);
+            shaderProgram->addShader(fragmentShader);
+        }
+    }
+
     virtual ~RenderWidgetPrivate()
+    {
+        deleteShaderProgram();
+        deleteShaders();
+        if (fbo)
+            delete fbo;
+        if (resultImageData)
+            delete [] resultImageData;
+    }
+
+private:
+    void deleteShaders()
+    {
+        if (vertexShader) {
+            delete vertexShader;
+            vertexShader = NULL;
+        }
+        if (fragmentShader) {
+            delete fragmentShader;
+            fragmentShader = NULL;
+        }
+    }
+
+    void deleteShaderProgram(void)
     {
         if (shaderProgram) {
             shaderProgram->removeAllShaders();
             delete shaderProgram;
+            shaderProgram = NULL;
         }
-        if (fbo)
-            delete fbo;
-        if (vertexShader)
-            delete vertexShader;
-        if (fragmentShader)
-            delete fragmentShader;
-        if (resultImageData)
-            delete [] resultImageData;
     }
 };
 
@@ -85,7 +119,7 @@ RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(parent)
     , d_ptr(new RenderWidgetPrivate)
 {
-    d_ptr->shaderProgram = new QGLShaderProgram(this);
+    d_ptr->makeShaderProgram(this);
     d_ptr->time.start();
     setFocusPolicy(Qt::StrongFocus);
     setFocus(Qt::MouseFocusReason);
@@ -124,15 +158,12 @@ void RenderWidget::makeImageFBO(void)
     Q_D(RenderWidget);
     if (context()->isValid()) {
         if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
-            if (d->fbo)
-                qDebug() << d->fbo->size() << d->img.size();
             if (d->resultImageData)
                 delete [] d->resultImageData;
             d->resultImageData = new GLuint[d->img.width() * d->img.height()];
             if (d->fbo)
                 delete d->fbo;
             d->fbo = new QGLFramebufferObject(d->img.size());
-            qDebug() << d->fbo->size();
         }
     }
 }
@@ -176,24 +207,25 @@ void RenderWidget::resizeToOriginalImageSize()
 
 void RenderWidget::updateUniforms()
 {
-    if (!d_ptr->shaderProgram->isLinked())
+    Q_D(RenderWidget);
+    if (!d->shaderProgram->isLinked())
         return;
-    d_ptr->shaderProgram->setUniformValue(d_ptr->uLocMouse, d_ptr->mousePos);
-    d_ptr->shaderProgram->setUniformValue(d_ptr->uLocResolution, d_ptr->resolution);
-    d_ptr->shaderProgram->setUniformValue(d_ptr->uLocTexture, 0);
-    const QList<QString>& keys = d_ptr->uniforms.keys();
+    d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
+    d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
+    d->shaderProgram->setUniformValue(d->uLocTexture, 0);
+    const QList<QString>& keys = d->uniforms.keys();
     for (QList<QString>::const_iterator k = keys.constBegin(); k != keys.constEnd(); ++k) {
         const QString& key = *k;
-        const QVariant& value = d_ptr->uniforms[key];
+        const QVariant& value = d->uniforms[key];
         switch (value.type()) {
         case QVariant::Int:
-            d_ptr->shaderProgram->setUniformValue(key.toUtf8().data(), value.toInt());
+            d->shaderProgram->setUniformValue(key.toUtf8().data(), value.toInt());
             break;
         case QVariant::Double:
-            d_ptr->shaderProgram->setUniformValue(key.toUtf8().data(), (float)value.toDouble());
+            d->shaderProgram->setUniformValue(key.toUtf8().data(), (float)value.toDouble());
             break;
         case QVariant::Bool:
-            d_ptr->shaderProgram->setUniformValue(key.toUtf8().data(), value.toBool());
+            d->shaderProgram->setUniformValue(key.toUtf8().data(), value.toBool());
             break;
         default:
             qWarning() << "RenderWidget::updateUniforms(): invalid value type in mUniforms";
@@ -213,26 +245,18 @@ bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
     Q_D(RenderWidget);
     bool ok = false;
     if (!vs.isEmpty() && !fs.isEmpty()) {
-        d->shaderProgram->release();
-        d->shaderProgram->removeAllShaders();
-        if (d->vertexShader)
-            delete d->vertexShader;
-        d->vertexShader = new QGLShader(QGLShader::Vertex, this);
+        d->makeShaderProgram();
+        d->makeShaders();
         ok = d->vertexShader->compileSourceCode(vs);
         if (!ok) {
             emit shaderError(d->vertexShader->log());
             return false;
         }
-        d->shaderProgram->addShader(d->vertexShader);
-        if (d->fragmentShader)
-            delete d->fragmentShader;
-        d->fragmentShader = new QGLShader(QGLShader::Fragment, this);
         ok = d->fragmentShader->compileSourceCode(fs);
         if (!ok) {
             emit shaderError(d->fragmentShader->log());
             return false;
         }
-        d->shaderProgram->addShader(d->fragmentShader);
     }
     d->shaderProgram->bind();
     d->shaderProgram->bindAttributeLocation("aVertex", PROGRAM_VERTEX_ATTRIBUTE);
