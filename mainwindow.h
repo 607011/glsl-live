@@ -50,8 +50,6 @@ private slots:
 private: //methods
     void saveSettings(void);
     void restoreSettings(void);
-    void loadVertexShader(const QString&);
-    void loadFragmentShader(const QString&);
     void updateWindowTitle(void);
 
 private:

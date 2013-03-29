@@ -401,38 +401,6 @@ void MainWindow::updateShaderSources(void)
                                       d->fragmentShaderEditor->toPlainText());
 }
 
-void MainWindow::loadVertexShader(const QString& filename)
-{
-    Q_D(MainWindow);
-    if (!filename.isEmpty()) {
-        QFile file(filename);
-        bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
-        if (success) {
-            const QString& source = file.readAll();
-            d->vertexShaderEditor->setPlainText(source);
-            d->vertexShaderFilename = filename;
-            d->project.setVertexShaderSource(source);
-            file.close();
-        }
-    }
-}
-
-void MainWindow::loadFragmentShader(const QString& filename)
-{
-    Q_D(MainWindow);
-    if (!filename.isEmpty()) {
-        QFile file(filename);
-        bool success = file.open(QIODevice::ReadOnly | QIODevice::Text);
-        if (success) {
-            const QString& source = file.readAll();
-            d->fragmentShaderEditor->setPlainText(source);
-            d->fragmentShaderFilename = filename;
-            d->project.setFragmentShaderSource(source);
-            file.close();
-        }
-    }
-}
-
 void MainWindow::updateWindowTitle()
 {
     setWindowTitle(tr("%1 %2%3")
