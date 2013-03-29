@@ -135,12 +135,11 @@ void GLSLHighlighter::highlightBlock(const QString& text)
 {
     // parsing state
     enum {
-        Start = 0,
-        Number = 1,
-        Identifier = 2,
-        String = 3,
-        Comment = 4,
-        Regex = 5
+        Start,
+        Number,
+        Identifier,
+        String,
+        Comment
     };
 
     QList<int> bracketPositions;
@@ -181,9 +180,6 @@ void GLSLHighlighter::highlightBlock(const QString& text)
             } else if (ch == '/' && next == '/') {
                 i = text.length();
                 setFormat(start, text.length(), m_colors[GLSLEdit::Comment]);
-            } else if (ch == '/' && next != '*') {
-                ++i;
-                state = Regex;
             } else {
                 if (!QString("(){}[]").contains(ch))
                     setFormat(start, 1, m_colors[GLSLEdit::Operator]);
@@ -242,21 +238,6 @@ void GLSLHighlighter::highlightBlock(const QString& text)
                 ++i;
                 setFormat(start, i - start, m_colors[GLSLEdit::Comment]);
                 state = Start;
-            } else {
-                ++i;
-            }
-            break;
-
-        case Regex:
-            if (ch == '/') {
-                QChar prev = (i > 0) ? text.at(i - 1) : QChar();
-                if (prev != '\\') {
-                    ++i;
-                    setFormat(start, i - start, m_colors[GLSLEdit::String]);
-                    state = Start;
-                } else {
-                    ++i;
-                }
             } else {
                 ++i;
             }
