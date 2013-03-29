@@ -19,23 +19,23 @@ public:
         , mRange(maxV - minV)
     {
         setMinimum(0);
-        setMaximum(Divisor);
+        setMaximum(Granularity);
         QObject::connect(this, SIGNAL(valueChanged(int)), SLOT(divide(int)));
     }
 
-    static const int Divisor = 100000;
+    static const int Granularity = 100000000;
 
 public slots:
     void setDoubleValue(double v)
     {
-        int i = int((v - mMin) / mRange * Divisor);
+        int i = int((v - mMin) / mRange * Granularity);
         setValue(i);
     }
 
 private slots:
     void divide(int i)
     {
-        double d = mMin + mRange * double(i) / Divisor;
+        double d = mMin + mRange * double(i) / Granularity;
         emit valueChanged(d);
     }
 

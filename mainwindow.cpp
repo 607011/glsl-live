@@ -18,6 +18,8 @@
 #include <QByteArray>
 #include <QWidget>
 #include <QString>
+#include <QVector>
+#include <qmath.h>
 #include "main.h"
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -37,7 +39,9 @@ public:
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
-    { /* ... */ }
+    {
+        calcSteps();
+    }
 
     Project project;
     RenderWidget* renderWidget;
@@ -49,6 +53,8 @@ public:
     GLSLEdit* fragmentShaderEditor;
     QByteArray currentParameterHash;
 
+    static QVector<double> steps;
+
     virtual ~MainWindowPrivate()
     {
         delete renderWidget;
@@ -56,7 +62,17 @@ public:
         delete vertexShaderEditor;
         delete fragmentShaderEditor;
     }
+
+private:
+    static void calcSteps(void)
+    {
+        for (int i = -9; i < 10; ++i)
+            steps << qPow(10, i);
+    }
+
 };
+
+QVector<double> MainWindowPrivate::steps;
 
 
 MainWindow::MainWindow(QWidget* parent)
@@ -211,7 +227,7 @@ void MainWindow::parseShadersForParameters()
                         groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                         QSlider* slider = new QSlider(Qt::Horizontal);
                         innerLayout->addWidget(slider);
-                        QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
+                        connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
                         slider->setObjectName(name);
                         slider->setMinimum(minV.toInt());
                         slider->setMaximum(maxV.toInt());
@@ -222,8 +238,8 @@ void MainWindow::parseShadersForParameters()
                         spinbox->setMinimum(minV.toInt());
                         spinbox->setMaximum(maxV.toInt());
                         spinbox->setValue(defaultV.toInt());
-                        QObject::connect(slider, SIGNAL(valueChanged(int)), spinbox, SLOT(setValue(int)));
-                        QObject::connect(spinbox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
+                        connect(slider, SIGNAL(valueChanged(int)), spinbox, SLOT(setValue(int)));
+                        connect(spinbox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
                         layout->addWidget(groupbox);
                     }
                     else if (type == "float") {
@@ -237,14 +253,19 @@ void MainWindow::parseShadersForParameters()
                         innerLayout->addWidget(slider);
                         QDoubleSpinBox* spinbox = new QDoubleSpinBox;
                         innerLayout->addWidget(spinbox);
-                        QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
-                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
-                        spinbox->setDecimals(9);
+                        connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
+                        connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
                         spinbox->setObjectName(name);
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
                         spinbox->setValue(defaultV.toDouble());
-                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), slider, SLOT(setDoubleValue(double)));
+                        double x = spinbox->maximum() - spinbox->minimum();
+                        int decimals = (x < 1)? int(qAbs(log(x))) : 2;
+                        spinbox->setDecimals(decimals);
+                        for (QVector<double>::const_iterator i = d->steps.constBegin(); i != d->steps.constEnd(); ++i)
+                            if (x < *i) { x = *i / 1000; break; }
+                        spinbox->setSingleStep(x);
+                        connect(spinbox, SIGNAL(valueChanged(double)), slider, SLOT(setDoubleValue(double)));
                         layout->addWidget(groupbox);
                     }
                     else
@@ -256,7 +277,7 @@ void MainWindow::parseShadersForParameters()
                         if (type == "bool") {
                             bool b = (v == "true");
                             QCheckBox* checkbox = new QCheckBox(name);
-                            QObject::connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
+                            connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
                             checkbox->setObjectName(name);
                             checkbox->setCheckable(true);
                             checkbox->setChecked(b);
