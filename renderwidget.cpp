@@ -73,7 +73,10 @@ public:
     int uLocMouse;
     int uLocResolution;
     int uLocTexture;
+    int uLocMarks;
+    int uLocMarksCount;
     QMap<QString, QVariant> uniforms;
+    QVector<QVector2D> marks;
 
     void makeShaderProgram(void)
     {
@@ -219,6 +222,8 @@ void RenderWidget::updateUniforms()
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     d->shaderProgram->setUniformValue(d->uLocTexture, 0);
+    d->shaderProgram->setUniformValueArray(d->uLocMarks, d->marks.data(), d->marks.size());
+    d->shaderProgram->setUniformValue(d->uLocMarksCount, d->marks.size());
     const QList<QString>& keys = d->uniforms.keys();
     for (QList<QString>::const_iterator k = keys.constBegin(); k != keys.constEnd(); ++k) {
         const QString& key = *k;
@@ -279,6 +284,8 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
     d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
     d->uLocMouse = d->shaderProgram->uniformLocation("uMouse");
     d->uLocResolution = d->shaderProgram->uniformLocation("uResolution");
+    d->uLocMarks = d->shaderProgram->uniformLocation("uMarks");
+    d->uLocMarksCount = d->shaderProgram->uniformLocation("uMarksCount");
 }
 
 void RenderWidget::resizeEvent(QResizeEvent* e)
@@ -362,9 +369,17 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
 
 void RenderWidget::mousePressEvent(QMouseEvent* e)
 {
-    if (e->button() == Qt::LeftButton) {
-        QSizeF pos = QSizeF(double(e->x()) / width(), double(e->y()) / height());
-        qDebug() << pos;
+    switch (e->button()) {
+    case Qt::LeftButton:
+        d_ptr->marks << QVector2D(double(e->x()) / width(), double(e->y()) / height());
+        updateUniforms();
+        break;
+    case Qt::RightButton:
+        d_ptr->marks.clear();
+        updateUniforms();
+        break;
+    default:
+        break;
     }
 }
 

@@ -23,6 +23,7 @@ uniform sampler2D uTexture;
 uniform float uT;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
+uniform vec2 uMarks[];
 uniform int uStitchSize; // 3, 40, 7
 uniform bool uInvert; // true
 uniform float uPulseSpeed; // 1, 10, 5
