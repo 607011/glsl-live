@@ -14,6 +14,7 @@
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QGroupBox>
+#include <QLayout>
 #include <QTimer>
 #include <QByteArray>
 #include <QWidget>
@@ -53,7 +54,7 @@ public:
     GLSLEdit* fragmentShaderEditor;
     QByteArray currentParameterHash;
 
-    static QVector<double> steps;
+    QVector<double> steps;
 
     virtual ~MainWindowPrivate()
     {
@@ -64,15 +65,13 @@ public:
     }
 
 private:
-    static void calcSteps(void)
+    void calcSteps(void)
     {
         for (int i = -9; i < 10; ++i)
             steps << qPow(10, i);
     }
 
 };
-
-QVector<double> MainWindowPrivate::steps;
 
 
 MainWindow::MainWindow(QWidget* parent)

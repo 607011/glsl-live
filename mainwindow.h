@@ -5,7 +5,7 @@
 #define __MAINWINDOW_H_
 
 #include <QMainWindow>
-#include <QResizeEvent>
+#include <QCloseEvent>
 #include <QScopedPointer>
 #include <QString>
 
