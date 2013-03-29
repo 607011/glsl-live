@@ -181,10 +181,12 @@ void RenderWidget::setImage(const QImage& image)
 {
     Q_D(RenderWidget);
     d->img = image.convertToFormat(QImage::Format_ARGB32);
+    qDebug() << "RenderWidget::setImage() d->img.size() =" << d->img.size();
+    qDebug() << "RenderWidget::setImage() d->inputTextureHandle =" << d->inputTextureHandle;
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
     if (d->shaderProgram->isLinked()) {
-        d->shaderProgram->setUniformValue("uTexture", (GLuint)0);
+        d->shaderProgram->setUniformValue(d->uLocTexture, (GLuint)d->inputTextureHandle);
         update();
     }
     makeImageFBO();
@@ -198,6 +200,7 @@ const QString& RenderWidget::imageFileName(void) const
 QImage RenderWidget::resultImage(void)
 {
     Q_D(RenderWidget);
+    makeCurrent();
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glViewport(0, 0, d->img.width(), d->img.height());
     makeImageFBO();
@@ -221,7 +224,7 @@ void RenderWidget::updateUniforms()
         return;
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
-    d->shaderProgram->setUniformValue(d->uLocTexture, 0);
+    d->shaderProgram->setUniformValue(d->uLocTexture, (GLuint)d->inputTextureHandle);
     d->shaderProgram->setUniformValueArray(d->uLocMarks, d->marks.data(), d->marks.size());
     d->shaderProgram->setUniformValue(d->uLocMarksCount, d->marks.size());
     const QList<QString>& keys = d->uniforms.keys();
@@ -254,6 +257,7 @@ void RenderWidget::clearUniforms(void)
 void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
+    makeCurrent();
     if (vs.isEmpty() || fs.isEmpty())
         return;
     d->makeShaderProgram();
@@ -322,6 +326,7 @@ void RenderWidget::initializeGL(void)
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glGenTextures(1, &d->inputTextureHandle);
+    qDebug() << "RenderWidget::initializeGL() d->inputTextureHandle =" << d->inputTextureHandle;
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -348,7 +353,7 @@ void RenderWidget::paintGL(void)
 void RenderWidget::timerEvent(QTimerEvent* e)
 {
     if (e->timerId() == d_ptr->liveTimerId) {
-        updateGL();
+        update();
     }
     else
         qWarning() << "RenderWidget::timerEven() received bad timer id:" << e->timerId();
@@ -362,7 +367,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
     if (d->shaderProgram->isLinked()) {
         d->mousePos = QPointF(e->pos());
         d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
-        updateGL();
+        update();
     }
     e->accept();
 }
