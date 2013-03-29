@@ -2,13 +2,24 @@
 // All rights reserved.
 
 #include "renderwidget.h"
+#include <QtCore/QDebug>
+#include <QRegExp>
 #include <QList>
 #include <QGLShader>
-#include <qmath.h>
-#include <QtCore/QDebug>
+#include <QGLFramebufferObject>
+#include <QGLShaderProgram>
+#include <QVector2D>
+#include <QVector3D>
+#include <QPoint>
+#include <QRgb>
 #include <QMimeData>
 #include <QUrl>
 #include <QList>
+#include <QPointF>
+#include <QTime>
+#include <QMap>
+#include <QVariant>
+#include <qmath.h>
 
 static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
 static const int PROGRAM_TEXCOORD_ATTRIBUTE = 1;
@@ -34,7 +45,7 @@ public:
         : firstPaintEventPending(true)
         , vertexShader(NULL)
         , fragmentShader(NULL)
-        , shaderProgram(NULL)
+        , shaderProgram(new QGLShaderProgram)
         , fbo(NULL)
         , resultImageData(NULL)
         , inputTextureHandle(0)
@@ -48,7 +59,6 @@ public:
     QGLFramebufferObject* fbo;
     GLuint* resultImageData;
     GLuint inputTextureHandle;
-    GLenum glerror;
     QTime time;
     QString imgFilename;
     QImage img;
@@ -65,23 +75,18 @@ public:
     int uLocTexture;
     QMap<QString, QVariant> uniforms;
 
-    void makeShaderProgram(QObject* parent = NULL)
+    void makeShaderProgram(void)
     {
         deleteShaderProgram();
-        shaderProgram = new QGLShaderProgram(parent);
-    }
-
-    void makeShaders(QObject* parent = NULL)
-    {
+        shaderProgram = new QGLShaderProgram();
         deleteShaders();
-        vertexShader = new QGLShader(QGLShader::Vertex, parent);
-        fragmentShader = new QGLShader(QGLShader::Fragment, parent);
+        vertexShader = new QGLShader(QGLShader::Vertex);
+        fragmentShader = new QGLShader(QGLShader::Fragment);
         if (shaderProgram) {
             shaderProgram->addShader(vertexShader);
             shaderProgram->addShader(fragmentShader);
         }
     }
-
     virtual ~RenderWidgetPrivate()
     {
         deleteShaderProgram();
@@ -119,7 +124,6 @@ RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(parent)
     , d_ptr(new RenderWidgetPrivate)
 {
-    d_ptr->makeShaderProgram(this);
     d_ptr->time.start();
     setFocusPolicy(Qt::StrongFocus);
     setFocus(Qt::MouseFocusReason);
@@ -136,21 +140,23 @@ RenderWidget::~RenderWidget()
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
-    d->preliminaryVertexShaderSource = vs;
-    d->preliminaryFragmentShaderSource = fs;
     if (d->firstPaintEventPending)
         return;
-    linkProgram(vs, fs);
+    d->preliminaryVertexShaderSource = vs;
+    d->preliminaryFragmentShaderSource = fs;
+    buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
     if (d->shaderProgram->isLinked()) {
-        d->vertexShaderSource = vs;
-        d->fragmentShaderSource = fs;
+        d->vertexShaderSource = d->preliminaryVertexShaderSource;
+        d->fragmentShaderSource = d->preliminaryFragmentShaderSource;
+        emit linkingSuccessful();
     }
     else {
-        // fall back to previous code
-        linkProgram(d->vertexShaderSource, d->fragmentShaderSource);
+        buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
     }
-    if (d->shaderProgram->isLinked())
+    if (d->shaderProgram->isLinked()) {
+        updateUniforms();
         goLive();
+    }
 }
 
 void RenderWidget::makeImageFBO(void)
@@ -175,7 +181,7 @@ void RenderWidget::setImage(const QImage& image)
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
     if (d->shaderProgram->isLinked()) {
-        d->shaderProgram->setUniformValue(d->uLocTexture, (GLuint)0);
+        d->shaderProgram->setUniformValue("uTexture", (GLuint)0);
         update();
     }
     makeImageFBO();
@@ -222,7 +228,7 @@ void RenderWidget::updateUniforms()
             d->shaderProgram->setUniformValue(key.toUtf8().data(), value.toInt());
             break;
         case QVariant::Double:
-            d->shaderProgram->setUniformValue(key.toUtf8().data(), (float)value.toDouble());
+            d->shaderProgram->setUniformValue(key.toUtf8().data(), (GLfloat)value.toDouble());
             break;
         case QVariant::Bool:
             d->shaderProgram->setUniformValue(key.toUtf8().data(), value.toBool());
@@ -240,51 +246,48 @@ void RenderWidget::clearUniforms(void)
     d_ptr->uniforms.clear();
 }
 
-bool RenderWidget::linkProgram(const QString& vs, const QString& fs)
+void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
-    bool ok = false;
-    if (!vs.isEmpty() && !fs.isEmpty()) {
-        d->makeShaderProgram();
-        d->makeShaders();
-        ok = d->vertexShader->compileSourceCode(vs);
-        if (!ok) {
-            emit shaderError(d->vertexShader->log());
-            return false;
-        }
-        ok = d->fragmentShader->compileSourceCode(fs);
-        if (!ok) {
-            emit shaderError(d->fragmentShader->log());
-            return false;
-        }
+    if (vs.isEmpty() || fs.isEmpty())
+        return;
+    d->makeShaderProgram();
+    bool ok;
+    ok = d->vertexShader->compileSourceCode(vs);
+    if (!ok) {
+        emit vertexShaderError(d->vertexShader->log());
+        return;
     }
-    d->shaderProgram->bind();
+    ok = d->fragmentShader->compileSourceCode(fs);
+    if (!ok) {
+        emit fragmentShaderError(d->fragmentShader->log());
+        return;
+    }
+    ok = d->shaderProgram->link();
+    if (!ok) {
+        emit linkerError(d->shaderProgram->log());
+        return;
+    }
     d->shaderProgram->bindAttributeLocation("aVertex", PROGRAM_VERTEX_ATTRIBUTE);
     d->shaderProgram->bindAttributeLocation("aTexCoord", PROGRAM_TEXCOORD_ATTRIBUTE);
-    if (!vs.isEmpty() && !fs.isEmpty()) {
-        d->shaderProgram->link();
-        if (!d->shaderProgram->isLinked()) {
-            emit shaderError(d->shaderProgram->log());
-        }
-    }
-    if (d->shaderProgram->isLinked()) {
-        d->uLocT = d->shaderProgram->uniformLocation("uT");
-        d->uLocMouse = d->shaderProgram->uniformLocation("uMouse");
-        d->uLocResolution = d->shaderProgram->uniformLocation("uResolution");
-        d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
-        updateUniforms();
-        emit linkingSuccessful();
-        update();
-    }
-    return ok;
+    d->shaderProgram->bind();
+    d->shaderProgram->enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
+    d->shaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
+    d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
+    d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
+    d->uLocT = d->shaderProgram->uniformLocation("uT");
+    d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
+    d->uLocMouse = d->shaderProgram->uniformLocation("uMouse");
+    d->uLocResolution = d->shaderProgram->uniformLocation("uResolution");
 }
 
 void RenderWidget::resizeEvent(QResizeEvent* e)
 {
     Q_D(RenderWidget);
     d->resolution = QSizeF(e->size());
-    if (d->shaderProgram->isLinked())
+    if (d->shaderProgram->isLinked()) {
         d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
+    }
     glViewport(0, 0, e->size().width(), e->size().height());
 }
 
@@ -311,13 +314,6 @@ void RenderWidget::initializeGL(void)
     glDepthMask(GL_FALSE);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    linkProgram();
-    d->shaderProgram->enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
-    d->shaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
-    d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
-    d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
-
     glGenTextures(1, &d->inputTextureHandle);
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -331,7 +327,7 @@ void RenderWidget::paintGL(void)
 {
     Q_D(RenderWidget);
     if (d->firstPaintEventPending) {
-        linkProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
+        buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
         if (d->shaderProgram->isLinked())
             goLive();
         d->firstPaintEventPending = false;
@@ -347,6 +343,9 @@ void RenderWidget::timerEvent(QTimerEvent* e)
     if (e->timerId() == d_ptr->liveTimerId) {
         updateGL();
     }
+    else
+        qWarning() << "RenderWidget::timerEven() received bad timer id:" << e->timerId();
+
     e->accept();
 }
 
@@ -363,8 +362,10 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
 
 void RenderWidget::mousePressEvent(QMouseEvent* e)
 {
-    QSizeF pos = QSizeF(double(e->x()) / width(), double(e->y()) / height());
-    qDebug() << pos;
+    if (e->button() == Qt::LeftButton) {
+        QSizeF pos = QSizeF(double(e->x()) / width(), double(e->y()) / height());
+        qDebug() << pos;
+    }
 }
 
 void RenderWidget::resizeGL(int w, int h)

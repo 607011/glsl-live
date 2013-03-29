@@ -29,7 +29,9 @@ protected:
 private slots:
     void about(void);
     void aboutQt(void);
-    void badShaderCode(const QString&);
+    void badVertexShaderCode(const QString&);
+    void badFragmentShaderCode(const QString&);
+    void linkerError(const QString&);
     void successfullyLinkedShader(void);
     void parseShadersForParameters();
     void processShaderChange(void);

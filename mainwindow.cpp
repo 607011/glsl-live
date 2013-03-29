@@ -66,19 +66,24 @@ MainWindow::MainWindow(QWidget* parent)
 {
     Q_D(MainWindow);
     ui->setupUi(this);
-    ui->splitter->addWidget(d->renderWidget);
-    ui->splitter->addWidget(d->paramWidget);
+    ui->hsplitter->addWidget(d->renderWidget);
+    ui->hsplitter->addWidget(d->paramWidget);
     ui->toolBox->setMinimumWidth(300);
     ui->vertexShaderHLayout->addWidget(d->vertexShaderEditor);
     ui->fragmentShaderHLayout->addWidget(d->fragmentShaderEditor);
-    ui->splitter->setStretchFactor(0, 3);
-    ui->splitter->setStretchFactor(1, 2);
-    ui->splitter->setStretchFactor(2, 1);
+    ui->hsplitter->setStretchFactor(0, 3);
+    ui->hsplitter->setStretchFactor(1, 2);
+    ui->hsplitter->setStretchFactor(2, 1);
+    ui->vsplitter->setStretchFactor(0, 5);
+    ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
     prepareEditor(d->fragmentShaderEditor);
     QObject::connect(d->vertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(d->fragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
-    QObject::connect(d->renderWidget, SIGNAL(shaderError(QString)), SLOT(badShaderCode(QString)));
+    QObject::connect(d->renderWidget, SIGNAL(vertexShaderError(QString)), SLOT(badVertexShaderCode(QString)));
+    QObject::connect(d->renderWidget, SIGNAL(fragmentShaderError(QString)), SLOT(badFragmentShaderCode(QString)));
+    QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
+    QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
     QObject::connect(d->renderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
@@ -101,7 +106,9 @@ void MainWindow::restoreSettings(void)
 {
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
-    ui->splitter->restoreGeometry(settings.value("MainWindow/splitter/geometry").toByteArray());
+    ui->hsplitter->restoreGeometry(settings.value("MainWindow/hsplitter/geometry").toByteArray());
+    ui->vsplitter->restoreGeometry(settings.value("MainWindow/vsplitter/geometry").toByteArray());
+    ui->toolBox->setCurrentIndex(settings.value("MainWindow/toolbox/currentIndex").toInt());
     const QString& projectFilename = settings.value("Project/filename").toString();
     if (!projectFilename.isEmpty()) {
         openProject(projectFilename);
@@ -115,8 +122,9 @@ void MainWindow::saveSettings(void)
 {
     QSettings settings(Company, AppName);
     settings.setValue("MainWindow/geometry", saveGeometry());
-    settings.setValue("MainWindow/Toolbox/currentIndex", ui->toolBox->currentIndex());
-    settings.setValue("MainWindow/splitter/geometry", saveGeometry());
+    settings.setValue("MainWindow/toolbox/currentIndex", ui->toolBox->currentIndex());
+    settings.setValue("MainWindow/hsplitter/geometry", ui->hsplitter->saveGeometry());
+    settings.setValue("MainWindow/vsplitter/geometry", ui->vsplitter->saveGeometry());
     settings.setValue("Project/filename", d_ptr->project.filename());
 }
 
@@ -129,18 +137,6 @@ void MainWindow::closeEvent(QCloseEvent* e)
     }
     saveSettings();
     e->accept();
-}
-
-void MainWindow::badShaderCode(const QString& msg)
-{
-    ui->logTextEdit->append(msg);
-    ui->toolBox->setItemText(2, tr("Error log*"));
-}
-
-void MainWindow::successfullyLinkedShader(void)
-{
-    ui->logTextEdit->clear();
-    ui->toolBox->setItemText(2, tr("Error log"));
 }
 
 void MainWindow::valueChanged(int v)
@@ -287,6 +283,33 @@ void MainWindow::processShaderChange(void)
     updateWindowTitle();
 }
 
+void MainWindow::badVertexShaderCode(const QString& msg)
+{
+    ui->logTextEdit->append(msg);
+    ui->toolBox->setItemText(2, tr("Error log*"));
+    ui->toolBox->setCurrentIndex(0);
+}
+
+void MainWindow::badFragmentShaderCode(const QString& msg)
+{
+    ui->logTextEdit->append(msg);
+    ui->toolBox->setItemText(2, tr("Error log*"));
+    ui->toolBox->setCurrentIndex(1);
+}
+
+void MainWindow::linkerError(const QString& msg)
+{
+    ui->logTextEdit->append(msg);
+    ui->toolBox->setItemText(2, tr("Error log*"));
+    ui->toolBox->setCurrentIndex(2);
+}
+
+void MainWindow::successfullyLinkedShader(void)
+{
+    ui->logTextEdit->clear();
+    ui->toolBox->setItemText(2, tr("Error log"));
+}
+
 void MainWindow::newProject(void)
 {
     Q_D(MainWindow);
@@ -330,9 +353,7 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->setPlainText(d->project.fragmentShaderSource());
         d->fragmentShaderEditor->blockSignals(false);
         d->renderWidget->setImage(d->project.image());
-        updateShaderSources();
         processShaderChange();
-        d->project.setDirty(false);
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())

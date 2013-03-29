@@ -14,7 +14,7 @@
    <string>GLSL Live Coder</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout_2">
+   <layout class="QGridLayout" name="gridLayout">
     <property name="leftMargin">
      <number>0</number>
     </property>
@@ -28,114 +28,137 @@
      <number>0</number>
     </property>
     <item row="0" column="0">
-     <widget class="QSplitter" name="splitter">
+     <widget class="QSplitter" name="hsplitter">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QToolBox" name="toolBox">
-       <property name="frameShape">
-        <enum>QFrame::NoFrame</enum>
+      <widget class="QSplitter" name="vsplitter">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
        </property>
-       <property name="frameShadow">
-        <enum>QFrame::Plain</enum>
-       </property>
-       <property name="currentIndex">
-        <number>0</number>
-       </property>
-       <property name="tabSpacing">
-        <number>3</number>
-       </property>
-       <widget class="QWidget" name="vertexShaderPage">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>774</width>
-          <height>410</height>
-         </rect>
-        </property>
-        <attribute name="label">
-         <string>Vertex Shader</string>
-        </attribute>
-        <layout class="QGridLayout" name="gridLayout_4">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item row="0" column="0">
-          <layout class="QHBoxLayout" name="vertexShaderHLayout"/>
+       <widget class="QWidget" name="layoutWidget">
+        <layout class="QVBoxLayout" name="verticalLayoutEditors">
+         <item>
+          <widget class="QToolBox" name="toolBox">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+             <horstretch>0</horstretch>
+             <verstretch>2</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="midLineWidth">
+            <number>0</number>
+           </property>
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
+           <property name="tabSpacing">
+            <number>2</number>
+           </property>
+           <widget class="QWidget" name="vertexShaderPage">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>98</width>
+              <height>28</height>
+             </rect>
+            </property>
+            <attribute name="label">
+             <string>Vertex Shader</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_4">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <layout class="QHBoxLayout" name="vertexShaderHLayout"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="fragmentShaderPage">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>772</width>
+              <height>117</height>
+             </rect>
+            </property>
+            <attribute name="label">
+             <string>Fragment Shader</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_3">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
+              <number>0</number>
+             </property>
+             <item row="0" column="0">
+              <layout class="QHBoxLayout" name="fragmentShaderHLayout"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="fragmentShaderPage">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>774</width>
-          <height>410</height>
-         </rect>
-        </property>
-        <attribute name="label">
-         <string>Fragment Shader</string>
-        </attribute>
-        <layout class="QGridLayout" name="gridLayout_3">
+       <widget class="QWidget" name="layoutWidget">
+        <layout class="QVBoxLayout" name="verticalLayoutErrors">
          <property name="leftMargin">
-          <number>0</number>
+          <number>5</number>
          </property>
          <property name="topMargin">
-          <number>0</number>
+          <number>5</number>
          </property>
          <property name="rightMargin">
-          <number>0</number>
+          <number>5</number>
          </property>
          <property name="bottomMargin">
-          <number>0</number>
+          <number>5</number>
          </property>
-         <item row="0" column="0">
-          <layout class="QHBoxLayout" name="fragmentShaderHLayout"/>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Errors</string>
+           </property>
+          </widget>
          </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="logPage">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>0</y>
-          <width>774</width>
-          <height>410</height>
-         </rect>
-        </property>
-        <attribute name="label">
-         <string>Error log</string>
-        </attribute>
-        <layout class="QGridLayout" name="gridLayout">
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item row="0" column="0">
+         <item>
           <widget class="QTextEdit" name="logTextEdit">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
            <property name="font">
             <font>
              <family>Courier New</family>
              <italic>false</italic>
+             <kerning>false</kerning>
             </font>
            </property>
            <property name="readOnly">

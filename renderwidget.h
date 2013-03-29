@@ -5,24 +5,14 @@
 #define __RENDERWIDGET_H_
 
 #include <QGLWidget>
-#include <QGLFramebufferObject>
-#include <QGLShaderProgram>
 #include <QString>
-#include <QVector2D>
-#include <QVector3D>
-#include <QPoint>
-#include <QRgb>
-#include <QPointF>
 #include <QImage>
-#include <QTime>
 #include <QTimerEvent>
 #include <QMouseEvent>
 #include <QDragEnterEvent>
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include <QResizeEvent>
-#include <QMap>
-#include <QVariant>
 #include <QScopedPointer>
 
 class RenderWidgetPrivate;
@@ -52,7 +42,9 @@ public slots:
     void resizeToOriginalImageSize(void);
 
 signals:
-    void shaderError(QString);
+    void vertexShaderError(QString);
+    void fragmentShaderError(QString);
+    void linkerError(QString);
     void linkingSuccessful(void);
     void imageDropped(const QImage&);
 
@@ -65,7 +57,7 @@ private:
 private: // methods
     void goLive(void);
     void stopCode(void);
-    bool linkProgram(const QString& vs = QString(), const QString& fs = QString());
+    void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
 
 protected:
