@@ -17,43 +17,22 @@ class Project : public QObject
     Q_OBJECT
 
 public:
-    explicit Project(QString filename = QString(), QObject* parent = NULL);
+    explicit Project(QObject* parent = NULL);
     void reset(void);
     bool save(void);
     bool save(const QString& fileName);
     bool load(const QString& fileName);
-    QString errorString(void) const { return QObject::tr("%1 (line %2, column %3)").arg(mXml.errorString()).arg(mXml.lineNumber()).arg(mXml.columnNumber()); }
-    bool isDirty(void) const { return mDirty; }
-    const QString& filename(void) const { return mFilename; }
-    const QString vertexShaderSource(void) const { return mVertexShaderSource; }
-    const QString fragmentShaderSource(void) const { return mFragmentShaderSource; }
-    const QImage& image(void) const { return mImage; }
-    int webcam(void) const { return mWebcam; }
-
-    void setDirty(bool dirty = true)
-    {
-        mDirty = dirty;
-    }
-    void setVertexShaderSource(const QString& source)
-    {
-        mVertexShaderSource = source;
-        mDirty = true;
-    }
-    void setFragmentShaderSource(const QString& source)
-    {
-        mFragmentShaderSource = source;
-        mDirty = true;
-    }
-    void setImage(const QImage& image)
-    {
-        mImage = image;
-        mDirty = true;
-    }
-    void setFilename(const QString& filename)
-    {
-        mFilename = filename;
-        mDirty = true;
-    }
+    QString errorString(void) const;
+    bool isDirty(void) const;
+    const QString& filename(void) const;
+    const QString vertexShaderSource(void) const;
+    const QString fragmentShaderSource(void) const;
+    const QImage& image(void) const;
+    void setDirty(bool dirty = true);
+    void setVertexShaderSource(const QString&);
+    void setFragmentShaderSource(const QString&);
+    void setImage(const QImage&);
+    void setFilename(const QString&);
 
 signals:
 
@@ -63,9 +42,7 @@ private: // variables
     QString mVertexShaderSource;
     QString mFragmentShaderSource;
     QImage mImage;
-    int mWebcam;
     QString mFilename;
-    QSize mImageSize;
 
 private: // methods
     void read(void);

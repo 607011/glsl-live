@@ -10,20 +10,18 @@
 #include <QtCore/QDebug>
 #include <QByteArray>
 
-Project::Project(QString filename, QObject* parent)
+Project::Project(QObject* parent)
     : QObject(parent)
     , mDirty(false)
-    , mWebcam(-1)
 {
-    if (!filename.isEmpty())
-        load(filename);
+    /* ... */
 }
 
-void Project::reset()
+void Project::reset(void)
 {
     mDirty = false;
-    mWebcam = -1;
     mImage = QImage(":/images/toad.png");
+    mFilename = QString();
 
     QFile vf(":/shaders/vertexshader.glsl");
     vf.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -68,20 +66,15 @@ bool Project::save(const QString& filename)
         << "    <fragment><![CDATA[" << mFragmentShaderSource << "]]></fragment>\n"
         << "  </shaders>\n";
     out << "  <input>\n";
-    if (!mImage.isNull() || mWebcam >= 0) {
-        out << "    <image>\n";
-        if (!mImage.isNull()) {
-            QByteArray ba;
-            QBuffer buffer(&ba);
-            buffer.open(QIODevice::WriteOnly);
-            mImage.save(&buffer, "PNG");
-            buffer.close();
-            out << "      <static><![CDATA[" << ba.toBase64() << "]]></static>\n";
-        }
-        else if (mWebcam >= 0) {
-            out << "      <webcam>" << mWebcam << "</webcam>\n";
-        }
-        out << "    </image>\n";
+    if (!mImage.isNull()) {
+        QByteArray ba;
+        QBuffer buffer(&ba);
+        buffer.open(QIODevice::WriteOnly);
+        mImage.save(&buffer, "PNG");
+        buffer.close();
+        out << "    <image>\n"
+            << "      <static><![CDATA[" << ba.toBase64() << "]]></static>\n"
+            << "    </image>\n";
     }
     out << "  </input>\n";
     out << "</glsl-live-coder-project>\n";
@@ -121,6 +114,65 @@ bool Project::load(const QString& filename)
     file.close();
     mDirty = false;
     return success;
+}
+
+QString Project::errorString(void) const
+ {
+    return QObject::tr("%1 (line %2, column %3)").arg(mXml.errorString()).arg(mXml.lineNumber()).arg(mXml.columnNumber());
+}
+
+bool Project::isDirty(void) const
+{
+    return mDirty;
+}
+
+const QString &Project::filename(void) const
+{
+    return mFilename;
+}
+
+const QString Project::vertexShaderSource(void) const
+{
+    return mVertexShaderSource;
+}
+
+const QString Project::fragmentShaderSource(void) const
+{
+    return mFragmentShaderSource;
+}
+
+const QImage &Project::image(void) const
+{
+    return mImage;
+}
+
+void Project::setDirty(bool dirty)
+{
+    mDirty = dirty;
+}
+
+void Project::setVertexShaderSource(const QString& source)
+{
+    mVertexShaderSource = source;
+    mDirty = true;
+}
+
+void Project::setFragmentShaderSource(const QString& source)
+{
+    mFragmentShaderSource = source;
+    mDirty = true;
+}
+
+void Project::setImage(const QImage& image)
+{
+    mImage = image;
+    mDirty = true;
+}
+
+void Project::setFilename(const QString& filename)
+{
+    mFilename = filename;
+    mDirty = true;
 }
 
 bool Project::read(QIODevice* device)
@@ -232,20 +284,5 @@ void Project::readInputImageData()
     }
     else {
         mXml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
-    }
-}
-
-void Project::readInputWebcam()
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "webcam");
-    const QString& str = mXml.readElementText();
-    if (!str.isEmpty()) {
-        bool ok = false;
-        mWebcam = str.toInt(&ok);
-        if (!ok)
-            mXml.raiseError(QObject::tr("invalid webcam: %1").arg(str));
-    }
-    else {
-        mXml.raiseError(QObject::tr("empty webcam tag: %1").arg(str));
     }
 }
