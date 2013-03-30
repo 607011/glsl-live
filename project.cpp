@@ -10,41 +10,63 @@
 #include <QtCore/QDebug>
 #include <QByteArray>
 
+class ProjectPrivate {
+public:
+    ProjectPrivate(void)
+        : dirty(false)
+    { /* ... */ }
+    bool dirty;
+    QXmlStreamReader xml;
+    QString vertexShaderSource;
+    QString fragmentShaderSource;
+    QImage image;
+    QString filename;
+
+};
+
 Project::Project(QObject* parent)
     : QObject(parent)
-    , mDirty(false)
+    , d_ptr(new ProjectPrivate)
+{
+    /* ... */
+}
+
+Project::~Project()
 {
     /* ... */
 }
 
 void Project::reset(void)
 {
-    mDirty = false;
-    mImage = QImage(":/images/toad.png");
-    mFilename = QString();
+    Q_D(Project);
+    d->dirty = false;
+    d->image = QImage(":/images/toad.png");
+    d->filename = QString();
 
     QFile vf(":/shaders/vertexshader.glsl");
     vf.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream vin(&vf);
-    mVertexShaderSource = vin.readAll();
+    d->vertexShaderSource = vin.readAll();
     vf.close();
 
     QFile ff(":/shaders/fragmentshader.glsl");
     ff.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream fin(&ff);
-    mFragmentShaderSource = fin.readAll();
+    d->fragmentShaderSource = fin.readAll();
     ff.close();
 }
 
 bool Project::save(void)
 {
-    Q_ASSERT(!mFilename.isEmpty());
-    bool ok = save(mFilename);
+    Q_D(Project);
+    Q_ASSERT(!d->filename.isEmpty());
+    bool ok = save(d->filename);
     return ok;
 }
 
 bool Project::save(const QString& filename)
 {
+    Q_D(Project);
     Q_ASSERT(!filename.isEmpty());
     QFile file(filename);
     int flags = QIODevice::WriteOnly;
@@ -56,48 +78,47 @@ bool Project::save(const QString& filename)
         qWarning() << "file.open() failed.";
         return false;
     }
-    QString d;
-    QTextStream out(&d);
+    QString dstr;
+    QTextStream out(&dstr);
     out.setAutoDetectUnicode(false);
     out.setCodec(QTextCodec::codecForMib(106/* UTF-8 */));
     out << "<glsl-live-coder-project version=\"" << AppVersionNoDebug << "\">\n"
         << "  <shaders>\n"
-        << "    <vertex><![CDATA[" << mVertexShaderSource << "]]></vertex>\n"
-        << "    <fragment><![CDATA[" << mFragmentShaderSource << "]]></fragment>\n"
+        << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
+        << "    <fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
         << "  </shaders>\n";
     out << "  <input>\n";
-    if (!mImage.isNull()) {
+    if (!d->image.isNull()) {
         QByteArray ba;
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
-        mImage.save(&buffer, "PNG");
+        d->image.save(&buffer, "PNG");
         buffer.close();
-        out << "    <image>\n"
-            << "      <static><![CDATA[" << ba.toBase64() << "]]></static>\n"
-            << "    </image>\n";
+        out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
     }
     out << "  </input>\n";
     out << "</glsl-live-coder-project>\n";
     if (compress) {
-        file.write(qCompress(d.toUtf8(), 9));
+        file.write(qCompress(dstr.toUtf8(), 9));
     }
     else {
-        file.write(d.toUtf8());
+        file.write(dstr.toUtf8());
     }
     file.close();
-    mDirty = false;
+    d->dirty = false;
     return ok;
 }
 
 bool Project::load(const QString& filename)
 {
+    Q_D(Project);
     Q_ASSERT(!filename.isEmpty());
-    mFilename = filename;
+    d->filename = filename;
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
     if (!compressed)
         flags |= QIODevice::Text;
-    QFile file(mFilename);
+    QFile file(d->filename);
     bool success = file.open((QIODevice::OpenMode)flags);
     if (!success) {
         qWarning() << "file.open() failed.";
@@ -112,177 +133,174 @@ bool Project::load(const QString& filename)
     if (!success)
         qWarning() << "Project.read(QIODevice* device) failed.";
     file.close();
-    mDirty = false;
+    d->dirty = false;
     return success;
 }
 
 QString Project::errorString(void) const
  {
-    return QObject::tr("%1 (line %2, column %3)").arg(mXml.errorString()).arg(mXml.lineNumber()).arg(mXml.columnNumber());
+    return QObject::tr("%1 (line %2, column %3)")
+            .arg(d_ptr->xml.errorString())
+            .arg(d_ptr->xml.lineNumber())
+            .arg(d_ptr->xml.columnNumber());
 }
 
 bool Project::isDirty(void) const
 {
-    return mDirty;
+    return d_ptr->dirty;
 }
 
 const QString &Project::filename(void) const
 {
-    return mFilename;
+    return d_ptr->filename;
 }
 
 const QString Project::vertexShaderSource(void) const
 {
-    return mVertexShaderSource;
+    return d_ptr->vertexShaderSource;
 }
 
 const QString Project::fragmentShaderSource(void) const
 {
-    return mFragmentShaderSource;
+    return d_ptr->fragmentShaderSource;
 }
 
 const QImage &Project::image(void) const
 {
-    return mImage;
+    return d_ptr->image;
 }
 
 void Project::setDirty(bool dirty)
 {
-    mDirty = dirty;
+    d_ptr->dirty = dirty;
 }
 
 void Project::setVertexShaderSource(const QString& source)
 {
-    mVertexShaderSource = source;
-    mDirty = true;
+    d_ptr->vertexShaderSource = source;
+    d_ptr->dirty = true;
 }
 
 void Project::setFragmentShaderSource(const QString& source)
 {
-    mFragmentShaderSource = source;
-    mDirty = true;
+    d_ptr->fragmentShaderSource = source;
+    d_ptr->dirty = true;
 }
 
 void Project::setImage(const QImage& image)
 {
-    mImage = image;
-    mDirty = true;
+    d_ptr->image = image;
+    d_ptr->dirty = true;
 }
 
 void Project::setFilename(const QString& filename)
 {
-    mFilename = filename;
-    mDirty = true;
+    d_ptr->filename = filename;
+    d_ptr->dirty = true;
 }
 
 bool Project::read(QIODevice* device)
 {
+    Q_D(Project);
     Q_ASSERT(device != NULL);
-    mXml.setDevice(device);
-    if (mXml.readNextStartElement()) {
-        if (mXml.name() == "glsl-live-coder-project" && mXml.attributes().value("version").toString().startsWith("0.")) {
+    d->xml.setDevice(device);
+    if (d->xml.readNextStartElement()) {
+        if (d->xml.name() == "glsl-live-coder-project" && d->xml.attributes().value("version").toString().startsWith("0.")) {
             read();
         }
         else {
-            mXml.raiseError(QObject::tr("The file is not an GLSL Live Coder v0.x project file."));
+            d->xml.raiseError(QObject::tr("The file is not an GLSL Live Coder v0.x project file."));
         }
     }
-    return !mXml.error();
+    return !d->xml.error();
 }
 
 void Project::read(void)
 {
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "glsl-live-coder-project");
-    while (mXml.readNextStartElement()) {
-        if (mXml.name() == "shaders") {
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "glsl-live-coder-project");
+    while (d->xml.readNextStartElement()) {
+        if (d->xml.name() == "shaders") {
             readShaders();
         }
-        else if (mXml.name() == "input") {
+        else if (d->xml.name() == "input") {
             readInput();
         }
         else {
-            mXml.skipCurrentElement();
+            d->xml.skipCurrentElement();
         }
     }
 }
 
 void Project::readShaders(void)
 {
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "shaders");
-    while (mXml.readNextStartElement()) {
-        if (mXml.name() == "vertex") {
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "shaders");
+    while (d->xml.readNextStartElement()) {
+        if (d->xml.name() == "vertex") {
             readShaderVertex();
         }
-        else if (mXml.name() == "fragment") {
+        else if (d->xml.name() == "fragment") {
             readShaderFragment();
         }
         else {
-            mXml.skipCurrentElement();
+            d->xml.skipCurrentElement();
         }
     }
 }
 
 void Project::readShaderVertex()
 {
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "vertex");
-    const QString& str = mXml.readElementText();
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "vertex");
+    const QString& str = d->xml.readElementText();
     if (!str.isEmpty()) {
-        mVertexShaderSource = str;
+        d->vertexShaderSource = str;
     }
     else {
-        mXml.raiseError(QObject::tr("empty vertex shader: %1").arg(str));
+        d->xml.raiseError(QObject::tr("empty vertex shader: %1").arg(str));
     }
 }
 
 void Project::readShaderFragment()
 {
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "fragment");
-    const QString& str = mXml.readElementText();
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "fragment");
+    const QString& str = d->xml.readElementText();
     if (!str.isEmpty()) {
-        mFragmentShaderSource = str;
+        d->fragmentShaderSource = str;
     }
     else {
-        mXml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
+        d->xml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
     }
 }
 
 void Project::readInput(void)
 {
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "input");
-    while (mXml.readNextStartElement()) {
-        if (mXml.name() == "image") {
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "input");
+    while (d->xml.readNextStartElement()) {
+        if (d->xml.name() == "image") {
             readInputImage();
         }
         else {
-            mXml.skipCurrentElement();
+            d->xml.skipCurrentElement();
         }
     }
 }
 
 void Project::readInputImage()
 {
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "image");
-    while (mXml.readNextStartElement()) {
-        if (mXml.name() == "static") {
-            readInputImageData();
-        }
-        else {
-            mXml.skipCurrentElement();
-        }
-    }
-}
-
-void Project::readInputImageData()
-{
-    Q_ASSERT(mXml.isStartElement() && mXml.name() == "static");
-    const QString& str = mXml.readElementText();
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "image");
+    const QString& str = d->xml.readElementText();
     if (!str.isEmpty()) {
         const QByteArray& imgData = QByteArray::fromBase64(str.toUtf8());
-        bool ok = mImage.loadFromData(imgData);
+        bool ok = d->image.loadFromData(imgData);
         if (!ok)
-            qWarning() << "mImage.loadFromData() failed.";
+            qWarning() << "Project::readInputImage() failed.";
     }
     else {
-        mXml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
+        d->xml.raiseError(QObject::tr("empty image: %1").arg(str));
     }
 }

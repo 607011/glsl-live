@@ -7,10 +7,11 @@
 #include <QObject>
 #include <QImage>
 #include <QString>
-#include <QRgb>
 #include <QIODevice>
 #include <QXmlStreamReader>
-#include <QQueue>
+#include <QScopedPointer>
+
+class ProjectPrivate;
 
 class Project : public QObject
 {
@@ -18,10 +19,11 @@ class Project : public QObject
 
 public:
     explicit Project(QObject* parent = NULL);
+    ~Project();
     void reset(void);
     bool save(void);
-    bool save(const QString& fileName);
-    bool load(const QString& fileName);
+    bool save(const QString& filename);
+    bool load(const QString& filename);
     QString errorString(void) const;
     bool isDirty(void) const;
     const QString& filename(void) const;
@@ -36,14 +38,6 @@ public:
 
 signals:
 
-private: // variables
-    bool mDirty;
-    QXmlStreamReader mXml;
-    QString mVertexShaderSource;
-    QString mFragmentShaderSource;
-    QImage mImage;
-    QString mFilename;
-
 private: // methods
     void read(void);
     bool read(QIODevice*);
@@ -53,8 +47,12 @@ private: // methods
     void readShaderVertex(void);
     void readShaderFragment(void);
     void readInputImage(void);
-    void readInputImageData(void);
-    void readInputWebcam(void);
+
+private: // variables
+    QScopedPointer<ProjectPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(Project)
+    Q_DISABLE_COPY(Project)
+
 };
 
 #endif // __PROJECT_H_
