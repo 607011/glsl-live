@@ -19,6 +19,7 @@
 #include <QTime>
 #include <QMap>
 #include <QVariant>
+#include <QTransform>
 #include <qmath.h>
 
 static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
