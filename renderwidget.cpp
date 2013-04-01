@@ -50,6 +50,7 @@ public:
         , resultImageData(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
+        , updateImageGL(false)
     { /* ... */ }
 
     bool firstPaintEventPending;
@@ -75,6 +76,7 @@ public:
     int uLocTexture;
     int uLocMarks;
     int uLocMarksCount;
+    bool updateImageGL;
     QMap<QString, QVariant> uniforms;
     QVector<QVector2D> marks;
 
@@ -181,12 +183,7 @@ void RenderWidget::setImage(const QImage& image)
 {
     Q_D(RenderWidget);
     d->img = image.convertToFormat(QImage::Format_ARGB32);
-    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
-    if (d->shaderProgram->isLinked()) {
-        d->shaderProgram->setUniformValue("uTexture", (GLuint)0);
-        update();
-    }
+    d->updateImageGL = true;
     makeImageFBO();
 }
 
@@ -217,8 +214,11 @@ void RenderWidget::resizeToOriginalImageSize()
 void RenderWidget::updateUniforms()
 {
     Q_D(RenderWidget);
-    if (!d->shaderProgram->isLinked())
+    if (!d->shaderProgram->isLinked()) {
+        qWarning() << "RenderWidget::updateUniforms() called but shader program not linked";
         return;
+    }
+    qDebug() << "RenderWidget::updateUniforms()";
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     d->shaderProgram->setUniformValue(d->uLocTexture, 0);
@@ -254,6 +254,7 @@ void RenderWidget::clearUniforms(void)
 void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
+    makeCurrent();
     if (vs.isEmpty() || fs.isEmpty())
         return;
     d->makeShaderProgram();
@@ -315,6 +316,7 @@ void RenderWidget::stopCode()
 void RenderWidget::initializeGL(void)
 {
     Q_D(RenderWidget);
+    qDebug() << "RenderWidget::initializeGL()";
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glDisable(GL_TEXTURE_2D);
@@ -327,7 +329,6 @@ void RenderWidget::initializeGL(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
 }
 
 void RenderWidget::paintGL(void)
@@ -342,6 +343,13 @@ void RenderWidget::paintGL(void)
     if (d->shaderProgram->isLinked()) {
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->time.elapsed());
     }
+    if (d->updateImageGL) {
+        // Aktualisieren des Bildes *außerhalb* von paintGL() oder initializeGL() ist immer fehlgeschlagen, trotz makeCurrent()
+        glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
+        d->updateImageGL = false;
+    }
+
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 

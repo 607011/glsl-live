@@ -125,7 +125,10 @@ void MainWindow::restoreSettings(void)
     ui->vsplitter->restoreGeometry(settings.value("MainWindow/vsplitter/geometry").toByteArray());
     ui->toolBox->setCurrentIndex(settings.value("MainWindow/toolbox/currentIndex").toInt());
     const QString& projectFilename = settings.value("Project/filename").toString();
-    if (!projectFilename.isEmpty()) {
+    if (projectFilename.isEmpty()) {
+        newProject();
+    }
+    else {
         openProject(projectFilename);
     }
     processShaderChange();
