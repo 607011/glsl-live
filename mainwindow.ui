@@ -187,6 +187,7 @@
      <string>Help</string>
     </property>
     <addaction name="separator"/>
+    <addaction name="actionHelp"/>
     <addaction name="actionAbout"/>
     <addaction name="actionAboutQt"/>
    </widget>
@@ -291,6 +292,14 @@
   <action name="actionResizeWindowToOriginalImageSize">
    <property name="text">
     <string>Resize window to original image size</string>
+   </property>
+  </action>
+  <action name="actionHelp">
+   <property name="text">
+    <string>Help</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
    </property>
   </action>
  </widget>

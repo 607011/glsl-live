@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <QtHelpProject version="1.0">
+     <namespace>de.ct.glsl-live-coder.0-9</namespace>
+     <virtualFolder>doc</virtualFolder>
+     <filterSection>
+         <toc>
+             <section title="GLSL Live Coder" ref="index.html">
+                 <section title="Installation" ref="index.html#installation"/>
+                 <section title="Bedienung" ref="index.html#bedienung"/>
+                 <section title="To-Do" ref="index.html#todo"/>
+             </section>
+         </toc>
+         <keywords>
+             <keyword name="Start" id="Start" ref="index.html#start"/>
+             <keyword name="Installation" id="Installation" ref="index.html#installation"/>
+             <keyword name="Bedienung" id="Bedienung" ref="index.html#bedienung"/>
+             <keyword name="ToDo" id="ToDocopy" ref="index.html#todo"/>
+             <keyword name="FAQ" id="FAQ" ref="index.html#faq"/>
+         </keywords>
+         <files>
+             <file>index.html</file>
+         </files>
+     </filterSection>
+ </QtHelpProject>
