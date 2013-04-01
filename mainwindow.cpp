@@ -20,6 +20,10 @@
 #include <QWidget>
 #include <QString>
 #include <QVector>
+#include <QtHelp/QHelpEngine>
+#include <QMap>
+#include <QUrl>
+#include <QTextBrowser>
 #include <qmath.h>
 #include "main.h"
 #include "mainwindow.h"
@@ -40,6 +44,7 @@ public:
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
+        , helpBrowser(NULL)
     {
         calcSteps();
     }
@@ -53,7 +58,7 @@ public:
     GLSLEdit* vertexShaderEditor;
     GLSLEdit* fragmentShaderEditor;
     QByteArray currentParameterHash;
-
+    QTextBrowser* helpBrowser;
     QVector<double> steps;
 
     virtual ~MainWindowPrivate()
@@ -62,6 +67,8 @@ public:
         delete paramWidget;
         delete vertexShaderEditor;
         delete fragmentShaderEditor;
+        if (helpBrowser)
+            delete helpBrowser;
     }
 
 private:
@@ -109,6 +116,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
     QObject::connect(ui->actionResizeWindowToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
+    QObject::connect(ui->actionHelp, SIGNAL(triggered()), SLOT(showHelp()));
     restoreSettings();
 }
 
@@ -434,6 +442,23 @@ void MainWindow::updateWindowTitle()
                         : tr(" - %1%2")
                           .arg(d_ptr->project.filename())
                           .arg(d_ptr->project.isDirty()? "*" : "")));
+}
+
+void MainWindow::showHelp(void)
+{
+    QHelpEngineCore helpEngine("main.qhc");
+    qDebug() << "helpEngine.setupData() =" << helpEngine.setupData();
+    QMap<QString, QUrl> links = helpEngine.linksForIdentifier("Start");
+    qDebug() << "links.count() =" << links.count();
+    if (links.count() > 0) {
+        QByteArray helpData = helpEngine.fileData(links.constBegin().value());
+        if (!helpData.isEmpty()) {
+            if (d_ptr->helpBrowser == NULL)
+                d_ptr->helpBrowser = new QTextBrowser;
+            d_ptr->helpBrowser->setText(helpData);
+            d_ptr->helpBrowser->show();
+        }
+    }
 }
 
 void MainWindow::about(void)

@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/help">
+        <file alias="main.qhc">doc/main.qhc</file>
+    </qresource>
+</RCC>

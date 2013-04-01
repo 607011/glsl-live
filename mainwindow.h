@@ -27,6 +27,7 @@ protected:
     void closeEvent(QCloseEvent*);
 
 private slots:
+    void showHelp(void);
     void about(void);
     void aboutQt(void);
     void badVertexShaderCode(const QString&);

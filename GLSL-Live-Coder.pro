@@ -1,7 +1,7 @@
 # Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 # All rights reserved.
 
-QT       += core gui opengl xml
+QT       += core gui opengl xml help
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -32,11 +32,16 @@ FORMS    += mainwindow.ui
 
 RESOURCES += \
     shaders.qrc \
-    images.qrc
+    images.qrc \
+    help.qrc
 
 OTHER_FILES += \
     shaders/fragmentshader.glsl \
     shaders/vertexshader.glsl \
     LICENSE.txt \
     examples/crosshatch.xml \
-    TODO.txt
+    TODO.txt \
+    doc/main.qhp \
+    doc/index.html \
+    doc/main.qhcp \
+    doc/default.css

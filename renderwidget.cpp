@@ -129,12 +129,12 @@ RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(parent)
     , d_ptr(new RenderWidgetPrivate)
 {
-    d_ptr->time.start();
     setFocusPolicy(Qt::StrongFocus);
     setFocus(Qt::MouseFocusReason);
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
     setAcceptDrops(true);
     setMouseTracking(true);
+    d_ptr->time.start();
 }
 
 RenderWidget::~RenderWidget()
@@ -167,23 +167,21 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 void RenderWidget::makeImageFBO(void)
 {
     Q_D(RenderWidget);
-    if (context()->isValid()) {
-        if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
-            if (d->resultImageData)
-                delete [] d->resultImageData;
-            d->resultImageData = new GLuint[d->img.width() * d->img.height()];
-            if (d->fbo)
-                delete d->fbo;
-            d->fbo = new QGLFramebufferObject(d->img.size());
-        }
+    makeCurrent();
+    if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
+        if (d->resultImageData)
+            delete [] d->resultImageData;
+        d->resultImageData = new GLuint[d->img.width() * d->img.height()];
+        if (d->fbo)
+            delete d->fbo;
+        d->fbo = new QGLFramebufferObject(d->img.size());
     }
 }
 
 void RenderWidget::setImage(const QImage& image)
 {
-    Q_D(RenderWidget);
-    d->img = image.convertToFormat(QImage::Format_ARGB32);
-    d->updateImageGL = true;
+    d_ptr->img = image.convertToFormat(QImage::Format_ARGB32);
+    d_ptr->updateImageGL = true;
     makeImageFBO();
 }
 
@@ -195,6 +193,7 @@ const QString& RenderWidget::imageFileName(void) const
 QImage RenderWidget::resultImage(void)
 {
     Q_D(RenderWidget);
+    makeCurrent();
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     glViewport(0, 0, d->img.width(), d->img.height());
     makeImageFBO();
@@ -203,7 +202,7 @@ QImage RenderWidget::resultImage(void)
     glReadPixels(0, 0, d->img.width(), d->img.height(), GL_BGRA, GL_UNSIGNED_BYTE, d->resultImageData);
     d->fbo->release();
     glPopAttrib();
-    return QImage(reinterpret_cast<uchar*>(d->resultImageData), d->img.width(), d->img.height(), QImage::Format_RGB32);
+    return QImage(reinterpret_cast<uchar*>(d->resultImageData), d->img.width(), d->img.height(), QImage::Format_RGB32).mirrored(false, true);
 }
 
 void RenderWidget::resizeToOriginalImageSize()
@@ -327,8 +326,8 @@ void RenderWidget::initializeGL(void)
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 }
 
 void RenderWidget::paintGL(void)
