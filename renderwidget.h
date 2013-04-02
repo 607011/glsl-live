@@ -8,6 +8,7 @@
 #include <QString>
 #include <QImage>
 #include <QTimerEvent>
+#include <QWheelEvent>
 #include <QMouseEvent>
 #include <QDragEnterEvent>
 #include <QDragLeaveEvent>
@@ -48,18 +49,6 @@ signals:
     void linkingSuccessful(void);
     void imageDropped(const QImage&);
 
-private:
-    QScopedPointer<RenderWidgetPrivate> d_ptr;
-    Q_DECLARE_PRIVATE(RenderWidget)
-    Q_DISABLE_COPY(RenderWidget)
-
-
-private: // methods
-    void goLive(void);
-    void stopCode(void);
-    void buildProgram(const QString& vs, const QString& fs);
-    void makeImageFBO(void);
-
 protected:
     void resizeEvent(QResizeEvent*);
     void initializeGL(void);
@@ -68,9 +57,22 @@ protected:
     void timerEvent(QTimerEvent*);
     void mouseMoveEvent(QMouseEvent*);
     void mousePressEvent(QMouseEvent*);
+    void mouseReleaseEvent(QMouseEvent*);
+    void wheelEvent(QWheelEvent*);
     void dragEnterEvent(QDragEnterEvent*);
     void dragLeaveEvent(QDragLeaveEvent*);
     void dropEvent(QDropEvent*);
+
+private: // methods
+    void goLive(void);
+    void stopCode(void);
+    void buildProgram(const QString& vs, const QString& fs);
+    void makeImageFBO(void);
+
+private:
+    QScopedPointer<RenderWidgetPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(RenderWidget)
+    Q_DISABLE_COPY(RenderWidget)
 
 };
 

@@ -11,15 +11,15 @@
 #include <QVector2D>
 #include <QVector3D>
 #include <QPoint>
+#include <QRect>
+#include <QPointF>
 #include <QRgb>
 #include <QMimeData>
 #include <QUrl>
 #include <QList>
-#include <QPointF>
 #include <QTime>
 #include <QMap>
 #include <QVariant>
-#include <QTransform>
 #include <qmath.h>
 
 static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
@@ -31,7 +31,7 @@ static const QVector2D TexCoords[4] =
     QVector2D(1, 0),
     QVector2D(1, 1)
 };
-static const QVector3D Vertices[4] =
+static const QVector2D Vertices[4] =
 {
     QVector2D(-1.0, -1.0),
     QVector2D(-1.0,  1.0),
@@ -52,6 +52,11 @@ public:
         , inputTextureHandle(0)
         , liveTimerId(0)
         , updateImageGL(false)
+        , scale(1.0)
+        , leftMouseButtonPressed(false)
+        , mouseMovedWhileLeftButtonPressed(false)
+        , windowAspectRatio(1.0)
+        , imageAspectRatio(1.0)
     { /* ... */ }
 
     bool firstPaintEventPending;
@@ -78,6 +83,13 @@ public:
     int uLocMarks;
     int uLocMarksCount;
     bool updateImageGL;
+    double scale;
+    bool leftMouseButtonPressed;
+    bool mouseMovedWhileLeftButtonPressed;
+    QPoint lastMousePos;
+    QRect viewport;
+    double windowAspectRatio;
+    double imageAspectRatio;
     QMap<QString, QVariant> uniforms;
     QVector<QVector2D> marks;
 
@@ -179,10 +191,11 @@ void RenderWidget::makeImageFBO(void)
     }
 }
 
-void RenderWidget::setImage(const QImage& image)
+void RenderWidget::setImage(const QImage& img)
 {
-    d_ptr->img = image.convertToFormat(QImage::Format_ARGB32);
+    d_ptr->img = img.convertToFormat(QImage::Format_ARGB32);
     d_ptr->updateImageGL = true;
+    d_ptr->imageAspectRatio = double(img.width()) / img.height();
     makeImageFBO();
 }
 
@@ -289,16 +302,6 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
     d->uLocMarksCount = d->shaderProgram->uniformLocation("uMarksCount");
 }
 
-void RenderWidget::resizeEvent(QResizeEvent* e)
-{
-    Q_D(RenderWidget);
-    d->resolution = QSizeF(e->size());
-    if (d->shaderProgram->isLinked()) {
-        d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
-    }
-    glViewport(0, 0, e->size().width(), e->size().height());
-}
-
 void RenderWidget::goLive()
 {
     if (d_ptr->liveTimerId == 0)
@@ -313,15 +316,38 @@ void RenderWidget::stopCode()
     }
 }
 
+void RenderWidget::resizeEvent(QResizeEvent* e)
+{
+    Q_D(RenderWidget);
+    resizeGL(e->size().width(), e->size().height());
+    if (d->shaderProgram->isLinked())
+        d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
+}
+
+void RenderWidget::resizeGL(int glw, int glh)
+{
+    Q_D(RenderWidget);
+    d->windowAspectRatio = double(glw) / glh;
+    if (d->windowAspectRatio < d->imageAspectRatio) {
+        int h = int(width() / d->imageAspectRatio);
+        d->viewport = QRect(0, (glh-h)/2, glw, h);
+    }
+    else {
+        int w = int(height() * d->imageAspectRatio);
+        d->viewport = QRect((glw-w)/2, 0, w, glh);
+    }
+    d->resolution = QSizeF(d->viewport.size());
+    glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
+    update();
+}
+
 void RenderWidget::initializeGL(void)
 {
     Q_D(RenderWidget);
-    qDebug() << "RenderWidget::initializeGL()";
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
-    glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.4f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glGenTextures(1, &d->inputTextureHandle);
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
@@ -344,46 +370,54 @@ void RenderWidget::paintGL(void)
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->time.elapsed());
     }
     if (d->updateImageGL) {
-        // Aktualisieren des Bildes *außerhalb* von paintGL() oder initializeGL() ist immer fehlgeschlagen, trotz makeCurrent()
+        d->updateImageGL = false;
+        // Aktualisierung hier, weil Aktualisieren des Bildes
+        // *außerhalb* von paintGL() oder initializeGL() trotz
+        // makeCurrent() immer fehlgeschlagen ist
         glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
-        d->updateImageGL = false;
     }
-
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void RenderWidget::timerEvent(QTimerEvent* e)
 {
-    if (e->timerId() == d_ptr->liveTimerId) {
-        updateGL();
-    }
+    if (e->timerId() == d_ptr->liveTimerId)
+        update();
     else
         qWarning() << "RenderWidget::timerEven() received bad timer id:" << e->timerId();
-
     e->accept();
 }
 
 void RenderWidget::mouseMoveEvent(QMouseEvent* e)
 {
     Q_D(RenderWidget);
-    if (d->shaderProgram->isLinked()) {
-        d->mousePos = QPointF(e->pos());
-        d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
-        updateGL();
+    if (d->leftMouseButtonPressed) {
+        qDebug() << "d->mouseMovedWhileLeftButtonPressed = true";
+        d->mouseMovedWhileLeftButtonPressed = true;
+        QPoint md = d->lastMousePos - e->pos();
+        glViewport(-md.x(), md.y(), d->scale * width(), d->scale * height());
+    }
+    else {
+        if (d->shaderProgram->isLinked()) {
+            d->mousePos = QPointF(e->pos());
+            d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
+            update();
+        }
     }
     e->accept();
 }
 
 void RenderWidget::mousePressEvent(QMouseEvent* e)
 {
+    Q_D(RenderWidget);
     switch (e->button()) {
     case Qt::LeftButton:
-        d_ptr->marks << QVector2D(double(e->x()) / width(), double(e->y()) / height());
-        updateUniforms();
+        d->leftMouseButtonPressed = true;
+        d->lastMousePos = e->pos();
         break;
     case Qt::RightButton:
-        d_ptr->marks.clear();
+        d->marks.clear();
         updateUniforms();
         break;
     default:
@@ -391,9 +425,42 @@ void RenderWidget::mousePressEvent(QMouseEvent* e)
     }
 }
 
-void RenderWidget::resizeGL(int w, int h)
+void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
 {
-    glViewport(0, 0, w, h);
+    Q_D(RenderWidget);
+    qDebug() << "RenderWidget::mouseReleaseEvent() e->button() =" << e->button();
+    switch (e->button()) {
+    case Qt::LeftButton:
+        if (d->mouseMovedWhileLeftButtonPressed) {
+
+        }
+        else {
+            d->marks << QVector2D(double(e->x()) / width(), double(e->y()) / height());
+            qDebug() << d->marks;
+            updateUniforms();
+        }
+        d->leftMouseButtonPressed = false;
+        d->mouseMovedWhileLeftButtonPressed = false;
+        break;
+    case Qt::RightButton:
+        d->marks.clear();
+        updateUniforms();
+        break;
+    default:
+        break;
+    }
+}
+
+void RenderWidget::wheelEvent(QWheelEvent* e)
+{
+    Q_D(RenderWidget);
+    if (e->delta() == 0)
+        return;
+    if (e->delta() < 0)
+        d->scale /= 1e-2 * double(-e->delta());
+    else
+        d->scale *= 1e-2 * double(e->delta());
+    resizeGL(d->scale * d->viewport.width(), d->scale * d->viewport.height()); // XXX
 }
 
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)
