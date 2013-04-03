@@ -8,6 +8,8 @@
 #include <QCloseEvent>
 #include <QScopedPointer>
 #include <QString>
+#include <QAction>
+#include <QMenu>
 
 namespace Ui {
 class MainWindow;
@@ -37,6 +39,8 @@ private slots:
     void parseShadersForParameters();
     void processShaderChange(void);
     void updateShaderSources(void);
+    void loadRecentScript(void);
+    void appendToRecentFileList(const QString& fileName, const QString& listName, QMenu* menu, QAction* actions[]);
     void newProject(void);
     void openProject(void);
     void openProject(const QString& filename);

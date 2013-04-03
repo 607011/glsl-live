@@ -60,6 +60,8 @@ public:
     QByteArray currentParameterHash;
     QTextBrowser* helpBrowser;
     QVector<double> steps;
+    static const int MaxRecentFiles = 16;
+    QAction* recentProjectsActs[MaxRecentFiles];
 
     virtual ~MainWindowPrivate()
     {
@@ -88,6 +90,13 @@ MainWindow::MainWindow(QWidget* parent)
 {
     Q_D(MainWindow);
     ui->setupUi(this);
+    for (int i = 0; i < MainWindowPrivate::MaxRecentFiles; ++i) {
+        QAction* act = new QAction(this);
+        act->setVisible(false);
+        d->recentProjectsActs[i] = act;
+        QObject::connect(act, SIGNAL(triggered()), SLOT(loadRecentScript()));
+        ui->menuRecentProjects->addAction(act);
+    }
     ui->hsplitter->addWidget(d->renderWidget);
     ui->hsplitter->addWidget(d->paramWidget);
     ui->toolBox->setMinimumWidth(300);
@@ -127,11 +136,13 @@ MainWindow::~MainWindow()
 
 void MainWindow::restoreSettings(void)
 {
+    Q_D(MainWindow);
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
     ui->hsplitter->restoreGeometry(settings.value("MainWindow/hsplitter/geometry").toByteArray());
     ui->vsplitter->restoreGeometry(settings.value("MainWindow/vsplitter/geometry").toByteArray());
     ui->toolBox->setCurrentIndex(settings.value("MainWindow/toolbox/currentIndex").toInt());
+    appendToRecentFileList(QString(), "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
     const QString& projectFilename = settings.value("Project/filename").toString();
     if (projectFilename.isEmpty()) {
         newProject();
@@ -357,6 +368,44 @@ void MainWindow::newProject(void)
     updateWindowTitle();
 }
 
+void MainWindow::appendToRecentFileList(const QString& filename, const QString& listname, QMenu* menu, QAction* actions[])
+{
+    QSettings settings(Company, AppName);
+    QStringList files = settings.value(listname).toStringList();
+    if (!filename.isEmpty()) {
+        files.removeAll(filename);
+        files.prepend(filename);
+        while (files.size() > MainWindowPrivate::MaxRecentFiles)
+            files.removeLast();
+    }
+    QStringList updatedFiles;
+    QStringListIterator file(files);
+    while (file.hasNext() && updatedFiles.size() < MainWindowPrivate::MaxRecentFiles) {
+        const QString& proposedFilename = file.next();
+        QFileInfo fInfo(proposedFilename);
+        // lesbare Dateien behalten, Duplikate verwerfen
+        if (!updatedFiles.contains(proposedFilename) && fInfo.isFile() && fInfo.isReadable()) {
+            const int i = updatedFiles.size();
+            const QString& text = tr("&%1 %2").arg(i).arg(fInfo.fileName());
+            actions[i]->setText(text);
+            actions[i]->setData(proposedFilename);
+            actions[i]->setVisible(true);
+            updatedFiles.append(proposedFilename);
+        }
+    }
+    for (int i = files.size(); i < MainWindowPrivate::MaxRecentFiles; ++i)
+        actions[i]->setVisible(false);
+    menu->setEnabled(updatedFiles.size() > 0);
+    settings.setValue(listname, updatedFiles);
+}
+
+void MainWindow::loadRecentScript(void)
+{
+    const QAction* const action = qobject_cast<QAction*>(sender());
+    if (action)
+        openProject(action->data().toString());
+}
+
 void MainWindow::openProject(void)
 {
     if (d_ptr->project.isDirty()) {
@@ -369,7 +418,6 @@ void MainWindow::openProject(void)
         return;
     openProject(filename);
 }
-
 
 void MainWindow::openProject(const QString& filename)
 {
@@ -385,6 +433,7 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->blockSignals(false);
         d->renderWidget->setImage(d->project.image());
         processShaderChange();
+        appendToRecentFileList(filename, "Project/recentFileList", ui->menuRecentProjects, d->recentProjectsActs);
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())
@@ -422,6 +471,8 @@ void MainWindow::saveProject(const QString &filename)
     ui->statusBar->showMessage(ok
                                ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
                                : tr("Saving failed."), 3000);
+    if (ok)
+        appendToRecentFileList(filename, "Project/recentFileList", ui->menuRecentProjects, d->recentProjectsActs);
     updateWindowTitle();
 }
 
