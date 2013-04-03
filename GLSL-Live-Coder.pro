@@ -42,4 +42,7 @@ OTHER_FILES += \
     LICENSE.txt \
     examples/crosshatch.xml \
     TODO.txt \
-    doc/index.html
+    doc/index.html \
+    examples/chromatic.xml \
+    examples/ontoeidetik.xml \
+    examples/gaussian.xml
