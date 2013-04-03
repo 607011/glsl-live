@@ -31,6 +31,7 @@ public:
     const QString fragmentShaderSource(void) const;
     const QImage& image(void) const;
     void setDirty(bool dirty = true);
+    void setClean(bool clean = true);
     void setVertexShaderSource(const QString&);
     void setFragmentShaderSource(const QString&);
     void setImage(const QImage&);

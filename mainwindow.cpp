@@ -147,7 +147,6 @@ void MainWindow::restoreSettings(void)
     else {
         openProject(projectFilename);
     }
-    processShaderChange();
     d_ptr->project.setDirty(false);
     updateWindowTitle();
 }
@@ -356,7 +355,8 @@ void MainWindow::newProject(void)
     d->vertexShaderEditor->setPlainText(d->project.vertexShaderSource());
     d->fragmentShaderEditor->setPlainText(d->project.fragmentShaderSource());
     d->renderWidget->setImage(d->project.image());
-    updateShaderSources();
+    processShaderChange();
+    d->project.setClean();
     updateWindowTitle();
 }
 
@@ -428,6 +428,7 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->blockSignals(false);
         d->renderWidget->setImage(d->project.image());
         processShaderChange();
+        d->project.setClean();
         appendToRecentFileList(filename, "Project/recentFileList", ui->menuRecentProjects, d->recentProjectsActs);
     }
     ui->statusBar->showMessage(ok

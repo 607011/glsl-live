@@ -1,14 +1,14 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#include "project.h"
-#include "main.h"
 #include <QBuffer>
 #include <QFile>
 #include <QTextStream>
 #include <QTextCodec>
 #include <QtCore/QDebug>
 #include <QByteArray>
+#include "project.h"
+#include "main.h"
 
 class ProjectPrivate {
 public:
@@ -41,12 +41,10 @@ void Project::reset(void)
     d->dirty = false;
     d->image = QImage(":/images/toad.png");
     d->filename = QString();
-
     QFile vf(":/shaders/vertexshader.glsl");
     vf.open(QIODevice::ReadOnly | QIODevice::Text);
     d->vertexShaderSource = vf.readAll();
     vf.close();
-
     QFile ff(":/shaders/fragmentshader.glsl");
     ff.open(QIODevice::ReadOnly | QIODevice::Text);
     d->fragmentShaderSource = ff.readAll();
@@ -102,7 +100,7 @@ bool Project::save(const QString& filename)
         file.write(dstr.toUtf8());
     }
     file.close();
-    d->dirty = false;
+    setClean();
     return ok;
 }
 
@@ -130,7 +128,7 @@ bool Project::load(const QString& filename)
     if (!success)
         qWarning() << "Project.read(QIODevice* device) failed.";
     file.close();
-    d->dirty = false;
+    setClean();
     return success;
 }
 
@@ -170,6 +168,11 @@ const QImage &Project::image(void) const
 void Project::setDirty(bool dirty)
 {
     d_ptr->dirty = dirty;
+}
+
+void Project::setClean(bool clean)
+{
+    setDirty(!clean);
 }
 
 void Project::setVertexShaderSource(const QString& source)

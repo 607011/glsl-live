@@ -312,7 +312,7 @@ void RenderWidget::calcViewport(int w, int h)
     d->resolution = QSizeF(d->viewport.size());
     if (d->shaderProgram->isLinked())
         d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
-    update();
+    updateGL();
 }
 
 void RenderWidget::resizeEvent(QResizeEvent* e)
@@ -333,7 +333,7 @@ void RenderWidget::initializeGL(void)
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glGenTextures(1, &d->inputTextureHandle);
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
@@ -346,6 +346,7 @@ void RenderWidget::initializeGL(void)
 void RenderWidget::paintGL(void)
 {
     Q_D(RenderWidget);
+    glClear(GL_COLOR_BUFFER_BIT);
     if (d->firstPaintEventPending) {
         buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
         if (d->shaderProgram->isLinked())
@@ -388,8 +389,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
     }
     else {
         if (d->shaderProgram->isLinked()) {
-            d->mousePos = QPointF(e->pos() - d->viewport.topLeft());
-            qDebug() << d->mousePos << d->offset << d->viewport.topLeft();
+            d->mousePos = QPointF(e->pos() - QPoint(d->viewport.left(), height() - d->viewport.bottom()));
             d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
             update();
         }
