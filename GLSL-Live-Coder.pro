@@ -1,7 +1,7 @@
 # Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 # All rights reserved.
 
-QT       += core gui opengl xml help
+QT       += core gui opengl xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -26,7 +26,8 @@ HEADERS  += mainwindow.h \
     doubleslider.h \
     glsledit/glslhighlighter.h \
     glsledit/sidebarwidget.h \
-    glsledit/glsldoclayout.h
+    glsledit/glsldoclayout.h \
+    util.h
 
 FORMS    += mainwindow.ui
 
@@ -41,7 +42,4 @@ OTHER_FILES += \
     LICENSE.txt \
     examples/crosshatch.xml \
     TODO.txt \
-    doc/main.qhp \
-    doc/index.html \
-    doc/main.qhcp \
-    doc/default.css
+    doc/index.html

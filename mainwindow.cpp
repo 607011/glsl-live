@@ -4,6 +4,7 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QFile>
 #include <QFileInfo>
 #include <QByteArray>
 #include <QTextStream>
@@ -14,16 +15,13 @@
 #include <QDoubleSpinBox>
 #include <QCheckBox>
 #include <QGroupBox>
+#include <QWidget>
+#include <QTextBrowser>
 #include <QLayout>
 #include <QTimer>
 #include <QByteArray>
-#include <QWidget>
 #include <QString>
 #include <QVector>
-#include <QtHelp/QHelpEngine>
-#include <QMap>
-#include <QUrl>
-#include <QTextBrowser>
 #include <qmath.h>
 #include "main.h"
 #include "mainwindow.h"
@@ -32,6 +30,7 @@
 #include "project.h"
 #include "renderwidget.h"
 #include "glsledit/glsledit.h"
+#include "util.h"
 
 
 static void prepareEditor(GLSLEdit* editor);
@@ -44,7 +43,7 @@ public:
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
-        , helpBrowser(NULL)
+        , docBrowser(NULL)
     {
         calcSteps();
     }
@@ -58,17 +57,16 @@ public:
     GLSLEdit* vertexShaderEditor;
     GLSLEdit* fragmentShaderEditor;
     QByteArray currentParameterHash;
-    QTextBrowser* helpBrowser;
+    QTextBrowser* docBrowser;
     QVector<double> steps;
 
     virtual ~MainWindowPrivate()
     {
-        delete renderWidget;
-        delete paramWidget;
-        delete vertexShaderEditor;
-        delete fragmentShaderEditor;
-        if (helpBrowser)
-            delete helpBrowser;
+        safeDelete(renderWidget);
+        safeDelete(paramWidget);
+        safeDelete(vertexShaderEditor);
+        safeDelete(fragmentShaderEditor);
+        safeDelete(docBrowser);
     }
 
 private:
@@ -115,7 +113,6 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
-    QObject::connect(ui->actionResizeWindowToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     QObject::connect(ui->actionHelp, SIGNAL(triggered()), SLOT(showHelp()));
     restoreSettings();
 }
@@ -446,19 +443,16 @@ void MainWindow::updateWindowTitle()
 
 void MainWindow::showHelp(void)
 {
-    QHelpEngineCore helpEngine("main.qhc");
-    qDebug() << "helpEngine.setupData() =" << helpEngine.setupData();
-    QMap<QString, QUrl> links = helpEngine.linksForIdentifier("Start");
-    qDebug() << "links.count() =" << links.count();
-    if (links.count() > 0) {
-        QByteArray helpData = helpEngine.fileData(links.constBegin().value());
-        if (!helpData.isEmpty()) {
-            if (d_ptr->helpBrowser == NULL)
-                d_ptr->helpBrowser = new QTextBrowser;
-            d_ptr->helpBrowser->setText(helpData);
-            d_ptr->helpBrowser->show();
-        }
+    Q_D(MainWindow);
+    QFile docFile(":/doc/index.html");
+    docFile.open(QIODevice::ReadOnly | QIODevice::Text);
+    if (d->docBrowser == NULL) {
+        d->docBrowser = new QTextBrowser;
+        d->docBrowser->setOpenExternalLinks(true);
+        d->docBrowser->setOpenLinks(true);
     }
+    d->docBrowser->setText(docFile.readAll());
+    d->docBrowser->show();
 }
 
 void MainWindow::about(void)

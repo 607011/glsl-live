@@ -1,7 +1,6 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#include "renderwidget.h"
 #include <QtCore/QDebug>
 #include <QRegExp>
 #include <QList>
@@ -21,6 +20,8 @@
 #include <QMap>
 #include <QVariant>
 #include <qmath.h>
+#include "renderwidget.h"
+#include "util.h"
 
 static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
 static const int PROGRAM_TEXCOORD_ATTRIBUTE = 1;
@@ -55,8 +56,6 @@ public:
         , scale(1.0)
         , leftMouseButtonPressed(false)
         , mouseMovedWhileLeftButtonPressed(false)
-        , windowAspectRatio(1.0)
-        , imageAspectRatio(1.0)
     { /* ... */ }
 
     bool firstPaintEventPending;
@@ -84,12 +83,11 @@ public:
     int uLocMarksCount;
     bool updateImageGL;
     double scale;
+    QPoint offset;
     bool leftMouseButtonPressed;
     bool mouseMovedWhileLeftButtonPressed;
     QPoint lastMousePos;
     QRect viewport;
-    double windowAspectRatio;
-    double imageAspectRatio;
     QMap<QString, QVariant> uniforms;
     QVector<QVector2D> marks;
 
@@ -109,31 +107,22 @@ public:
     {
         deleteShaderProgram();
         deleteShaders();
-        if (fbo)
-            delete fbo;
-        if (resultImageData)
-            delete [] resultImageData;
+        safeDelete(fbo);
+        safeDeleteArray(resultImageData);
     }
 
 private:
     void deleteShaders()
     {
-        if (vertexShader) {
-            delete vertexShader;
-            vertexShader = NULL;
-        }
-        if (fragmentShader) {
-            delete fragmentShader;
-            fragmentShader = NULL;
-        }
+        safeDelete(vertexShader);
+        safeDelete(fragmentShader);
     }
 
     void deleteShaderProgram(void)
     {
         if (shaderProgram) {
             shaderProgram->removeAllShaders();
-            delete shaderProgram;
-            shaderProgram = NULL;
+            safeDelete(shaderProgram);
         }
     }
 };
@@ -182,20 +171,18 @@ void RenderWidget::makeImageFBO(void)
     Q_D(RenderWidget);
     makeCurrent();
     if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
-        if (d->resultImageData)
-            delete [] d->resultImageData;
+        safeDeleteArray(d->resultImageData);
         d->resultImageData = new GLuint[d->img.width() * d->img.height()];
-        if (d->fbo)
-            delete d->fbo;
+        safeDelete(d->fbo);
         d->fbo = new QGLFramebufferObject(d->img.size());
     }
 }
 
 void RenderWidget::setImage(const QImage& img)
 {
-    d_ptr->img = img.convertToFormat(QImage::Format_ARGB32);
-    d_ptr->updateImageGL = true;
-    d_ptr->imageAspectRatio = double(img.width()) / img.height();
+    Q_D(RenderWidget);
+    d->img = img.convertToFormat(QImage::Format_ARGB32);
+    d->updateImageGL = true;
     makeImageFBO();
 }
 
@@ -219,11 +206,6 @@ QImage RenderWidget::resultImage(void)
     return QImage(reinterpret_cast<uchar*>(d->resultImageData), d->img.width(), d->img.height(), QImage::Format_RGB32).mirrored(false, true);
 }
 
-void RenderWidget::resizeToOriginalImageSize()
-{
-    resize(d_ptr->img.size());
-}
-
 void RenderWidget::updateUniforms()
 {
     Q_D(RenderWidget);
@@ -231,7 +213,6 @@ void RenderWidget::updateUniforms()
         qWarning() << "RenderWidget::updateUniforms() called but shader program not linked";
         return;
     }
-    qDebug() << "RenderWidget::updateUniforms()";
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     d->shaderProgram->setUniformValue(d->uLocTexture, 0);
@@ -316,29 +297,33 @@ void RenderWidget::stopCode()
     }
 }
 
-void RenderWidget::resizeEvent(QResizeEvent* e)
+void RenderWidget::calcViewport(const QSize& size)
 {
-    Q_D(RenderWidget);
-    resizeGL(e->size().width(), e->size().height());
-    if (d->shaderProgram->isLinked())
-        d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
+    calcViewport(size.width(), size.height());
 }
 
-void RenderWidget::resizeGL(int glw, int glh)
+void RenderWidget::calcViewport(int w, int h)
 {
     Q_D(RenderWidget);
-    d->windowAspectRatio = double(glw) / glh;
-    if (d->windowAspectRatio < d->imageAspectRatio) {
-        int h = int(width() / d->imageAspectRatio);
-        d->viewport = QRect(0, (glh-h)/2, glw, h);
-    }
-    else {
-        int w = int(height() * d->imageAspectRatio);
-        d->viewport = QRect((glw-w)/2, 0, w, glh);
-    }
-    d->resolution = QSizeF(d->viewport.size());
+    const QSizeF& glSize = d->scale * QSizeF(d->img.size());
+    const QPoint& topLeft = QPoint(w - glSize.width(), h - glSize.height()) / 2;
+    d->viewport = QRect(topLeft + d->offset, glSize.toSize());
     glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
+    d->resolution = QSizeF(d->viewport.size());
+    if (d->shaderProgram->isLinked())
+        d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     update();
+}
+
+void RenderWidget::resizeEvent(QResizeEvent* e)
+{
+    calcViewport(e->size());
+}
+
+void RenderWidget::resizeGL(int w, int h)
+{
+    calcViewport(w, h);
+    updateGL();
 }
 
 void RenderWidget::initializeGL(void)
@@ -346,8 +331,9 @@ void RenderWidget::initializeGL(void)
     Q_D(RenderWidget);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
-    glClearColor(0.4f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     glGenTextures(1, &d->inputTextureHandle);
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
@@ -385,7 +371,7 @@ void RenderWidget::timerEvent(QTimerEvent* e)
     if (e->timerId() == d_ptr->liveTimerId)
         update();
     else
-        qWarning() << "RenderWidget::timerEven() received bad timer id:" << e->timerId();
+        qWarning() << "RenderWidget::timerEvent() received bad timer id:" << e->timerId();
     e->accept();
 }
 
@@ -393,14 +379,17 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
 {
     Q_D(RenderWidget);
     if (d->leftMouseButtonPressed) {
-        qDebug() << "d->mouseMovedWhileLeftButtonPressed = true";
         d->mouseMovedWhileLeftButtonPressed = true;
-        QPoint md = d->lastMousePos - e->pos();
-        glViewport(-md.x(), md.y(), d->scale * width(), d->scale * height());
+        QPoint dp = e->pos() - d->lastMousePos;
+        dp.setY(-dp.y());
+        d->offset += dp;
+        d->lastMousePos = e->pos();
+        calcViewport(width(), height());
     }
     else {
         if (d->shaderProgram->isLinked()) {
-            d->mousePos = QPointF(e->pos());
+            d->mousePos = QPointF(e->pos() - d->viewport.topLeft());
+            qDebug() << d->mousePos << d->offset << d->viewport.topLeft();
             d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
             update();
         }
@@ -428,13 +417,9 @@ void RenderWidget::mousePressEvent(QMouseEvent* e)
 void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
 {
     Q_D(RenderWidget);
-    qDebug() << "RenderWidget::mouseReleaseEvent() e->button() =" << e->button();
     switch (e->button()) {
     case Qt::LeftButton:
-        if (d->mouseMovedWhileLeftButtonPressed) {
-
-        }
-        else {
+        if (!d->mouseMovedWhileLeftButtonPressed) {
             d->marks << QVector2D(double(e->x()) / width(), double(e->y()) / height());
             qDebug() << d->marks;
             updateUniforms();
@@ -454,13 +439,11 @@ void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
 void RenderWidget::wheelEvent(QWheelEvent* e)
 {
     Q_D(RenderWidget);
-    if (e->delta() == 0)
+    if (d->img.isNull() || e->delta() == 0)
         return;
-    if (e->delta() < 0)
-        d->scale /= 1e-2 * double(-e->delta());
-    else
-        d->scale *= 1e-2 * double(e->delta());
-    resizeGL(d->scale * d->viewport.width(), d->scale * d->viewport.height()); // XXX
+    double f = e->delta() * (e->modifiers() & Qt::ControlModifier)? 0.1 : 0.05;
+    d->scale *= (e->delta() < 0)? 1-f : 1+f;
+    calcViewport(width(), height());
 }
 
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)

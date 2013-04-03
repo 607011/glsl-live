@@ -21,7 +21,6 @@ public:
     QString fragmentShaderSource;
     QImage image;
     QString filename;
-
 };
 
 Project::Project(QObject* parent)
@@ -45,14 +44,12 @@ void Project::reset(void)
 
     QFile vf(":/shaders/vertexshader.glsl");
     vf.open(QIODevice::ReadOnly | QIODevice::Text);
-    QTextStream vin(&vf);
-    d->vertexShaderSource = vin.readAll();
+    d->vertexShaderSource = vf.readAll();
     vf.close();
 
     QFile ff(":/shaders/fragmentshader.glsl");
     ff.open(QIODevice::ReadOnly | QIODevice::Text);
-    QTextStream fin(&ff);
-    d->fragmentShaderSource = fin.readAll();
+    d->fragmentShaderSource = ff.readAll();
     ff.close();
 }
 
@@ -178,25 +175,25 @@ void Project::setDirty(bool dirty)
 void Project::setVertexShaderSource(const QString& source)
 {
     d_ptr->vertexShaderSource = source;
-    d_ptr->dirty = true;
+    setDirty();
 }
 
 void Project::setFragmentShaderSource(const QString& source)
 {
     d_ptr->fragmentShaderSource = source;
-    d_ptr->dirty = true;
+    setDirty();
 }
 
 void Project::setImage(const QImage& image)
 {
     d_ptr->image = image;
-    d_ptr->dirty = true;
+    setDirty();
 }
 
 void Project::setFilename(const QString& filename)
 {
     d_ptr->filename = filename;
-    d_ptr->dirty = true;
+    setDirty();
 }
 
 bool Project::read(QIODevice* device)

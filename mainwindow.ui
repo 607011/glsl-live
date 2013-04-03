@@ -209,7 +209,6 @@
      <string>Tools</string>
     </property>
     <addaction name="actionRemoveImage"/>
-    <addaction name="actionResizeWindowToOriginalImageSize"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTools"/>

@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/help">
-        <file alias="main.qhc">doc/main.qhc</file>
+    <qresource prefix="/doc">
+        <file alias="index.html">doc/index.html</file>
     </qresource>
 </RCC>

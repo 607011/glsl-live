@@ -39,9 +39,6 @@ public:
     void clearUniforms(void);
     QImage resultImage(void);
 
-public slots:
-    void resizeToOriginalImageSize(void);
-
 signals:
     void vertexShaderError(QString);
     void fragmentShaderError(QString);
@@ -68,6 +65,8 @@ private: // methods
     void stopCode(void);
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
+    void calcViewport(const QSize&);
+    void calcViewport(int w, int h);
 
 private:
     QScopedPointer<RenderWidgetPrivate> d_ptr;
