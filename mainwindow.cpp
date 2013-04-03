@@ -97,7 +97,7 @@ MainWindow::MainWindow(QWidget* parent)
     }
     ui->hsplitter->addWidget(d->renderWidget);
     ui->hsplitter->addWidget(d->paramWidget);
-    ui->toolBox->setMinimumWidth(300);
+    ui->tabWidget->setMinimumWidth(300);
     ui->vertexShaderHLayout->addWidget(d->vertexShaderEditor);
     ui->fragmentShaderHLayout->addWidget(d->fragmentShaderEditor);
     ui->hsplitter->setStretchFactor(0, 3);
@@ -138,7 +138,7 @@ void MainWindow::restoreSettings(void)
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
     ui->hsplitter->restoreGeometry(settings.value("MainWindow/hsplitter/geometry").toByteArray());
     ui->vsplitter->restoreGeometry(settings.value("MainWindow/vsplitter/geometry").toByteArray());
-    ui->toolBox->setCurrentIndex(settings.value("MainWindow/toolbox/currentIndex").toInt());
+    ui->tabWidget->setCurrentIndex(settings.value("MainWindow/tabwidget/currentIndex").toInt());
     appendToRecentFileList(QString(), "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
     const QString& projectFilename = settings.value("Project/filename").toString();
     if (projectFilename.isEmpty()) {
@@ -156,7 +156,7 @@ void MainWindow::saveSettings(void)
 {
     QSettings settings(Company, AppName);
     settings.setValue("MainWindow/geometry", saveGeometry());
-    settings.setValue("MainWindow/toolbox/currentIndex", ui->toolBox->currentIndex());
+    settings.setValue("MainWindow/tabwidget/currentIndex", ui->tabWidget->currentIndex());
     settings.setValue("MainWindow/hsplitter/geometry", ui->hsplitter->saveGeometry());
     settings.setValue("MainWindow/vsplitter/geometry", ui->vsplitter->saveGeometry());
     settings.setValue("Project/filename", d_ptr->project.filename());
@@ -325,28 +325,23 @@ void MainWindow::processShaderChange(void)
 void MainWindow::badVertexShaderCode(const QString& msg)
 {
     ui->logTextEdit->append(msg);
-    ui->toolBox->setItemText(2, tr("Error log*"));
-    ui->toolBox->setCurrentIndex(0);
+    ui->tabWidget->setCurrentIndex(0);
 }
 
 void MainWindow::badFragmentShaderCode(const QString& msg)
 {
     ui->logTextEdit->append(msg);
-    ui->toolBox->setItemText(2, tr("Error log*"));
-    ui->toolBox->setCurrentIndex(1);
+    ui->tabWidget->setCurrentIndex(1);
 }
 
 void MainWindow::linkerError(const QString& msg)
 {
     ui->logTextEdit->append(msg);
-    ui->toolBox->setItemText(2, tr("Error log*"));
-    ui->toolBox->setCurrentIndex(2);
 }
 
 void MainWindow::successfullyLinkedShader(void)
 {
     ui->logTextEdit->clear();
-    ui->toolBox->setItemText(2, tr("Error log"));
 }
 
 void MainWindow::newProject(void)
@@ -385,6 +380,8 @@ void MainWindow::appendToRecentFileList(const QString& filename, const QString& 
             const int i = updatedFiles.size();
             const QString& text = tr("&%1 %2").arg(i).arg(fInfo.fileName());
             actions[i]->setText(text);
+            actions[i]->setToolTip(fInfo.canonicalFilePath());
+            actions[i]->setStatusTip(fInfo.canonicalFilePath());
             actions[i]->setData(proposedFilename);
             actions[i]->setVisible(true);
             updatedFiles.append(proposedFilename);

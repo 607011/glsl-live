@@ -39,41 +39,18 @@
        <widget class="QWidget" name="layoutWidget">
         <layout class="QVBoxLayout" name="verticalLayoutEditors">
          <item>
-          <widget class="QToolBox" name="toolBox">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-             <horstretch>0</horstretch>
-             <verstretch>2</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Plain</enum>
-           </property>
-           <property name="midLineWidth">
-            <number>0</number>
+          <widget class="QTabWidget" name="tabWidget">
+           <property name="tabShape">
+            <enum>QTabWidget::Rounded</enum>
            </property>
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
-           <property name="tabSpacing">
-            <number>2</number>
-           </property>
-           <widget class="QWidget" name="vertexShaderPage">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>98</width>
-              <height>28</height>
-             </rect>
-            </property>
-            <attribute name="label">
+           <widget class="QWidget" name="tabVertexShader">
+            <attribute name="title">
              <string>Vertex Shader</string>
             </attribute>
-            <layout class="QGridLayout" name="gridLayout_4">
+            <layout class="QGridLayout" name="gridLayoutVSEditor">
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -91,19 +68,11 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="fragmentShaderPage">
-            <property name="geometry">
-             <rect>
-              <x>0</x>
-              <y>0</y>
-              <width>772</width>
-              <height>117</height>
-             </rect>
-            </property>
-            <attribute name="label">
+           <widget class="QWidget" name="tabFragmentShader">
+            <attribute name="title">
              <string>Fragment Shader</string>
             </attribute>
-            <layout class="QGridLayout" name="gridLayout_3">
+            <layout class="QGridLayout" name="gridLayoutFSEditor">
              <property name="leftMargin">
               <number>0</number>
              </property>
@@ -140,7 +109,7 @@
           <number>5</number>
          </property>
          <item>
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="labelErrors">
            <property name="text">
             <string>Errors</string>
            </property>
@@ -210,14 +179,7 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuTools">
-    <property name="title">
-     <string>Tools</string>
-    </property>
-    <addaction name="actionRemoveImage"/>
-   </widget>
    <addaction name="menuFile"/>
-   <addaction name="menuTools"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
