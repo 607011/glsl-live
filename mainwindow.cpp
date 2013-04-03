@@ -92,7 +92,7 @@ MainWindow::MainWindow(QWidget* parent)
         QAction* act = new QAction(this);
         act->setVisible(false);
         d->recentProjectsActs[i] = act;
-        QObject::connect(act, SIGNAL(triggered()), SLOT(loadRecentScript()));
+        QObject::connect(act, SIGNAL(triggered()), SLOT(openRecentProject()));
         ui->menuRecentProjects->addAction(act);
     }
     ui->hsplitter->addWidget(d->renderWidget);
@@ -365,26 +365,27 @@ void MainWindow::appendToRecentFileList(const QString& filename, const QString& 
     QSettings settings(Company, AppName);
     QStringList files = settings.value(listname).toStringList();
     if (!filename.isEmpty()) {
-        files.removeAll(filename);
-        files.prepend(filename);
+        QFileInfo fInfo(filename);
+        if (fInfo.isFile() && fInfo.isReadable()) {
+            files.removeAll(fInfo.canonicalFilePath());
+            files.prepend(fInfo.canonicalFilePath());
+        }
         while (files.size() > MainWindowPrivate::MaxRecentFiles)
             files.removeLast();
     }
     QStringList updatedFiles;
     QStringListIterator file(files);
     while (file.hasNext() && updatedFiles.size() < MainWindowPrivate::MaxRecentFiles) {
-        const QString& proposedFilename = file.next();
-        QFileInfo fInfo(proposedFilename);
+        QFileInfo fInfo(file.next());
         // lesbare Dateien behalten, Duplikate verwerfen
-        if (!updatedFiles.contains(proposedFilename) && fInfo.isFile() && fInfo.isReadable()) {
+        if (!updatedFiles.contains(fInfo.canonicalFilePath()) && fInfo.isFile() && fInfo.isReadable()) {
             const int i = updatedFiles.size();
             const QString& text = tr("&%1 %2").arg(i).arg(fInfo.fileName());
             actions[i]->setText(text);
-            actions[i]->setToolTip(fInfo.canonicalFilePath());
             actions[i]->setStatusTip(fInfo.canonicalFilePath());
-            actions[i]->setData(proposedFilename);
+            actions[i]->setData(fInfo.canonicalFilePath());
             actions[i]->setVisible(true);
-            updatedFiles.append(proposedFilename);
+            updatedFiles.append(fInfo.canonicalFilePath());
         }
     }
     for (int i = files.size(); i < MainWindowPrivate::MaxRecentFiles; ++i)
@@ -393,7 +394,7 @@ void MainWindow::appendToRecentFileList(const QString& filename, const QString& 
     settings.setValue(listname, updatedFiles);
 }
 
-void MainWindow::loadRecentScript(void)
+void MainWindow::openRecentProject(void)
 {
     const QAction* const action = qobject_cast<QAction*>(sender());
     if (action)

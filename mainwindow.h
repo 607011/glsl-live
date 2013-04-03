@@ -39,7 +39,7 @@ private slots:
     void parseShadersForParameters();
     void processShaderChange(void);
     void updateShaderSources(void);
-    void loadRecentScript(void);
+    void openRecentProject(void);
     void appendToRecentFileList(const QString& fileName, const QString& listName, QMenu* menu, QAction* actions[]);
     void newProject(void);
     void openProject(void);
