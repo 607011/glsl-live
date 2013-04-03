@@ -3,19 +3,18 @@
 
 #include <QtCore/QDebug>
 #include <QRegExp>
-#include <QList>
+#include <QStringList>
 #include <QGLShader>
 #include <QGLFramebufferObject>
 #include <QGLShaderProgram>
 #include <QVector2D>
 #include <QVector3D>
 #include <QPoint>
-#include <QRect>
 #include <QPointF>
+#include <QRect>
 #include <QRgb>
 #include <QMimeData>
 #include <QUrl>
-#include <QList>
 #include <QTime>
 #include <QMap>
 #include <QVariant>
@@ -209,18 +208,16 @@ QImage RenderWidget::resultImage(void)
 void RenderWidget::updateUniforms()
 {
     Q_D(RenderWidget);
-    if (!d->shaderProgram->isLinked()) {
-        qWarning() << "RenderWidget::updateUniforms() called but shader program not linked";
+    if (!d->shaderProgram->isLinked())
         return;
-    }
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     d->shaderProgram->setUniformValue(d->uLocTexture, 0);
     d->shaderProgram->setUniformValueArray(d->uLocMarks, d->marks.data(), d->marks.size());
     d->shaderProgram->setUniformValue(d->uLocMarksCount, d->marks.size());
-    const QList<QString>& keys = d->uniforms.keys();
-    for (QList<QString>::const_iterator k = keys.constBegin(); k != keys.constEnd(); ++k) {
-        const QString& key = *k;
+    QStringListIterator k(d->uniforms.keys());
+    while (k.hasNext()) {
+        const QString& key = k.next();
         const QVariant& value = d->uniforms[key];
         switch (value.type()) {
         case QVariant::Int:
@@ -320,6 +317,26 @@ void RenderWidget::resizeEvent(QResizeEvent* e)
     calcViewport(e->size());
 }
 
+void RenderWidget::fitImageToWindow(void)
+{
+    Q_D(RenderWidget);
+    const double imageAspectRatio = double(d->img.width()) / d->img.height();
+    const double windowAspectRatio = double(width()) / height();
+    d->scale = (imageAspectRatio > windowAspectRatio)
+            ? double(width()) / d->img.width()
+            : double(height()) / d->img.height();
+    d->offset = QPoint(0, 0);
+    calcViewport(size());
+}
+
+void RenderWidget::resizeToOriginalImageSize(void)
+{
+    Q_D(RenderWidget);
+    d->scale = 1.0;
+    d->offset = QPoint(0, 0);
+    calcViewport(size());
+}
+
 void RenderWidget::resizeGL(int w, int h)
 {
     calcViewport(w, h);
@@ -381,9 +398,8 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
     Q_D(RenderWidget);
     if (d->leftMouseButtonPressed) {
         d->mouseMovedWhileLeftButtonPressed = true;
-        QPoint dp = e->pos() - d->lastMousePos;
-        dp.setY(-dp.y());
-        d->offset += dp;
+        const QPoint& dp = e->pos() - d->lastMousePos;
+        d->offset += QPoint(dp.x(), -dp.y());
         d->lastMousePos = e->pos();
         calcViewport(width(), height());
     }
@@ -420,8 +436,8 @@ void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
     switch (e->button()) {
     case Qt::LeftButton:
         if (!d->mouseMovedWhileLeftButtonPressed) {
-            d->marks << QVector2D(double(e->x()) / width(), double(e->y()) / height());
-            qDebug() << d->marks;
+            const QPointF& mp = e->pos() - QPoint(d->viewport.left(), height() - d->viewport.bottom());
+            d->marks << QVector2D(mp.x() / d->viewport.width(), mp.y() / d->viewport.height());
             updateUniforms();
         }
         d->leftMouseButtonPressed = false;
@@ -449,7 +465,7 @@ void RenderWidget::wheelEvent(QWheelEvent* e)
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)
 {
     const QMimeData* const d = e->mimeData();
-    if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|gif|ico|mng|tga|tiff?)$")))
+    if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
         e->acceptProposedAction();
     else
         e->ignore();
@@ -465,7 +481,7 @@ void RenderWidget::dropEvent(QDropEvent* e)
     const QMimeData* const d = e->mimeData();
     if (d->hasUrls()) {
         QString fileUrl = d->urls().first().toString();
-        if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|gif|ico|mng|tga|tiff?)$")))
+        if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
 #if defined(WIN32)
             loadImage(fileUrl.remove("file:///"));
 #else
@@ -474,16 +490,18 @@ void RenderWidget::dropEvent(QDropEvent* e)
     }
 }
 
-bool RenderWidget::loadImage(const QString& fileName)
+bool RenderWidget::loadImage(const QString& filename)
 {
-    if (fileName.isEmpty())
+    Q_D(RenderWidget);
+    if (filename.isEmpty())
         return false;
-    QImage image(fileName);
+    QImage image(filename);
     if (image.isNull())
         return false;
     setImage(image);
-    d_ptr->imgFilename = fileName;
-    emit imageDropped(d_ptr->img);
+    fitImageToWindow();
+    d->imgFilename = filename;
+    emit imageDropped(d->img);
     return true;
 }
 

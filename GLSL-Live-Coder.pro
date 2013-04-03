@@ -16,7 +16,8 @@ SOURCES += main.cpp\
     project.cpp \
     glsledit/glslhighlighter.cpp \
     glsledit/sidebarwidget.cpp \
-    glsledit/glsldoclayout.cpp
+    glsledit/glsldoclayout.cpp \
+    kineticscroller.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
@@ -27,7 +28,8 @@ HEADERS  += mainwindow.h \
     glsledit/glslhighlighter.h \
     glsledit/sidebarwidget.h \
     glsledit/glsldoclayout.h \
-    util.h
+    util.h \
+    kineticscroller.h
 
 FORMS    += mainwindow.ui
 

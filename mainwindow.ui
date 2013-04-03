@@ -179,7 +179,15 @@
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionFitImageToWindow"/>
+    <addaction name="actionResizeToOriginalImageSize"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -267,6 +275,16 @@
    </property>
    <property name="shortcut">
     <string>F1</string>
+   </property>
+  </action>
+  <action name="actionFitImageToWindow">
+   <property name="text">
+    <string>Fit image to window</string>
+   </property>
+  </action>
+  <action name="actionResizeToOriginalImageSize">
+   <property name="text">
+    <string>Resize to original image size</string>
    </property>
   </action>
  </widget>

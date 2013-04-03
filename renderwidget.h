@@ -39,6 +39,10 @@ public:
     void clearUniforms(void);
     QImage resultImage(void);
 
+public slots:
+    void fitImageToWindow(void);
+    void resizeToOriginalImageSize(void);
+
 signals:
     void vertexShaderError(QString);
     void fragmentShaderError(QString);

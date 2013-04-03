@@ -36,6 +36,7 @@
 static void prepareEditor(GLSLEdit* editor);
 static void clearLayout(QLayout* layout);
 
+
 class MainWindowPrivate {
 public:
     explicit MainWindowPrivate(void)
@@ -123,6 +124,8 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
     QObject::connect(ui->actionHelp, SIGNAL(triggered()), SLOT(showHelp()));
+    QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
+    QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     restoreSettings();
 }
 
