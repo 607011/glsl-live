@@ -8,23 +8,48 @@ html, body {
 pre, code, tt {
     font-family: "Lucida Console", monospace;
 }
+.intro {
+    font-weight: bold;
+    font-size: large;
+}
+dt {
+    margin-top: 1.2ex;
+}
+dd {
+    margin-bottom: 1.2ex;
+}
+h1, h2, h3, h4, h5 {
+    text-transform: uppercase;
+}
 </style>
 </head>
 <body>
 <a name="start"></a>
 <h1>GLSL Live Coder</h1>
 
-<p class="intro">Mit dieser Software können Sie in GLSL geschriebene OpenGL-1.x-Vertex- und -Fragment-Shader in Echtzeit ausprobieren. Jede Änderung im Code wird sofort sichtbar.</p>
+<p class="intro">Mit dieser Software können Sie in GLSL geschriebene
+OpenGL-1.x-Vertex- und -Fragment-Shader in Echtzeit ausprobieren.
+Jede Änderung im Code wird sofort sichtbar.</p>
 
 
 <a name="disclaimer"></a>
 <h2>Nutzungshinweise</h2>
 
-<p style="font-weight: bold">Die Software <em>GLSL Live Coder</em> wurde zu Lehr- und Demonstrationszwecken geschaffen und ist nicht für den produktiven Einsatz vorgesehen. Der Autor und der Heise Zeitschriften Verlag haften nicht für Schäden, die aus der Nutzung der Software entstehen, und übernehmen keine Gewähr für ihre Vollständigkeit, Fehlerfreiheit und Eignung für einen bestimmten Zweck.</p>
+<p style="font-weight: bold">Die Software <em>GLSL Live Coder</em>
+wurde zu Lehr-, Lern- und Demonstrationszwecken geschaffen und ist
+nicht für den produktiven Einsatz vorgesehen. Der Autor und der Heise
+Zeitschriften Verlag haften nicht für Schäden, die aus der Nutzung
+der Software entstehen, und übernehmen keine Gewähr für ihre
+Vollständigkeit, Fehlerfreiheit und Eignung für einen bestimmten
+Zweck.</p>
 
-<p>Falls Sie beabsichtigen, den Code in eigenen Produkten zu verwenden, so ist das im Rahmen der GPL&nbsp;v3 (<a href="#license">s.u.</a>) kostenfrei gestattet.</p>
+<p>Falls Sie beabsichtigen, den Code in eigenen Produkten zu
+verwenden, so ist das im Rahmen der GPL&nbsp;v3
+(<a href="#license">s.u.</a>) kostenfrei gestattet.</p>
 
-<p>Copyright &copy; 2013 Oliver Lau &lt;<a href="mailto:ola@ct.de">ola@ct.de</a>&gt;, Heise Zeitschriften Verlag.</p>
+<p>Copyright &copy; 2013 Oliver Lau
+&lt;<a href="mailto:ola@ct.de">ola@ct.de</a>&gt;,
+Heise Zeitschriften Verlag.</p>
 
 <a name="bedienung"></a>
 <h2>Bedienung</h2>
@@ -35,24 +60,34 @@ pre, code, tt {
 
 <dl>
     <dt><code>uniform float uT</code></dt>
-    <dd></dd>
-    <dt><code>uniform float uResolution</code></dt>
-    <dd></dd>
+    <dd>verstrichene Sekunden seit Start der Anwendung</dd>
+
+    <dt><code>uniform vec2 uResolution</code></dt>
+    <dd>Größe des OpenGL-Viewport in Pixeln (Breite &times; Höhe)</dd>
+
     <dt><code>uniform sampler2D uTexture</code></dt>
-    <dd></dd>
+    <dd>Das per Drag'n'Drop ins Fenster gezogene Bild als
+        OpenGL-Textur</dd>
+
     <dt><code>uniform vec2 uMouse</code></dt>
-    <dd></dd>
+    <dd>Aktuelle Mauskoordinaten in Pixeln innerhalb des
+        OpenGL-Viewport; der Ursprung liegt links oben</dd>
+
     <dt><code>uniform vec2 uMarks[]</code></dt>
-    <dd></dd>
+    <dd>Koordinaten markierter Punkte innerhalb der Textur;
+        links oben liegt (0;0), rechts unten (1;1)</dd>
+
     <dt><code>uniform int uMarksCount</code></dt>
-    <dd></dd>
+    <dd>Anzahl der Markierungen</dd>
 </dl>
 
 <a name="todo"></a>
 <h2>TODO</h2>
 
 <ul>
-  <li>Fehler: Neues oder frisch geladenes Projekt wird durch <code>GLSLEdit</code>-Signal <code>textChangedDelayed()</code> fälschlicherweise als "dirty" markiert.</li>
+  <li>Fehler: Neues oder frisch geladenes Projekt wird durch
+      <code>GLSLEdit</code>-Signal <code>textChangedDelayed()</code>
+      fälschlicherweise als "dirty" markiert.</li>
 </ul>
 
 

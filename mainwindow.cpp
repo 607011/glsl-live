@@ -543,17 +543,17 @@ void MainWindow::updateWindowTitle()
 void MainWindow::showHelp(bool visible)
 {
     Q_D(MainWindow);
-    QFile docFile(":/doc/index.html");
-    docFile.open(QIODevice::ReadOnly | QIODevice::Text);
     if (d->docBrowser == NULL) {
         d->docBrowser = new QTextBrowser;
         d->docBrowser->setOpenExternalLinks(true);
         d->docBrowser->setOpenLinks(true);
-    }
-    if (visible) {
+        QFile docFile(":/doc/index.html");
+        docFile.open(QIODevice::ReadOnly | QIODevice::Text);
         d->docBrowser->setText(docFile.readAll());
-        d->docBrowser->show();
+        docFile.close();
     }
+    if (visible)
+        d->docBrowser->show();
 }
 
 void MainWindow::about(void)
