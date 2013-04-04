@@ -156,6 +156,7 @@ RenderWidget::RenderWidget(QWidget* parent)
     setAcceptDrops(true);
     setCursor(Qt::OpenHandCursor);
     d_ptr->time.start();
+    makeCurrent();
 }
 
 RenderWidget::~RenderWidget()
@@ -200,10 +201,10 @@ void RenderWidget::makeImageFBO(void)
     Q_D(RenderWidget);
     makeCurrent();
     if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
-        safeDeleteArray(d->resultImageData);
-        d->resultImageData = new GLuint[d->img.width() * d->img.height()];
         safeDelete(d->fbo);
         d->fbo = new QGLFramebufferObject(d->img.size());
+        safeDeleteArray(d->resultImageData);
+        d->resultImageData = new GLuint[d->img.width() * d->img.height()];
     }
 }
 
@@ -223,16 +224,16 @@ const QString& RenderWidget::imageFileName(void) const
 QImage RenderWidget::resultImage(void)
 {
     Q_D(RenderWidget);
-    makeCurrent();
     glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glViewport(0, 0, d->img.width(), d->img.height());
+    glPushMatrix();
     makeImageFBO();
     d->fbo->bind();
+    glViewport(0, 0, d->img.width(), d->img.height());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glReadPixels(0, 0, d->img.width(), d->img.height(), GL_BGRA, GL_UNSIGNED_BYTE, d->resultImageData);
     d->fbo->release();
+    glPopMatrix();
     glPopAttrib();
-    return QImage(reinterpret_cast<uchar*>(d->resultImageData), d->img.width(), d->img.height(), QImage::Format_RGB32).mirrored();
+    return d->fbo->toImage();
 }
 
 void RenderWidget::updateUniforms()
@@ -275,7 +276,6 @@ void RenderWidget::clearUniforms(void)
 void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
-    makeCurrent();
     if (vs.isEmpty() || fs.isEmpty())
         return;
     d->makeShaderProgram();
@@ -382,12 +382,12 @@ void RenderWidget::resizeGL(int w, int h)
 void RenderWidget::initializeGL(void)
 {
     Q_D(RenderWidget);
+    qglClearColor(QColor(20, 20, 20));
+    glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
     glGenTextures(1, &d->inputTextureHandle);
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -414,6 +414,7 @@ void RenderWidget::paintGL(void)
         // Aktualisierung hier, weil Aktualisieren des Bildes
         // *außerhalb* von paintGL() oder initializeGL() trotz
         // makeCurrent() immer fehlgeschlagen ist
+        // d->inputTextureHandle = bindTexture(d->img);
         glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
     }
