@@ -10,6 +10,7 @@
 #include <QString>
 #include <QImage>
 #include <QTimerEvent>
+#include <QKeyEvent>
 #include <QWheelEvent>
 #include <QMouseEvent>
 #include <QDragEnterEvent>
@@ -27,10 +28,11 @@ class RenderWidget : public QGLWidget
 public:
     explicit RenderWidget(QWidget* parent = NULL);
     ~RenderWidget();
-    QSize minimumSizeHint(void) const;
-    QSize sizeHint(void) const;
 
+    QSize minimumSizeHint(void) const { return QSize(240, 160); }
+    QSize sizeHint(void) const  { return QSize(640, 480); }
     void setShaderSources(const QString& vs, const QString& fs);
+    bool tryToGoLive(void);
     void setImage(const QImage&);
     const QString& imageFileName(void) const;
     bool loadImage(const QString& fileName);
@@ -58,6 +60,8 @@ protected:
     void initializeGL(void);
     void resizeGL(int, int);
     void paintGL(void);
+    void keyPressEvent(QKeyEvent*);
+    void keyReleaseEvent(QKeyEvent*);
     void mouseMoveEvent(QMouseEvent*);
     void mousePressEvent(QMouseEvent*);
     void mouseReleaseEvent(QMouseEvent*);

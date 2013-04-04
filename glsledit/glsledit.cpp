@@ -201,7 +201,7 @@ void GLSLEdit::setColor(ColorComponent component, const QColor& color)
     }
 }
 
-QStringList GLSLEdit::keywords() const
+QStringList GLSLEdit::keywords(void) const
 {
     return d_ptr->highlighter->keywords();
 }
@@ -211,7 +211,7 @@ void GLSLEdit::setKeywords(const QStringList &keywords)
     d_ptr->highlighter->setKeywords(keywords);
 }
 
-bool GLSLEdit::isLineNumbersVisible() const
+bool GLSLEdit::isLineNumbersVisible(void) const
 {
     return d_ptr->showLineNumbers;
 }
@@ -222,7 +222,7 @@ void GLSLEdit::setLineNumbersVisible(bool visible)
     updateSidebar();
 }
 
-bool GLSLEdit::isTextWrapEnabled() const
+bool GLSLEdit::isTextWrapEnabled(void) const
 {
     return d_ptr->textWrap;
 }
@@ -233,7 +233,7 @@ void GLSLEdit::setTextWrapEnabled(bool enable)
     setLineWrapMode(enable ? WidgetWidth : NoWrap);
 }
 
-bool GLSLEdit::isBracketsMatchingEnabled() const
+bool GLSLEdit::isBracketsMatchingEnabled(void) const
 {
     return d_ptr->bracketsMatching;
 }
@@ -244,7 +244,7 @@ void GLSLEdit::setBracketsMatchingEnabled(bool enable)
     updateCursor();
 }
 
-bool GLSLEdit::isCodeFoldingEnabled() const
+bool GLSLEdit::isCodeFoldingEnabled(void) const
 {
     return d_ptr->codeFolding;
 }
@@ -255,7 +255,7 @@ void GLSLEdit::setCodeFoldingEnabled(bool enable)
     updateSidebar();
 }
 
-static int findClosingConstruct(const QTextBlock &block)
+static int findClosingConstruct(const QTextBlock& block)
 {
     if (!block.isValid())
         return -1;
@@ -376,7 +376,9 @@ void GLSLEdit::wheelEvent(QWheelEvent *e)
 
 void GLSLEdit::delayTextChange(void)
 {
-    mTextChangedTimer.start(500);
+    bool unblocked = !signalsBlocked();
+    if (unblocked)
+        mTextChangedTimer.start(500);
 }
 
 void GLSLEdit::keyPressEvent(QKeyEvent* e)

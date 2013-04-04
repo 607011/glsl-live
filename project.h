@@ -8,7 +8,6 @@
 #include <QImage>
 #include <QString>
 #include <QIODevice>
-#include <QXmlStreamReader>
 #include <QScopedPointer>
 
 class ProjectPrivate;
@@ -27,8 +26,8 @@ public:
     QString errorString(void) const;
     bool isDirty(void) const;
     const QString& filename(void) const;
-    const QString vertexShaderSource(void) const;
-    const QString fragmentShaderSource(void) const;
+    const QString& vertexShaderSource(void) const;
+    const QString& fragmentShaderSource(void) const;
     const QImage& image(void) const;
     void setDirty(bool dirty = true);
     void setClean(bool clean = true);
@@ -36,8 +35,6 @@ public:
     void setFragmentShaderSource(const QString&);
     void setImage(const QImage&);
     void setFilename(const QString&);
-
-signals:
 
 private: // methods
     void read(void);
@@ -48,6 +45,9 @@ private: // methods
     void readShaderVertex(void);
     void readShaderFragment(void);
     void readInputImage(void);
+
+    void resetErrors(void);
+    void raiseError(const QString&);
 
 private: // variables
     QScopedPointer<ProjectPrivate> d_ptr;

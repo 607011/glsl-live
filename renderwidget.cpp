@@ -108,8 +108,8 @@ public:
     void makeShaderProgram(void)
     {
         deleteShaderProgram();
-        shaderProgram = new QGLShaderProgram();
         deleteShaders();
+        shaderProgram = new QGLShaderProgram();
         vertexShader = new QGLShader(QGLShader::Vertex);
         fragmentShader = new QGLShader(QGLShader::Fragment);
         if (shaderProgram) {
@@ -151,7 +151,6 @@ RenderWidget::RenderWidget(QWidget* parent)
     , d_ptr(new RenderWidgetPrivate)
 {
     setFocusPolicy(Qt::StrongFocus);
-    setFocus(Qt::MouseFocusReason);
     setMouseTracking(true);
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
     setAcceptDrops(true);
@@ -165,21 +164,9 @@ RenderWidget::~RenderWidget()
     stopCode();
 }
 
-QSize RenderWidget::minimumSizeHint() const
-{
-    return QSize(240, 160);
-}
-
-QSize RenderWidget::sizeHint() const
-{
-    return QSize(240, 160);
-}
-
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
-    if (d->firstPaintEventPending)
-        return;
     d->preliminaryVertexShaderSource = vs;
     d->preliminaryFragmentShaderSource = fs;
     buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
@@ -195,6 +182,17 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
         updateUniforms();
         goLive();
     }
+}
+
+bool RenderWidget::tryToGoLive(void)
+{
+    Q_D(RenderWidget);
+    if (d->shaderProgram->isLinked()) {
+        updateUniforms();
+        goLive();
+        return true;
+    }
+    return false;
 }
 
 void RenderWidget::makeImageFBO(void)
@@ -234,7 +232,7 @@ QImage RenderWidget::resultImage(void)
     glReadPixels(0, 0, d->img.width(), d->img.height(), GL_BGRA, GL_UNSIGNED_BYTE, d->resultImageData);
     d->fbo->release();
     glPopAttrib();
-    return QImage(reinterpret_cast<uchar*>(d->resultImageData), d->img.width(), d->img.height(), QImage::Format_RGB32).mirrored(false, true);
+    return QImage(reinterpret_cast<uchar*>(d->resultImageData), d->img.width(), d->img.height(), QImage::Format_RGB32).mirrored();
 }
 
 void RenderWidget::updateUniforms()
@@ -314,8 +312,9 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 
 void RenderWidget::goLive()
 {
-    if (d_ptr->liveTimerId == 0)
+    if (d_ptr->liveTimerId == 0) {
         d_ptr->liveTimerId = startTimer(1000/50);
+    }
 }
 
 void RenderWidget::stopCode()
@@ -328,7 +327,7 @@ void RenderWidget::stopCode()
 
 void RenderWidget::calcViewport(void)
 {
-    calcViewport(size());
+    calcViewport(width(), height());
 }
 
 void RenderWidget::calcViewport(const QSize& size)
@@ -370,7 +369,7 @@ void RenderWidget::resizeToOriginalImageSize(void)
 {
     Q_D(RenderWidget);
     d->scale = 1.0;
-    d->offset = QPoint(0, 0);
+    d->offset = QPoint();
     calcViewport();
 }
 
@@ -393,8 +392,8 @@ void RenderWidget::initializeGL(void)
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 }
 
 void RenderWidget::paintGL(void)
@@ -421,11 +420,31 @@ void RenderWidget::paintGL(void)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
+void RenderWidget::keyPressEvent(QKeyEvent* e)
+{
+    if (e->modifiers() & Qt::AltModifier) {
+        setCursor(Qt::ArrowCursor);
+    }
+}
+
+void RenderWidget::keyReleaseEvent(QKeyEvent* e)
+{
+    switch (e->key()) {
+    case Qt::Key_Escape:
+        stopMotion();
+        resizeToOriginalImageSize();
+        break;
+    default:
+        break;
+    }
+    setCursor(Qt::OpenHandCursor);
+}
+
 void RenderWidget::timerEvent(QTimerEvent* e)
 {
     Q_D(RenderWidget);
     if (e->timerId() == d->liveTimerId) {
-        update();
+        updateGL();
     }
     else if (e->timerId() == d->mouseMoveTimerId) {
         if (d->velocity.manhattanLength() > M_SQRT2) {
@@ -442,15 +461,17 @@ void RenderWidget::timerEvent(QTimerEvent* e)
 void RenderWidget::mouseMoveEvent(QMouseEvent* e)
 {
     Q_D(RenderWidget);
+    setFocus(Qt::MouseFocusReason);
     if (d->leftMouseButtonPressed) {
         d->mouseMovedWhileLeftButtonPressed = true;
         const QPoint& dp = e->pos() - d->lastMousePos;
         d->offset += QPoint(dp.x(), -dp.y());
-        d->kineticData.push_back(RenderWidgetPrivate::KineticData(e->pos(), d->mouseMoveTimer.elapsed()));
-        if (d->kineticData.count() > RenderWidgetPrivate::NumKineticDataSamples)
-            d->kineticData.pop_front();
+        d->kineticData.append(RenderWidgetPrivate::KineticData(e->pos(), d->mouseMoveTimer.elapsed()));
+        if (d->kineticData.size() > RenderWidgetPrivate::NumKineticDataSamples)
+            d->kineticData.erase(d->kineticData.begin());
         calcViewport();
         d->lastMousePos = e->pos();
+        setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::ClosedHandCursor);
     }
     else {
         if (d->shaderProgram->isLinked()) {
@@ -458,6 +479,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
             d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
             update();
         }
+        setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::OpenHandCursor);
     }
     e->accept();
 }
@@ -467,16 +489,20 @@ void RenderWidget::mousePressEvent(QMouseEvent* e)
     Q_D(RenderWidget);
     switch (e->button()) {
     case Qt::LeftButton:
-        stopMotion();
-        setCursor(Qt::ClosedHandCursor);
-        d->mouseMoveTimer.start();
-        d->kineticData.clear();
         d->leftMouseButtonPressed = true;
-        d->lastMousePos = e->pos();
+        if ((e->modifiers() & Qt::AltModifier) == 0) {
+            stopMotion();
+            d->mouseMoveTimer.start();
+            d->kineticData.clear();
+            d->lastMousePos = e->pos();
+        }
+        setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::ClosedHandCursor);
         break;
     case Qt::RightButton:
-        d->marks.clear();
-        updateUniforms();
+        if (e->modifiers() & Qt::AltModifier) {
+            d->marks.clear();
+            updateUniforms();
+        }
         break;
     default:
         break;
@@ -488,19 +514,20 @@ void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
     Q_D(RenderWidget);
     switch (e->button()) {
     case Qt::LeftButton:
-        setCursor(Qt::OpenHandCursor);
         if (!d->mouseMovedWhileLeftButtonPressed) {
-            const QPointF& mp = e->pos() - QPoint(d->viewport.left(), height() - d->viewport.bottom());
-            d->marks << QVector2D(mp.x() / d->viewport.width(), mp.y() / d->viewport.height());
-            updateUniforms();
+            if (e->modifiers() & Qt::AltModifier) {
+                const QPointF& mp = e->pos() - QPoint(d->viewport.left(), height() - d->viewport.bottom());
+                d->marks.append(QVector2D(mp.x() / d->viewport.width(), mp.y() / d->viewport.height()));
+                updateUniforms();
+            }
         }
         else {
             if (d->kineticData.count() == RenderWidgetPrivate::NumKineticDataSamples) {
                 int timeSinceLastMoveEvent = d->mouseMoveTimer.elapsed() - d->kineticData.last().t;
                 if (timeSinceLastMoveEvent < 100) {
-                    const QPointF& dp = d->kineticData.first().p - e->pos();
                     int dt = d->mouseMoveTimer.elapsed() - d->kineticData.first().t;
-                    QPointF initialVector(1000 * dp / dt / RenderWidgetPrivate::TimeInterval);
+                    const QPointF& moveDist = d->kineticData.first().p - e->pos();
+                    const QPointF& initialVector = 1000 * moveDist / dt / RenderWidgetPrivate::TimeInterval;
                     startMotion(initialVector);
                 }
             }
@@ -515,6 +542,7 @@ void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
     default:
         break;
     }
+    setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::OpenHandCursor);
 }
 
 void RenderWidget::wheelEvent(QWheelEvent* e)
@@ -608,12 +636,12 @@ void RenderWidget::stopMotion(void)
         killTimer(d->mouseMoveTimerId);
         d->mouseMoveTimerId = 0;
     }
-    d->velocity = QPointF(0, 0);
+    d->velocity = QPointF();
 }
 
 void RenderWidget::scrollBy(const QPoint& offset)
 {
     Q_D(RenderWidget);
-    d->offset = QPoint(offset.x(), -offset.y());
+    d->offset -= QPoint(offset.x(), -offset.y());
     calcViewport();
 }

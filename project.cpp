@@ -4,6 +4,7 @@
 #include <QBuffer>
 #include <QFile>
 #include <QTextStream>
+#include <QXmlStreamReader>
 #include <QTextCodec>
 #include <QtCore/QDebug>
 #include <QByteArray>
@@ -21,6 +22,7 @@ public:
     QString fragmentShaderSource;
     QImage image;
     QString filename;
+    QString errorString;
 };
 
 Project::Project(QObject* parent)
@@ -38,7 +40,7 @@ Project::~Project()
 void Project::reset(void)
 {
     Q_D(Project);
-    d->dirty = false;
+    setClean();
     d->image = QImage(":/images/toad.png");
     d->filename = QString();
     QFile vf(":/shaders/vertexshader.glsl");
@@ -63,6 +65,7 @@ bool Project::save(const QString& filename)
 {
     Q_D(Project);
     Q_ASSERT(!filename.isEmpty());
+    resetErrors();
     QFile file(filename);
     int flags = QIODevice::WriteOnly;
     bool compress = filename.endsWith("z");
@@ -70,7 +73,7 @@ bool Project::save(const QString& filename)
         flags |= QIODevice::Text;
     bool ok = file.open((QIODevice::OpenMode)flags);
     if (!ok) {
-        qWarning() << "file.open() failed.";
+        raiseError(tr("Cannot open file '%1' for writing").arg(filename));
         return false;
     }
     QString dstr;
@@ -81,8 +84,8 @@ bool Project::save(const QString& filename)
         << "  <shaders>\n"
         << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
         << "    <fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
-        << "  </shaders>\n";
-    out << "  <input>\n";
+        << "  </shaders>\n"
+        << "  <input>\n";
     if (!d->image.isNull()) {
         QByteArray ba;
         QBuffer buffer(&ba);
@@ -91,14 +94,12 @@ bool Project::save(const QString& filename)
         buffer.close();
         out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
     }
-    out << "  </input>\n";
-    out << "</glsl-live-coder-project>\n";
-    if (compress) {
-        file.write(qCompress(dstr.toUtf8(), 9));
-    }
-    else {
-        file.write(dstr.toUtf8());
-    }
+    out << "  </input>\n"
+        << "</glsl-live-coder-project>\n";
+    qint64 bytesWritten = file.write(compress? qCompress(dstr.toUtf8(), 9) : dstr.toUtf8());
+    ok = ok && (bytesWritten > 0);
+    if (bytesWritten <= 0)
+        raiseError(tr("Error writing data (%1 bytes written)").arg(bytesWritten));
     file.close();
     setClean();
     return ok;
@@ -108,6 +109,7 @@ bool Project::load(const QString& filename)
 {
     Q_D(Project);
     Q_ASSERT(!filename.isEmpty());
+    resetErrors();
     d->filename = filename;
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
@@ -116,7 +118,7 @@ bool Project::load(const QString& filename)
     QFile file(d->filename);
     bool success = file.open((QIODevice::OpenMode)flags);
     if (!success) {
-        qWarning() << "file.open() failed.";
+        raiseError(tr("Cannot open file '%1' for reading").arg(filename));
         return false;
     }
     QByteArray ba = file.readAll();
@@ -126,7 +128,7 @@ bool Project::load(const QString& filename)
         ba = qUncompress(ba);
     success = read(&buffer);
     if (!success)
-        qWarning() << "Project.read(QIODevice* device) failed.";
+        raiseError(tr("Cannot read from I/O device. (%1)").arg(filename));
     file.close();
     setClean();
     return success;
@@ -134,10 +136,26 @@ bool Project::load(const QString& filename)
 
 QString Project::errorString(void) const
  {
-    return QObject::tr("%1 (line %2, column %3)")
+    if (!d_ptr->xml.errorString().isEmpty()) {
+        return QObject::tr("%1 (line %2, column %3)")
             .arg(d_ptr->xml.errorString())
             .arg(d_ptr->xml.lineNumber())
             .arg(d_ptr->xml.columnNumber());
+    }
+    else if (!d_ptr->errorString.isEmpty()) {
+        return d_ptr->errorString;
+    }
+    return QString();
+}
+
+void Project::resetErrors(void)
+{
+    d_ptr->errorString = QString();
+}
+
+void Project::raiseError(const QString & msg)
+{
+    d_ptr->errorString = msg;
 }
 
 bool Project::isDirty(void) const
@@ -145,22 +163,22 @@ bool Project::isDirty(void) const
     return d_ptr->dirty;
 }
 
-const QString &Project::filename(void) const
+const QString& Project::filename(void) const
 {
     return d_ptr->filename;
 }
 
-const QString Project::vertexShaderSource(void) const
+const QString& Project::vertexShaderSource(void) const
 {
     return d_ptr->vertexShaderSource;
 }
 
-const QString Project::fragmentShaderSource(void) const
+const QString& Project::fragmentShaderSource(void) const
 {
     return d_ptr->fragmentShaderSource;
 }
 
-const QImage &Project::image(void) const
+const QImage& Project::image(void) const
 {
     return d_ptr->image;
 }
@@ -203,6 +221,7 @@ bool Project::read(QIODevice* device)
 {
     Q_D(Project);
     Q_ASSERT(device != NULL);
+    resetErrors();
     d->xml.setDevice(device);
     if (d->xml.readNextStartElement()) {
         if (d->xml.name() == "glsl-live-coder-project" && d->xml.attributes().value("version").toString().startsWith("0.")) {
@@ -249,7 +268,7 @@ void Project::readShaders(void)
     }
 }
 
-void Project::readShaderVertex()
+void Project::readShaderVertex(void)
 {
     Q_D(Project);
     Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "vertex");
@@ -262,7 +281,7 @@ void Project::readShaderVertex()
     }
 }
 
-void Project::readShaderFragment()
+void Project::readShaderFragment(void)
 {
     Q_D(Project);
     Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "fragment");
@@ -289,7 +308,7 @@ void Project::readInput(void)
     }
 }
 
-void Project::readInputImage()
+void Project::readInputImage(void)
 {
     Q_D(Project);
     Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "image");
@@ -298,7 +317,7 @@ void Project::readInputImage()
         const QByteArray& imgData = QByteArray::fromBase64(str.toUtf8());
         bool ok = d->image.loadFromData(imgData);
         if (!ok)
-            qWarning() << "Project::readInputImage() failed.";
+            raiseError(tr("Invalid data in <image> tag"));
     }
     else {
         d->xml.raiseError(QObject::tr("empty image: %1").arg(str));

@@ -30,7 +30,6 @@
 #include "project.h"
 #include "renderwidget.h"
 #include "glsledit/glsledit.h"
-#include "kineticscroller.h"
 #include "util.h"
 
 
@@ -42,7 +41,6 @@ class MainWindowPrivate {
 public:
     explicit MainWindowPrivate(void)
         : renderWidget(new RenderWidget)
-        , kineticScroller(NULL)
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
@@ -53,7 +51,6 @@ public:
 
     Project project;
     RenderWidget* renderWidget;
-    KineticScroller* kineticScroller;
     QWidget* paramWidget;
     QString vertexShaderFilename;
     QString fragmentShaderFilename;
@@ -68,7 +65,6 @@ public:
 
     virtual ~MainWindowPrivate()
     {
-        safeDelete(kineticScroller);
         safeDelete(renderWidget);
         safeDelete(paramWidget);
         safeDelete(vertexShaderEditor);
@@ -102,12 +98,8 @@ MainWindow::MainWindow(QWidget* parent)
     }
     ui->scrollArea->setWidget(d->renderWidget);
     ui->hsplitter->addWidget(d->paramWidget);
-    ui->tabWidget->setMinimumWidth(300);
     ui->vertexShaderHLayout->addWidget(d->vertexShaderEditor);
     ui->fragmentShaderHLayout->addWidget(d->fragmentShaderEditor);
-    ui->hsplitter->setStretchFactor(0, 3);
-    ui->hsplitter->setStretchFactor(1, 2);
-    ui->hsplitter->setStretchFactor(2, 1);
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
@@ -143,8 +135,22 @@ void MainWindow::restoreSettings(void)
     Q_D(MainWindow);
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
-    ui->hsplitter->restoreGeometry(settings.value("MainWindow/hsplitter/geometry").toByteArray());
-    ui->vsplitter->restoreGeometry(settings.value("MainWindow/vsplitter/geometry").toByteArray());
+    const QVariantList& hsz = settings.value("MainWindow/hsplitter/sizes").toList();
+    if (!hsz.isEmpty()) {
+        QListIterator<QVariant> h(hsz);
+        QList<int> hSizes;
+        while (h.hasNext())
+            hSizes.append(h.next().toInt());
+        ui->hsplitter->setSizes(hSizes);
+    }
+    const QVariantList& vsz = settings.value("MainWindow/vsplitter/sizes").toList();
+    if (!vsz.isEmpty()) {
+        QListIterator<QVariant> v(vsz);
+        QList<int> vSizes;
+        while (v.hasNext())
+            vSizes.append(v.next().toInt());
+        ui->vsplitter->setSizes(vSizes);
+    }
     ui->tabWidget->setCurrentIndex(settings.value("MainWindow/tabwidget/currentIndex").toInt());
     appendToRecentFileList(QString(), "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
     const QString& projectFilename = settings.value("Project/filename").toString();
@@ -163,20 +169,39 @@ void MainWindow::saveSettings(void)
     QSettings settings(Company, AppName);
     settings.setValue("MainWindow/geometry", saveGeometry());
     settings.setValue("MainWindow/tabwidget/currentIndex", ui->tabWidget->currentIndex());
-    settings.setValue("MainWindow/hsplitter/geometry", ui->hsplitter->saveGeometry());
-    settings.setValue("MainWindow/vsplitter/geometry", ui->vsplitter->saveGeometry());
+    const QList<int>& hsz =  ui->hsplitter->sizes();
+    if (!hsz.isEmpty()) {
+        QListIterator<int> h(hsz);
+        QVariantList hSizes;
+        while (h.hasNext())
+            hSizes.append(h.next());
+        settings.setValue("MainWindow/hsplitter/sizes", hSizes);
+    }
+    const QList<int>& vsz =  ui->vsplitter->sizes();
+    if (!vsz.isEmpty()) {
+        QListIterator<int> v(vsz);
+        QVariantList vSizes;
+        while (v.hasNext())
+            vSizes.append(v.next());
+        settings.setValue("MainWindow/vsplitter/sizes", vSizes);
+    }
     settings.setValue("Project/filename", d_ptr->project.filename());
 }
 
 void MainWindow::closeEvent(QCloseEvent* e)
 {
-    if (d_ptr->project.isDirty()) {
-        bool ok = QMessageBox::question(this, tr("Save before exit?"), tr("Your project has changed. Do you want to save the changes before exiting?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
-        if (ok)
-            saveProject();
+    int rc = (d_ptr->project.isDirty())
+            ? QMessageBox::question(this, tr("Save before exit?"), tr("Your project has changed. Do you want to save the changes before exiting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            : QMessageBox::NoButton;
+    if (rc == QMessageBox::Yes)
+        saveProject();
+    if (rc != QMessageBox::Cancel) {
+        saveSettings();
+        e->accept();
     }
-    saveSettings();
-    e->accept();
+    else {
+        e->ignore();
+    }
 }
 
 void MainWindow::valueChanged(int v)
@@ -353,18 +378,20 @@ void MainWindow::successfullyLinkedShader(void)
 void MainWindow::newProject(void)
 {
     Q_D(MainWindow);
-    if (d->project.isDirty()) {
-        bool ok = QMessageBox::question(this, tr("Really create a new project?"), tr("Your project has changed. Do you want to save the changes before creating a new project?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
-        if (ok)
-            saveProject();
+    int rc = (d->project.isDirty())
+            ? QMessageBox::question(this, tr("Save before creating a new project?"), tr("Your project has changed. Do you want to save the changes before creating a new project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            : QMessageBox::NoButton;
+    if (rc == QMessageBox::Yes)
+        saveProject();
+    if (rc != QMessageBox::Cancel) {
+        d->project.reset();
+        d->vertexShaderEditor->setPlainText(d->project.vertexShaderSource());
+        d->fragmentShaderEditor->setPlainText(d->project.fragmentShaderSource());
+        d->renderWidget->setImage(d->project.image());
+        processShaderChange();
+        d->project.setClean();
+        updateWindowTitle();
     }
-    d->project.reset();
-    d->vertexShaderEditor->setPlainText(d->project.vertexShaderSource());
-    d->fragmentShaderEditor->setPlainText(d->project.fragmentShaderSource());
-    d->renderWidget->setImage(d->project.image());
-    processShaderChange();
-    d->project.setClean();
-    updateWindowTitle();
 }
 
 void MainWindow::appendToRecentFileList(const QString& filename, const QString& listname, QMenu* menu, QAction* actions[])
@@ -410,15 +437,18 @@ void MainWindow::openRecentProject(void)
 
 void MainWindow::openProject(void)
 {
-    if (d_ptr->project.isDirty()) {
-        bool ok = QMessageBox::question(this, tr("Really load another project?"), tr("Your project has changed. Do you want to save the changes before loading another project?"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::Yes;
-        if (ok)
-            saveProject();
+    Q_D(MainWindow);
+    int rc = (d->project.isDirty())
+            ? QMessageBox::question(this, tr("Save before loading another project?"), tr("Your project has changed. Do you want to save the changes before loading another project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            : QMessageBox::NoButton;
+    if (rc == QMessageBox::Yes)
+        saveProject();
+    if (rc != QMessageBox::Cancel) {
+        const QString& filename = QFileDialog::getOpenFileName(this, tr("Load project"), QString(), tr("Project files (*.xml *.xmlz)"));
+        if (filename.isEmpty())
+            return;
+        openProject(filename);
     }
-    const QString& filename = QFileDialog::getOpenFileName(this, tr("Load project"), QString(), tr("Project files (*.xml *.glslx *.xmlz *.glslz)"));
-    if (filename.isEmpty())
-        return;
-    openProject(filename);
 }
 
 void MainWindow::openProject(const QString& filename)
@@ -436,11 +466,12 @@ void MainWindow::openProject(const QString& filename)
         d->renderWidget->setImage(d->project.image());
         processShaderChange();
         d->project.setClean();
-        appendToRecentFileList(filename, "Project/recentFileList", ui->menuRecentProjects, d->recentProjectsActs);
+        appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
+        d->renderWidget->tryToGoLive();
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())
-                               : tr("Loading '%1' failed.").arg(QFileInfo(filename).fileName()), 3000);
+                               : tr("Loading '%1' failed: %2").arg(QFileInfo(filename).fileName()).arg(d->project.errorString()), 10000);
     updateWindowTitle();
 }
 
@@ -475,7 +506,7 @@ void MainWindow::saveProject(const QString &filename)
                                ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
                                : tr("Saving failed."), 3000);
     if (ok)
-        appendToRecentFileList(filename, "Project/recentFileList", ui->menuRecentProjects, d->recentProjectsActs);
+        appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
     updateWindowTitle();
 }
 
@@ -540,6 +571,7 @@ void MainWindow::aboutQt(void)
 
 static void prepareEditor(GLSLEdit* editor)
 {
+    //editor->blockSignals(true);
     editor->setTabStopWidth(2);
     editor->setWordWrapMode(QTextOption::NoWrap);
     QFont monospace;
@@ -569,6 +601,7 @@ static void prepareEditor(GLSLEdit* editor)
     editor->setColor(GLSLEdit::BracketMatch,  QColor("#1ab0a6"));
     editor->setColor(GLSLEdit::BracketError,  QColor("#a82224"));
     editor->setColor(GLSLEdit::FoldIndicator, QColor("#555555"));
+    // editor->blockSignals(false);
 }
 
 static void clearLayout(QLayout* layout)

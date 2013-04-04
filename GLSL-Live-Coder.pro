@@ -16,8 +16,7 @@ SOURCES += main.cpp\
     project.cpp \
     glsledit/glslhighlighter.cpp \
     glsledit/sidebarwidget.cpp \
-    glsledit/glsldoclayout.cpp \
-    kineticscroller.cpp
+    glsledit/glsldoclayout.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
@@ -28,8 +27,7 @@ HEADERS  += mainwindow.h \
     glsledit/glslhighlighter.h \
     glsledit/sidebarwidget.h \
     glsledit/glsldoclayout.h \
-    util.h \
-    kineticscroller.h
+    util.h
 
 FORMS    += mainwindow.ui
 
@@ -47,4 +45,5 @@ OTHER_FILES += \
     doc/index.html \
     examples/chromatic.xml \
     examples/ontoeidetik.xml \
-    examples/gaussian.xml
+    examples/gaussian.xml \
+    examples/toad-torch.xml
