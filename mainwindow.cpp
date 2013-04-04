@@ -135,6 +135,9 @@ void MainWindow::restoreSettings(void)
     Q_D(MainWindow);
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
+    bool doc = settings.value("DocBrowser/show", false).toBool();
+    showHelp(doc);
+    d->docBrowser->restoreGeometry(settings.value("DocBrowser/geometry").toByteArray());
     const QVariantList& hsz = settings.value("MainWindow/hsplitter/sizes").toList();
     if (!hsz.isEmpty()) {
         QListIterator<QVariant> h(hsz);
@@ -166,8 +169,13 @@ void MainWindow::restoreSettings(void)
 
 void MainWindow::saveSettings(void)
 {
+    Q_D(MainWindow);
     QSettings settings(Company, AppName);
     settings.setValue("MainWindow/geometry", saveGeometry());
+    if (d->docBrowser) {
+        settings.setValue("DocBrowser/geometry", d->docBrowser->saveGeometry());
+        settings.setValue("DocBrowser/show", d->docBrowser->isVisible());
+    }
     settings.setValue("MainWindow/tabwidget/currentIndex", ui->tabWidget->currentIndex());
     const QList<int>& hsz =  ui->hsplitter->sizes();
     if (!hsz.isEmpty()) {
@@ -190,13 +198,16 @@ void MainWindow::saveSettings(void)
 
 void MainWindow::closeEvent(QCloseEvent* e)
 {
-    int rc = (d_ptr->project.isDirty())
+    Q_D(MainWindow);
+    int rc = (d->project.isDirty())
             ? QMessageBox::question(this, tr("Save before exit?"), tr("Your project has changed. Do you want to save the changes before exiting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
         saveProject();
     if (rc != QMessageBox::Cancel) {
+        QMainWindow::closeEvent(e);
         saveSettings();
+        safeDelete(d->docBrowser);
         e->accept();
     }
     else {
@@ -529,7 +540,7 @@ void MainWindow::updateWindowTitle()
                           .arg(d_ptr->project.isDirty()? "*" : "")));
 }
 
-void MainWindow::showHelp(void)
+void MainWindow::showHelp(bool visible)
 {
     Q_D(MainWindow);
     QFile docFile(":/doc/index.html");
@@ -539,14 +550,16 @@ void MainWindow::showHelp(void)
         d->docBrowser->setOpenExternalLinks(true);
         d->docBrowser->setOpenLinks(true);
     }
-    d->docBrowser->setText(docFile.readAll());
-    d->docBrowser->show();
+    if (visible) {
+        d->docBrowser->setText(docFile.readAll());
+        d->docBrowser->show();
+    }
 }
 
 void MainWindow::about(void)
 {
     QMessageBox::about(this, tr("About %1 %2%3").arg(AppName).arg(AppVersionNoDebug).arg(AppMinorVersion),
-                       tr("<p><b>%1</b> is a live coding environment for OpenGL shaders. "
+                       tr("<p><b>%1</b> is a live coding environment for OpenGL 1.x shaders. "
                           "See <a href=\"%2\" title=\"%1 project homepage\">%2</a> for more info.</p>"
                           "<p>Copyright &copy; 2013 %3 &lt;%4&gt;, Heise Zeitschriften Verlag.</p>"
                           "<p>This program is free software: you can redistribute it and/or modify "
@@ -567,7 +580,6 @@ void MainWindow::aboutQt(void)
 {
     QMessageBox::aboutQt(this);
 }
-
 
 static void prepareEditor(GLSLEdit* editor)
 {

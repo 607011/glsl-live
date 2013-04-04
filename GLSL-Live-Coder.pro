@@ -41,7 +41,6 @@ OTHER_FILES += \
     shaders/vertexshader.glsl \
     LICENSE.txt \
     examples/crosshatch.xml \
-    TODO.txt \
     doc/index.html \
     examples/chromatic.xml \
     examples/ontoeidetik.xml \

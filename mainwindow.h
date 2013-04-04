@@ -29,7 +29,7 @@ protected:
     void closeEvent(QCloseEvent*);
 
 private slots:
-    void showHelp(void);
+    void showHelp(bool visible = true);
     void about(void);
     void aboutQt(void);
     void badVertexShaderCode(const QString&);
