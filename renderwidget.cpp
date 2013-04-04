@@ -9,8 +9,6 @@
 #include <QGLShaderProgram>
 #include <QVector2D>
 #include <QVector3D>
-#include <QPoint>
-#include <QPointF>
 #include <QRect>
 #include <QRgb>
 #include <QMimeData>
@@ -55,6 +53,7 @@ public:
         , scale(1.0)
         , leftMouseButtonPressed(false)
         , mouseMovedWhileLeftButtonPressed(false)
+        , mouseMoveTimerId(0)
     { /* ... */ }
 
     bool firstPaintEventPending;
@@ -89,6 +88,22 @@ public:
     QRect viewport;
     QMap<QString, QVariant> uniforms;
     QVector<QVector2D> marks;
+
+    struct KineticData {
+        KineticData(void) : t(0) { /* ... */ }
+        KineticData(const QPoint& p, int t) : p(p), t(t) { /* ... */ }
+        QPoint p;
+        int t;
+    };
+
+    QVector<KineticData> kineticData;
+    QTime mouseMoveTimer;
+    int mouseMoveTimerId;
+    QPointF velocity;
+
+    static const double Friction;
+    static const int TimeInterval;
+    static const int NumKineticDataSamples;
 
     void makeShaderProgram(void)
     {
@@ -126,21 +141,38 @@ private:
     }
 };
 
+const double RenderWidgetPrivate::Friction = 0.85;
+const int RenderWidgetPrivate::TimeInterval = 20;
+const int RenderWidgetPrivate::NumKineticDataSamples = 5;
+
+
 RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(parent)
     , d_ptr(new RenderWidgetPrivate)
 {
     setFocusPolicy(Qt::StrongFocus);
     setFocus(Qt::MouseFocusReason);
+    setMouseTracking(true);
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
     setAcceptDrops(true);
-    setMouseTracking(true);
+    setCursor(Qt::OpenHandCursor);
     d_ptr->time.start();
 }
 
 RenderWidget::~RenderWidget()
 {
+    stopMotion();
     stopCode();
+}
+
+QSize RenderWidget::minimumSizeHint() const
+{
+    return QSize(240, 160);
+}
+
+QSize RenderWidget::sizeHint() const
+{
+    return QSize(240, 160);
 }
 
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
@@ -294,6 +326,11 @@ void RenderWidget::stopCode()
     }
 }
 
+void RenderWidget::calcViewport(void)
+{
+    calcViewport(size());
+}
+
 void RenderWidget::calcViewport(const QSize& size)
 {
     calcViewport(size.width(), size.height());
@@ -326,7 +363,7 @@ void RenderWidget::fitImageToWindow(void)
             ? double(width()) / d->img.width()
             : double(height()) / d->img.height();
     d->offset = QPoint(0, 0);
-    calcViewport(size());
+    calcViewport();
 }
 
 void RenderWidget::resizeToOriginalImageSize(void)
@@ -334,7 +371,7 @@ void RenderWidget::resizeToOriginalImageSize(void)
     Q_D(RenderWidget);
     d->scale = 1.0;
     d->offset = QPoint(0, 0);
-    calcViewport(size());
+    calcViewport();
 }
 
 void RenderWidget::resizeGL(int w, int h)
@@ -386,8 +423,17 @@ void RenderWidget::paintGL(void)
 
 void RenderWidget::timerEvent(QTimerEvent* e)
 {
-    if (e->timerId() == d_ptr->liveTimerId)
+    Q_D(RenderWidget);
+    if (e->timerId() == d->liveTimerId) {
         update();
+    }
+    else if (e->timerId() == d->mouseMoveTimerId) {
+        if (d->velocity.manhattanLength() > M_SQRT2) {
+            scrollBy(d->velocity.toPoint());
+            d->velocity *= RenderWidgetPrivate::Friction;
+        }
+        else stopMotion();
+    }
     else
         qWarning() << "RenderWidget::timerEvent() received bad timer id:" << e->timerId();
     e->accept();
@@ -400,8 +446,11 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
         d->mouseMovedWhileLeftButtonPressed = true;
         const QPoint& dp = e->pos() - d->lastMousePos;
         d->offset += QPoint(dp.x(), -dp.y());
+        d->kineticData.push_back(RenderWidgetPrivate::KineticData(e->pos(), d->mouseMoveTimer.elapsed()));
+        if (d->kineticData.count() > RenderWidgetPrivate::NumKineticDataSamples)
+            d->kineticData.pop_front();
+        calcViewport();
         d->lastMousePos = e->pos();
-        calcViewport(width(), height());
     }
     else {
         if (d->shaderProgram->isLinked()) {
@@ -418,6 +467,10 @@ void RenderWidget::mousePressEvent(QMouseEvent* e)
     Q_D(RenderWidget);
     switch (e->button()) {
     case Qt::LeftButton:
+        stopMotion();
+        setCursor(Qt::ClosedHandCursor);
+        d->mouseMoveTimer.start();
+        d->kineticData.clear();
         d->leftMouseButtonPressed = true;
         d->lastMousePos = e->pos();
         break;
@@ -435,10 +488,22 @@ void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
     Q_D(RenderWidget);
     switch (e->button()) {
     case Qt::LeftButton:
+        setCursor(Qt::OpenHandCursor);
         if (!d->mouseMovedWhileLeftButtonPressed) {
             const QPointF& mp = e->pos() - QPoint(d->viewport.left(), height() - d->viewport.bottom());
             d->marks << QVector2D(mp.x() / d->viewport.width(), mp.y() / d->viewport.height());
             updateUniforms();
+        }
+        else {
+            if (d->kineticData.count() == RenderWidgetPrivate::NumKineticDataSamples) {
+                int timeSinceLastMoveEvent = d->mouseMoveTimer.elapsed() - d->kineticData.last().t;
+                if (timeSinceLastMoveEvent < 100) {
+                    const QPointF& dp = d->kineticData.first().p - e->pos();
+                    int dt = d->mouseMoveTimer.elapsed() - d->kineticData.first().t;
+                    QPointF initialVector(1000 * dp / dt / RenderWidgetPrivate::TimeInterval);
+                    startMotion(initialVector);
+                }
+            }
         }
         d->leftMouseButtonPressed = false;
         d->mouseMovedWhileLeftButtonPressed = false;
@@ -459,7 +524,7 @@ void RenderWidget::wheelEvent(QWheelEvent* e)
         return;
     double f = e->delta() * (e->modifiers() & Qt::ControlModifier)? 0.1 : 0.05;
     d->scale *= (e->delta() < 0)? 1-f : 1+f;
-    calcViewport(width(), height());
+    calcViewport();
 }
 
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)
@@ -528,3 +593,27 @@ void RenderWidget::setUniformValue(const QString& name, bool value)
     updateUniforms();
 }
 
+void RenderWidget::startMotion(const QPointF& velocity)
+{
+    Q_D(RenderWidget);
+    d->velocity = velocity;
+    if (d->mouseMoveTimerId == 0)
+        d->mouseMoveTimerId = startTimer(RenderWidgetPrivate::TimeInterval);
+}
+
+void RenderWidget::stopMotion(void)
+{
+    Q_D(RenderWidget);
+    if (d->mouseMoveTimerId) {
+        killTimer(d->mouseMoveTimerId);
+        d->mouseMoveTimerId = 0;
+    }
+    d->velocity = QPointF(0, 0);
+}
+
+void RenderWidget::scrollBy(const QPoint& offset)
+{
+    Q_D(RenderWidget);
+    d->offset = QPoint(offset.x(), -offset.y());
+    calcViewport();
+}

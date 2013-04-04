@@ -5,6 +5,8 @@
 #define __RENDERWIDGET_H_
 
 #include <QGLWidget>
+#include <QPoint>
+#include <QPointF>
 #include <QString>
 #include <QImage>
 #include <QTimerEvent>
@@ -14,6 +16,7 @@
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include <QResizeEvent>
+#include <QTimerEvent>
 #include <QScopedPointer>
 
 class RenderWidgetPrivate;
@@ -24,8 +27,8 @@ class RenderWidget : public QGLWidget
 public:
     explicit RenderWidget(QWidget* parent = NULL);
     ~RenderWidget();
-    QSize minimumSizeHint(void) const { return QSize(320, 240); }
-    QSize sizeHint(void) const { return QSize(640, 480); }
+    QSize minimumSizeHint(void) const;
+    QSize sizeHint(void) const;
 
     void setShaderSources(const QString& vs, const QString& fs);
     void setImage(const QImage&);
@@ -55,7 +58,6 @@ protected:
     void initializeGL(void);
     void resizeGL(int, int);
     void paintGL(void);
-    void timerEvent(QTimerEvent*);
     void mouseMoveEvent(QMouseEvent*);
     void mousePressEvent(QMouseEvent*);
     void mouseReleaseEvent(QMouseEvent*);
@@ -63,14 +65,19 @@ protected:
     void dragEnterEvent(QDragEnterEvent*);
     void dragLeaveEvent(QDragLeaveEvent*);
     void dropEvent(QDropEvent*);
+    void timerEvent(QTimerEvent*);
 
 private: // methods
     void goLive(void);
     void stopCode(void);
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
+    void calcViewport(void);
     void calcViewport(const QSize&);
     void calcViewport(int w, int h);
+    void scrollBy(const QPoint&);
+    void startMotion(const QPointF& velocity);
+    void stopMotion(void);
 
 private:
     QScopedPointer<RenderWidgetPrivate> d_ptr;

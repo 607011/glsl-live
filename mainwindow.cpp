@@ -30,6 +30,7 @@
 #include "project.h"
 #include "renderwidget.h"
 #include "glsledit/glsledit.h"
+#include "kineticscroller.h"
 #include "util.h"
 
 
@@ -41,6 +42,7 @@ class MainWindowPrivate {
 public:
     explicit MainWindowPrivate(void)
         : renderWidget(new RenderWidget)
+        , kineticScroller(NULL)
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
@@ -51,6 +53,7 @@ public:
 
     Project project;
     RenderWidget* renderWidget;
+    KineticScroller* kineticScroller;
     QWidget* paramWidget;
     QString vertexShaderFilename;
     QString fragmentShaderFilename;
@@ -65,6 +68,7 @@ public:
 
     virtual ~MainWindowPrivate()
     {
+        safeDelete(kineticScroller);
         safeDelete(renderWidget);
         safeDelete(paramWidget);
         safeDelete(vertexShaderEditor);
@@ -96,7 +100,7 @@ MainWindow::MainWindow(QWidget* parent)
         QObject::connect(act, SIGNAL(triggered()), SLOT(openRecentProject()));
         ui->menuRecentProjects->addAction(act);
     }
-    ui->hsplitter->addWidget(d->renderWidget);
+    ui->scrollArea->setWidget(d->renderWidget);
     ui->hsplitter->addWidget(d->paramWidget);
     ui->tabWidget->setMinimumWidth(300);
     ui->vertexShaderHLayout->addWidget(d->vertexShaderEditor);

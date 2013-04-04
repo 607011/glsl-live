@@ -15,18 +15,6 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <property name="leftMargin">
-     <number>0</number>
-    </property>
-    <property name="topMargin">
-     <number>0</number>
-    </property>
-    <property name="rightMargin">
-     <number>0</number>
-    </property>
-    <property name="bottomMargin">
-     <number>0</number>
-    </property>
     <item row="0" column="0">
      <widget class="QSplitter" name="hsplitter">
       <property name="orientation">
@@ -40,11 +28,17 @@
         <layout class="QVBoxLayout" name="verticalLayoutEditors">
          <item>
           <widget class="QTabWidget" name="tabWidget">
+           <property name="minimumSize">
+            <size>
+             <width>240</width>
+             <height>240</height>
+            </size>
+           </property>
            <property name="tabShape">
             <enum>QTabWidget::Rounded</enum>
            </property>
            <property name="currentIndex">
-            <number>0</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="tabVertexShader">
             <attribute name="title">
@@ -123,6 +117,12 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>100</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <family>Courier New</family>
@@ -136,6 +136,27 @@
           </widget>
          </item>
         </layout>
+       </widget>
+      </widget>
+      <widget class="QScrollArea" name="scrollArea">
+       <property name="minimumSize">
+        <size>
+         <width>200</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="scrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>198</width>
+          <height>462</height>
+         </rect>
+        </property>
        </widget>
       </widget>
      </widget>
