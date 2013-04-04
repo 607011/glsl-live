@@ -18,6 +18,9 @@ void main(void)
     <fragment><![CDATA[// Crosshatch effect fragment shader
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
+
+const float SQRT2 = 1.41421356237;
+
 varying vec4 vTexCoord;
 uniform sampler2D uTexture;
 uniform float uT;
@@ -32,28 +35,27 @@ uniform float uLightness; // 0, 3, 1
 
 vec4 crosshatch(sampler2D tex, vec2 uv, vec2 resolution, int stitchSize, bool invert)
 {
-  stitchSize = -stitchSize;
+  float stitch = -float(stitchSize);
   vec4 c = vec4(0.0);
   vec2 cPos = uv * resolution;
-  vec2 tlPos = floor(cPos / vec2(stitchSize, stitchSize));
-  tlPos *= float(stitchSize);
-  int remX = int(mod(cPos.x, float(stitchSize)));
-  int remY = int(mod(cPos.y, float(stitchSize)));
+  vec2 tlPos = floor(cPos / stitch) * stitch;
+  int remX = int(mod(cPos.x, stitch));
+  int remY = int(mod(cPos.y, stitch));
   if (remX == 0 && remY == 0)
     tlPos = cPos;
   vec2 blPos = tlPos;
-  blPos.y += (float(stitchSize) - 1.0);
+  blPos.y += stitch - 1.0;
   if ((remX == remY) || 
      (((int(cPos.x) - int(blPos.x)) == (int(blPos.y) - int(cPos.y))))) 
   {
     if (invert)
       c = vec4(0.2, 0.15, 0.05, 1.0);
     else
-      c = texture2D(tex, tlPos * vec2(1.0, 1.0) / resolution) * 1.4;
+      c = texture2D(tex, tlPos / resolution) * SQRT2;
   }
   else {
     if (invert)
-      c = texture2D(tex, tlPos * vec2(1.0, 1.0) / resolution) * 1.4;
+      c = texture2D(tex, tlPos / resolution) * SQRT2;
     else
       c = vec4(0.0, 0.0, 0.0, 1.0);
   }
@@ -63,7 +65,7 @@ vec4 crosshatch(sampler2D tex, vec2 uv, vec2 resolution, int stitchSize, bool in
 void main(void)
 {
   vec4 color = crosshatch(uTexture, vTexCoord.st, uResolution, uStitchSize, uInvert);
-  gl_FragColor = uLightness * vec4(1.0, 0.5 + uPulseStrength * sin(uPulseSpeed * uT), 1.0, 1.0) * color;
+  gl_FragColor = uLightness * color * vec4(1.0, 0.5 + uPulseStrength * sin(uPulseSpeed * uT), 1.0, 1.0);
 }
 ]]></fragment>
   </shaders>

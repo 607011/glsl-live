@@ -225,14 +225,14 @@ QImage RenderWidget::resultImage(void)
 {
     Q_D(RenderWidget);
     glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glPushMatrix();
     makeImageFBO();
     d->fbo->bind();
+    d->shaderProgram->setUniformValue(d->uLocResolution, QSizeF(d->img.size()));
     glViewport(0, 0, d->img.width(), d->img.height());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     d->fbo->release();
-    glPopMatrix();
     glPopAttrib();
+    d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     return d->fbo->toImage();
 }
 
