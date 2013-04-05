@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9.1">
+<glsl-live-coder-project version="0.9.3">
   <shaders>
     <vertex><![CDATA[// Crosshatch effect vertex shader
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>774</width>
-    <height>535</height>
+    <width>722</width>
+    <height>495</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -166,7 +166,7 @@
           <x>0</x>
           <y>0</y>
           <width>238</width>
-          <height>462</height>
+          <height>422</height>
          </rect>
         </property>
        </widget>
@@ -180,7 +180,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>774</width>
+     <width>722</width>
      <height>21</height>
     </rect>
    </property>
@@ -236,15 +236,27 @@
    <property name="text">
     <string>About</string>
    </property>
+   <property name="shortcut">
+    <string notr="true"/>
+   </property>
   </action>
   <action name="actionAboutQt">
    <property name="text">
     <string>About Qt</string>
    </property>
+   <property name="shortcut">
+    <string notr="true"/>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::WindowShortcut</enum>
+   </property>
   </action>
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+   <property name="shortcut">
+    <string notr="true">Ctrl+Q</string>
    </property>
   </action>
   <action name="actionSave">
@@ -255,7 +267,10 @@
     <string>Save project</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S</string>
+    <string notr="true">Ctrl+S</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
    </property>
   </action>
   <action name="actionSaveAsProject">
@@ -271,7 +286,10 @@
     <string>Open project</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+O</string>
+    <string notr="true">Ctrl+O</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
    </property>
   </action>
   <action name="actionNew">
@@ -279,7 +297,10 @@
     <string>New project</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+N</string>
+    <string notr="true">Ctrl+N</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
    </property>
   </action>
   <action name="actionSaveProjectAs">
@@ -287,7 +308,10 @@
     <string>Save project as ...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+S</string>
+    <string notr="true">Ctrl+Shift+S</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
    </property>
   </action>
   <action name="actionRemoveImage">
@@ -300,7 +324,10 @@
     <string>Save image snapshot ...</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Alt+Shift+S</string>
+    <string notr="true">Ctrl+Alt+Shift+S</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
    </property>
   </action>
   <action name="actionResizeWindowToOriginalImageSize">
@@ -313,7 +340,10 @@
     <string>Help</string>
    </property>
    <property name="shortcut">
-    <string>F1</string>
+    <string notr="true">F1</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::ApplicationShortcut</enum>
    </property>
   </action>
   <action name="actionFitImageToWindow">
@@ -321,7 +351,7 @@
     <string>Fit image to window</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+I, 0</string>
+    <string notr="true">Ctrl+I, 0</string>
    </property>
   </action>
   <action name="actionResizeToOriginalImageSize">
@@ -329,7 +359,7 @@
     <string>Resize image to original size</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+I, 1</string>
+    <string notr="true">Ctrl+I, 1</string>
    </property>
   </action>
  </widget>
