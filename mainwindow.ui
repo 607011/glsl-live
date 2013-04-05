@@ -320,7 +320,7 @@
   </action>
   <action name="actionResizeToOriginalImageSize">
    <property name="text">
-    <string>Resize to original image size</string>
+    <string>Resize image to original size</string>
    </property>
   </action>
  </widget>

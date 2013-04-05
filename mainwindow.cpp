@@ -45,9 +45,12 @@ public:
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
-        , docBrowser(NULL)
+        , docBrowser(new QTextBrowser)
     {
         calcSteps();
+        docBrowser->setOpenExternalLinks(true);
+        docBrowser->setOpenLinks(true);
+        docBrowser->setSource(QUrl("qrc:/doc/index.html"));
     }
 
     Project project;
@@ -120,7 +123,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
-    QObject::connect(ui->actionHelp, SIGNAL(triggered()), SLOT(showHelp()));
+    QObject::connect(ui->actionHelp, SIGNAL(triggered()), d->docBrowser, SLOT(show()));
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     restoreSettings();
@@ -136,9 +139,10 @@ void MainWindow::restoreSettings(void)
     Q_D(MainWindow);
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
-    bool doc = settings.value("DocBrowser/show", false).toBool();
-    showHelp(doc);
     d->docBrowser->restoreGeometry(settings.value("DocBrowser/geometry").toByteArray());
+    bool showdoc = settings.value("DocBrowser/show", false).toBool();
+    if (showdoc)
+        d->docBrowser->show();
     const QVariantList& hsz = settings.value("MainWindow/hsplitter/sizes").toList();
     if (!hsz.isEmpty()) {
         QListIterator<QVariant> h(hsz);
@@ -173,10 +177,8 @@ void MainWindow::saveSettings(void)
     Q_D(MainWindow);
     QSettings settings(Company, AppName);
     settings.setValue("MainWindow/geometry", saveGeometry());
-    if (d->docBrowser) {
-        settings.setValue("DocBrowser/geometry", d->docBrowser->saveGeometry());
-        settings.setValue("DocBrowser/show", d->docBrowser->isVisible());
-    }
+    settings.setValue("DocBrowser/geometry", d->docBrowser->saveGeometry());
+    settings.setValue("DocBrowser/show", d->docBrowser->isVisible());
     settings.setValue("MainWindow/tabwidget/currentIndex", ui->tabWidget->currentIndex());
     const QList<int>& hsz =  ui->hsplitter->sizes();
     if (!hsz.isEmpty()) {
@@ -248,7 +250,7 @@ void MainWindow::saveImageSnapshot(void)
     d_ptr->renderWidget->resultImage().save(filename);
 }
 
-void MainWindow::parseShadersForParameters()
+void MainWindow::parseShadersForParameters(void)
 {
     Q_D(MainWindow);
     QByteArray ba = d->vertexShaderEditor->toPlainText().toUtf8()
@@ -541,18 +543,6 @@ void MainWindow::updateWindowTitle()
                           .arg(d_ptr->project.isDirty()? "*" : "")));
 }
 
-void MainWindow::showHelp(bool visible)
-{
-    Q_D(MainWindow);
-    if (d->docBrowser == NULL) {
-        d->docBrowser = new QTextBrowser;
-        d->docBrowser->setOpenExternalLinks(true);
-        d->docBrowser->setOpenLinks(true);
-        d->docBrowser->setSource(QUrl("qrc:/doc/index.html"));
-    }
-    if (visible)
-        d->docBrowser->show();
-}
 
 void MainWindow::about(void)
 {
