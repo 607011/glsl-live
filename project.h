@@ -53,7 +53,6 @@ private: // variables
     QScopedPointer<ProjectPrivate> d_ptr;
     Q_DECLARE_PRIVATE(Project)
     Q_DISABLE_COPY(Project)
-
 };
 
 #endif // __PROJECT_H_

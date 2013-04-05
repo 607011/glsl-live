@@ -490,6 +490,7 @@ void MainWindow::openProject(const QString& filename)
         processShaderChange();
         d->project.setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
+        d->renderWidget->resizeToOriginalImageSize();
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())
