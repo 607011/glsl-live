@@ -115,6 +115,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
     QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
     QObject::connect(d->renderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
+    QObject::connect(d->renderWidget, SIGNAL(imageDropped(QImage)), SLOT(imageDropped(QImage)));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
@@ -242,6 +243,12 @@ void MainWindow::valueChanged(bool v)
     }
 }
 
+void MainWindow::imageDropped(const QImage& img)
+{
+    Q_UNUSED(img);
+    processShaderChange();
+}
+
 void MainWindow::saveImageSnapshot(void)
 {
     const QString& filename = QFileDialog::getSaveFileName(this, tr("Save image snapshot"), QString(), tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
@@ -361,9 +368,11 @@ void MainWindow::parseShadersForParameters(void)
 
 void MainWindow::processShaderChange(void)
 {
+    Q_D(MainWindow);
     parseShadersForParameters();
     updateShaderSources();
-    d_ptr->project.setDirty(true);
+    d->project.setDirty();
+    ui->actionSave->setEnabled(true);
     updateWindowTitle();
 }
 
@@ -481,7 +490,6 @@ void MainWindow::openProject(const QString& filename)
         processShaderChange();
         d->project.setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
-        d->renderWidget->tryToGoLive();
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())

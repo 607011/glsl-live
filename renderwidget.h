@@ -32,8 +32,7 @@ public:
     QSize minimumSizeHint(void) const { return QSize(240, 160); }
     QSize sizeHint(void) const  { return QSize(640, 480); }
     void setShaderSources(const QString& vs, const QString& fs);
-    bool tryToGoLive(void);
-    void setImage(const QImage&);
+    void setImage(const QImage& = QImage());
     const QString& imageFileName(void) const;
     bool loadImage(const QString& fileName);
     const QImage& image(void) const;

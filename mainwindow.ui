@@ -248,6 +248,9 @@
    </property>
   </action>
   <action name="actionSave">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Save project</string>
    </property>
@@ -317,10 +320,16 @@
    <property name="text">
     <string>Fit image to window</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+I, 0</string>
+   </property>
   </action>
   <action name="actionResizeToOriginalImageSize">
    <property name="text">
     <string>Resize image to original size</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I, 1</string>
    </property>
   </action>
  </widget>

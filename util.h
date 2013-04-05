@@ -7,7 +7,7 @@
 
 
 template <class T>
-inline void safeDelete(T &a)
+inline void safeDelete(T& a)
 {
     if (a)
         delete a;
@@ -15,7 +15,7 @@ inline void safeDelete(T &a)
 }
 
 template <class T>
-inline void safeDeleteArray(T &a)
+inline void safeDeleteArray(T& a)
 {
     if (a)
         delete [] a;

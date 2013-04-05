@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9">
+<glsl-live-coder-project version="0.9.3">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
 attribute vec4 aTexCoord;
@@ -21,8 +21,8 @@ void main(void)
 {
     vec2 mouse = uMouse / uResolution;
     float dist = 1.0 - distance(mouse, vTexCoord.st);
-    vec4 color = texture2D(uTexture, vTexCoord.st);
-    gl_FragColor = color * clamp(2.0*dist, 0.1, 1.0);;
+    vec3 rgb = texture2D(uTexture, vTexCoord.st).rgb;
+    gl_FragColor = vec4(rgb * clamp(2.0*dist, 0.1, 1.0), 1.0);
 }
 ]]></fragment>
   </shaders>

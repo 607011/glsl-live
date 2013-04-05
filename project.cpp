@@ -28,14 +28,10 @@ public:
 Project::Project(QObject* parent)
     : QObject(parent)
     , d_ptr(new ProjectPrivate)
-{
-    /* ... */
-}
+{ /* ... */ }
 
 Project::~Project()
-{
-    /* ... */
-}
+{ /* ... */ }
 
 void Project::reset(void)
 {

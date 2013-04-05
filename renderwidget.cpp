@@ -49,7 +49,6 @@ public:
         , resultImageData(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
-        , updateImageGL(false)
         , scale(1.0)
         , leftMouseButtonPressed(false)
         , mouseMovedWhileLeftButtonPressed(false)
@@ -184,17 +183,6 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
     }
 }
 
-bool RenderWidget::tryToGoLive(void)
-{
-    Q_D(RenderWidget);
-    if (d->shaderProgram->isLinked()) {
-        updateUniforms();
-        goLive();
-        return true;
-    }
-    return false;
-}
-
 void RenderWidget::makeImageFBO(void)
 {
     Q_D(RenderWidget);
@@ -210,14 +198,18 @@ void RenderWidget::makeImageFBO(void)
 void RenderWidget::setImage(const QImage& img)
 {
     Q_D(RenderWidget);
-    d->img = img.convertToFormat(QImage::Format_ARGB32);
-    d->updateImageGL = true;
-    makeImageFBO();
+    if (!img.isNull()) {
+        d->img = img.convertToFormat(QImage::Format_ARGB32);
+        makeImageFBO();
+    }
+    makeCurrent();
+    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
 }
 
 const QString& RenderWidget::imageFileName(void) const
 {
-     return d_ptr->imgFilename;
+    return d_ptr->imgFilename;
 }
 
 QImage RenderWidget::resultImage(void)
@@ -403,20 +395,11 @@ void RenderWidget::paintGL(void)
         buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
         if (d->shaderProgram->isLinked())
             goLive();
+        setImage();
         d->firstPaintEventPending = false;
     }
-    if (d->shaderProgram->isLinked()) {
+    if (d->shaderProgram->isLinked())
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->time.elapsed());
-    }
-    if (d->updateImageGL) {
-        d->updateImageGL = false;
-        // Aktualisierung hier, weil Aktualisieren des Bildes
-        // *außerhalb* von paintGL() oder initializeGL() trotz
-        // makeCurrent() immer fehlgeschlagen ist
-        // d->inputTextureHandle = bindTexture(d->img);
-        glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
-    }
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
