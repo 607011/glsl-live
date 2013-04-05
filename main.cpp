@@ -16,16 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <QApplication>
+#include <QTranslator>
+#include <QLocale>
+#include <QtCore/QDebug>
 #include "main.h"
 #include "mainwindow.h"
-#include <QApplication>
 
 const QString Company = "c't";
 const QString AppName = "GLSL Live Coder";
 const QString AppUrl = "http://code.google.com/p/glsl-live/";
 const QString AppAuthor = "Oliver Lau";
 const QString AppAuthorMail = "ola@ct.de";
-const QString AppVersionNoDebug = "0.9.2";
+const QString AppVersionNoDebug = "0.9.3";
 const QString AppMinorVersion = "";
 #ifdef QT_NO_DEBUG
 const QString AppVersion = AppVersionNoDebug + AppMinorVersion;
@@ -34,13 +37,21 @@ const QString AppVersion = AppVersionNoDebug + AppMinorVersion + " [DEBUG]";
 #endif
 
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
     a.setOrganizationName(Company);
     a.setOrganizationDomain(Company);
     a.setApplicationName(AppName);
     a.setApplicationVersion(AppVersionNoDebug);
+    QTranslator translator;
+    bool ok = translator.load(":/translations/glsl-live_" + QLocale::system().name());
+#ifndef QT_NO_DEBUG
+    if (!ok)
+        qWarning() << "Could not load translations for" << QLocale::system().name() << "locale";
+#endif
+    if (ok)
+        a.installTranslator(&translator);
     MainWindow w;
     w.show();
     return a.exec();

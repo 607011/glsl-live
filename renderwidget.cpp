@@ -141,9 +141,9 @@ private:
     }
 };
 
-const double RenderWidgetPrivate::Friction = 0.85;
-const int RenderWidgetPrivate::TimeInterval = 20;
-const int RenderWidgetPrivate::NumKineticDataSamples = 5;
+const double RenderWidgetPrivate::Friction = 0.81;
+const int RenderWidgetPrivate::TimeInterval = 25;
+const int RenderWidgetPrivate::NumKineticDataSamples = 4;
 
 
 RenderWidget::RenderWidget(QWidget* parent)
@@ -156,7 +156,6 @@ RenderWidget::RenderWidget(QWidget* parent)
     setAcceptDrops(true);
     setCursor(Qt::OpenHandCursor);
     d_ptr->time.start();
-    makeCurrent();
 }
 
 RenderWidget::~RenderWidget()

@@ -5,6 +5,10 @@ QT       += core gui opengl xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+TRANSLATIONS = glsl-live_de.ts
+
+CODECFORTR = UTF-8
+
 TARGET = GLSL-Live-Coder
 TEMPLATE = app
 
@@ -34,7 +38,8 @@ FORMS    += mainwindow.ui
 RESOURCES += \
     shaders.qrc \
     images.qrc \
-    help.qrc
+    help.qrc \
+    translations.qrc
 
 OTHER_FILES += \
     shaders/fragmentshader.glsl \
@@ -45,4 +50,5 @@ OTHER_FILES += \
     examples/chromatic.xml \
     examples/ontoeidetik.xml \
     examples/gaussian.xml \
-    examples/toad-torch.xml
+    examples/toad-torch.xml \
+    glsl-live_de.ts
