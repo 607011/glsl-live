@@ -6,6 +6,7 @@
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
+#include <QUrl>
 #include <QByteArray>
 #include <QTextStream>
 #include <QRegExp>
@@ -547,10 +548,7 @@ void MainWindow::showHelp(bool visible)
         d->docBrowser = new QTextBrowser;
         d->docBrowser->setOpenExternalLinks(true);
         d->docBrowser->setOpenLinks(true);
-        QFile docFile(":/doc/index.html");
-        docFile.open(QIODevice::ReadOnly | QIODevice::Text);
-        d->docBrowser->setText(docFile.readAll());
-        docFile.close();
+        d->docBrowser->setSource(QUrl("qrc:/doc/index.html"));
     }
     if (visible)
         d->docBrowser->show();
