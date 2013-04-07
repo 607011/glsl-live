@@ -39,9 +39,12 @@ public:
     void setUniformValue(const QString& name, int value);
     void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);
-    void updateUniforms();
+    void updateUniforms(void);
     void clearUniforms(void);
     QImage resultImage(void);
+    void beginBatchProcessing(void);
+    QImage processImage(const QString& filename);
+    void endBatchProcessing(void);
 
 public slots:
     void fitImageToWindow(void);

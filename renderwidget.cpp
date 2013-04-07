@@ -46,7 +46,7 @@ public:
         , fragmentShader(NULL)
         , shaderProgram(new QGLShaderProgram)
         , fbo(NULL)
-        , resultImageData(NULL)
+        , batchFbo(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
         , scale(1.0)
@@ -60,7 +60,7 @@ public:
     QGLShader* fragmentShader;
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
-    GLuint* resultImageData;
+    QGLFramebufferObject* batchFbo;
     GLuint inputTextureHandle;
     QTime time;
     QString imgFilename;
@@ -87,6 +87,7 @@ public:
     QRect viewport;
     QMap<QString, QVariant> uniforms;
     QVector<QVector2D> marks;
+    QMutex renderMutex;
 
     struct KineticData {
         KineticData(void) : t(0) { /* ... */ }
@@ -121,7 +122,7 @@ public:
         deleteShaderProgram();
         deleteShaders();
         safeDelete(fbo);
-        safeDeleteArray(resultImageData);
+        safeDelete(batchFbo);
     }
 
 private:
@@ -190,8 +191,6 @@ void RenderWidget::makeImageFBO(void)
     if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
         safeDelete(d->fbo);
         d->fbo = new QGLFramebufferObject(d->img.size());
-        safeDeleteArray(d->resultImageData);
-        d->resultImageData = new GLuint[d->img.width() * d->img.height()];
     }
 }
 
@@ -225,6 +224,44 @@ QImage RenderWidget::resultImage(void)
     glPopAttrib();
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     return d->fbo->toImage();
+}
+
+void RenderWidget::beginBatchProcessing(void)
+{
+    makeCurrent();
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+}
+
+QImage RenderWidget::processImage(const QString& filename)
+{
+    Q_D(RenderWidget);
+    qDebug() << "RenderWidget::processImage(" << filename << ")";
+    if (filename.isEmpty())
+        return QImage();
+    QImage img(filename);
+    if (img.isNull())
+        return QImage();
+    if (d->batchFbo == NULL || d->batchFbo->size() != img.size()) {
+        safeDelete(d->batchFbo);
+        d->batchFbo = new QGLFramebufferObject(img.size());
+    }
+    d->batchFbo->bind();
+    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, img.bits());
+    d->shaderProgram->setUniformValue(d->uLocResolution, QSizeF(img.size()));
+    glViewport(0, 0, img.width(), img.height());
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    d->batchFbo->release();
+    return d->batchFbo->toImage();
+}
+
+void RenderWidget::endBatchProcessing(void)
+{
+    Q_D(RenderWidget);
+    glPopAttrib();
+    d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
+    setImage(d->img);
+    safeDelete(d->batchFbo);
 }
 
 void RenderWidget::updateUniforms()

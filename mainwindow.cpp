@@ -10,6 +10,7 @@
 #include <QByteArray>
 #include <QTextStream>
 #include <QRegExp>
+#include <QStringListIterator>
 #include <QCryptographicHash>
 #include <QSlider>
 #include <QSpinBox>
@@ -23,6 +24,8 @@
 #include <QByteArray>
 #include <QString>
 #include <QVector>
+#include <QtConcurrent/QtConcurrentMap>
+#include <QFutureWatcher>
 #include <qmath.h>
 #include "main.h"
 #include "mainwindow.h"
@@ -36,6 +39,17 @@
 
 static void prepareEditor(GLSLEdit* editor);
 static void clearLayout(QLayout* layout);
+
+
+struct BatchObject {
+    BatchObject(void) {}
+    BatchObject(const QImage& img, const QString& outfn)
+        : image(img)
+        , outFilename(outfn)
+    { /* ... */ }
+    QImage image;
+    QString outFilename;
+};
 
 
 class MainWindowPrivate {
@@ -52,7 +66,7 @@ public:
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
     }
-
+    QFutureWatcher<BatchObject> batchWatcher;
     Project project;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
@@ -124,9 +138,12 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
+    QObject::connect(ui->actionBatchProcess, SIGNAL(triggered()), SLOT(batchProcess()));
     QObject::connect(ui->actionHelp, SIGNAL(triggered()), d->docBrowser, SLOT(show()));
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
+    QObject::connect(&d->batchWatcher, SIGNAL(resultReadyAt(int)), SLOT(batchResultReadyAt(int)));
+    QObject::connect(&d->batchWatcher, SIGNAL(finished()), SLOT(batchProcessed()));
     restoreSettings();
 }
 
@@ -255,6 +272,54 @@ void MainWindow::saveImageSnapshot(void)
     if (filename.isNull())
         return;
     d_ptr->renderWidget->resultImage().save(filename);
+}
+
+class ImageProcessor {
+public:
+    ImageProcessor(RenderWidget* r, const QString& d)
+        : mRenderWidget(r)
+        , mOutDir(d)
+    { /* ... */ }
+    typedef BatchObject result_type;
+    BatchObject operator()(const QString& filename)
+    {
+        QFileInfo fInfo(filename);
+        const QString& outFile = QString("%1/%2").arg(mOutDir).arg(fInfo.fileName());
+        return BatchObject(mRenderWidget->processImage(filename), outFile);
+    }
+private:
+    RenderWidget* mRenderWidget;
+    QString mOutDir;
+};
+
+void MainWindow::batchProcess(void)
+{
+    Q_D(MainWindow);
+    const QList<QString>& filenames = QFileDialog::getOpenFileNames(this, tr("Select images to load"), QString(), tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
+    int i = filenames.size();
+    if (i == 0)
+        return;
+    const QString& outDir = QFileDialog::getExistingDirectory(this, tr("Select save directory"));
+    if (outDir.isEmpty())
+        return;
+    d->renderWidget->beginBatchProcessing();
+    QFuture<BatchObject> images = QtConcurrent::mapped(filenames, ImageProcessor(d->renderWidget, outDir));
+    d->batchWatcher.setFuture(images);
+}
+
+void MainWindow::batchProcessed(void)
+{
+    Q_D(MainWindow);
+    d->renderWidget->endBatchProcessing();
+}
+
+void MainWindow::batchResultReadyAt(int i)
+{
+    Q_D(MainWindow);
+    const BatchObject& o = d->batchWatcher.resultAt(i);
+    qDebug() << i << o.outFilename << o.image.size() << o.image.byteCount();
+    o.image.save(o.outFilename);
+    ui->statusBar->showMessage(tr("image %1 saved as %2").arg(i).arg(o.outFilename));
 }
 
 void MainWindow::parseShadersForParameters(void)

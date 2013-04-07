@@ -51,6 +51,9 @@ private slots:
     void valueChanged(bool);
     void imageDropped(const QImage&);
     void saveImageSnapshot(void);
+    void batchProcess(void);
+    void batchProcessed(void);
+    void batchResultReadyAt(int);
 
 private: //methods
     void saveSettings(void);
