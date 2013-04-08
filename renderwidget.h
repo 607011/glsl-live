@@ -45,6 +45,7 @@ public:
     void beginBatchProcessing(void);
     QImage processImage(const QString& filename);
     void endBatchProcessing(void);
+    const QMap<QString, QVariant>& uniforms(void) const;
 
 public slots:
     void fitImageToWindow(void);

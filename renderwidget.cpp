@@ -87,7 +87,6 @@ public:
     QRect viewport;
     QMap<QString, QVariant> uniforms;
     QVector<QVector2D> marks;
-    QMutex renderMutex;
 
     struct KineticData {
         KineticData(void) : t(0) { /* ... */ }
@@ -264,7 +263,12 @@ void RenderWidget::endBatchProcessing(void)
     safeDelete(d->batchFbo);
 }
 
-void RenderWidget::updateUniforms()
+const QMap<QString, QVariant>& RenderWidget::uniforms(void) const
+{
+    return d_ptr->uniforms;
+}
+
+void RenderWidget::updateUniforms(void)
 {
     Q_D(RenderWidget);
     if (!d->shaderProgram->isLinked())

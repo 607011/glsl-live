@@ -25,7 +25,9 @@
 #include <QString>
 #include <QVector>
 #include <QtConcurrent/QtConcurrentMap>
+#include <QThread>
 #include <QFutureWatcher>
+#include <QMutex>
 #include <qmath.h>
 #include "main.h"
 #include "mainwindow.h"
@@ -33,6 +35,7 @@
 #include "doubleslider.h"
 #include "project.h"
 #include "renderwidget.h"
+#include "renderer.h"
 #include "glsledit/glsledit.h"
 #include "util.h"
 
@@ -41,9 +44,9 @@ static void prepareEditor(GLSLEdit* editor);
 static void clearLayout(QLayout* layout);
 
 
-struct BatchObject {
-    BatchObject(void) {}
-    BatchObject(const QImage& img, const QString& outfn)
+struct BatchOutput {
+    BatchOutput(void) {}
+    BatchOutput(const QImage& img, const QString& outfn)
         : image(img)
         , outFilename(outfn)
     { /* ... */ }
@@ -66,7 +69,7 @@ public:
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
     }
-    QFutureWatcher<BatchObject> batchWatcher;
+    QFutureWatcher<BatchOutput> batchWatcher;
     Project project;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
@@ -276,21 +279,49 @@ void MainWindow::saveImageSnapshot(void)
 
 class ImageProcessor {
 public:
-    ImageProcessor(RenderWidget* r, const QString& d)
-        : mRenderWidget(r)
-        , mOutDir(d)
-    { /* ... */ }
-    typedef BatchObject result_type;
-    BatchObject operator()(const QString& filename)
+    typedef BatchOutput result_type;
+    ImageProcessor(void) {
+        for (int i = 0; i < QThread::idealThreadCount(); ++i) {
+            mRenderers.append(new Renderer);
+        }
+    }
+    ~ImageProcessor() { qDebug() << "~ImageProcessor()"; }
+    BatchOutput operator()(const QString& filename)
     {
+        qDebug() << "thread" << QThread::currentThreadId();
+        if (mOutDir.isEmpty()) {
+            qWarning() << "Call ImageProcessor::setOutputDirectory() before operator(). Doing nothing.";
+            return BatchOutput();
+        }
+        int tid;
+        tid = id++;
         QFileInfo fInfo(filename);
         const QString& outFile = QString("%1/%2").arg(mOutDir).arg(fInfo.fileName());
-        return BatchObject(mRenderWidget->processImage(filename), outFile);
+        qDebug() << "ImageProcessor()" << filename;
+        return BatchOutput(mRenderers.at(tid)->process(QImage(filename)), outFile);
     }
+    void setOutputDirectory(const QString& d) { mOutDir = d; }
+    void setShaderSources(const QString& vs, const QString& fs)
+    {
+        for (QVector<Renderer*>::iterator i = mRenderers.begin(); i != mRenderers.end(); ++i) {
+            Renderer* r = *i;
+            r->buildProgram(vs, fs);
+        }
+    }
+    void setUniforms(const Renderer::UniformMap& u)
+    {
+        for (QVector<Renderer*>::iterator i = mRenderers.begin(); i != mRenderers.end(); ++i) {
+            Renderer* r = *i;
+            r->setUniforms(u);
+        }
+    }
+    static int id;
 private:
-    RenderWidget* mRenderWidget;
+    QVector<Renderer*> mRenderers;
     QString mOutDir;
 };
+
+int ImageProcessor::id = 0;
 
 void MainWindow::batchProcess(void)
 {
@@ -302,21 +333,25 @@ void MainWindow::batchProcess(void)
     const QString& outDir = QFileDialog::getExistingDirectory(this, tr("Select save directory"));
     if (outDir.isEmpty())
         return;
-    d->renderWidget->beginBatchProcessing();
-    QFuture<BatchObject> images = QtConcurrent::mapped(filenames, ImageProcessor(d->renderWidget, outDir));
-    d->batchWatcher.setFuture(images);
+    qDebug() << filenames << " >> " << outDir;
+    ImageProcessor processor;
+    processor.setOutputDirectory(outDir);
+    processor.setShaderSources(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor->toPlainText());
+    processor.setUniforms(d->renderWidget->uniforms());
+    QList<BatchOutput> images = QtConcurrent::blockingMapped<QList<BatchOutput> >(filenames, processor);
+    qDebug() << "images processed:" << images.size();
+    // d->batchWatcher.setFuture(images);
 }
 
 void MainWindow::batchProcessed(void)
 {
-    Q_D(MainWindow);
-    d->renderWidget->endBatchProcessing();
+    ui->statusBar->showMessage(tr("Batch processing complete."), 5000);
 }
 
 void MainWindow::batchResultReadyAt(int i)
 {
     Q_D(MainWindow);
-    const BatchObject& o = d->batchWatcher.resultAt(i);
+    const BatchOutput& o = d->batchWatcher.resultAt(i);
     qDebug() << i << o.outFilename << o.image.size() << o.image.byteCount();
     o.image.save(o.outFilename);
     ui->statusBar->showMessage(tr("image %1 saved as %2").arg(i).arg(o.outFilename));
