@@ -293,8 +293,9 @@ public:
             qWarning() << "Call ImageProcessor::setOutputDirectory() before operator(). Doing nothing.";
             return BatchOutput();
         }
-        int tid;
-        tid = id++;
+        mMtx.lock();
+        int tid = (id++) % QThread::idealThreadCount();
+        mMtx.unlock();
         QFileInfo fInfo(filename);
         const QString& outFile = QString("%1/%2").arg(mOutDir).arg(fInfo.fileName());
         qDebug() << "ImageProcessor()" << filename;
@@ -319,9 +320,11 @@ public:
 private:
     QVector<Renderer*> mRenderers;
     QString mOutDir;
+    static QMutex mMtx;
 };
 
 int ImageProcessor::id = 0;
+QMutex ImageProcessor::mMtx;
 
 void MainWindow::batchProcess(void)
 {

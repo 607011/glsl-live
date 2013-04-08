@@ -23,6 +23,7 @@ Renderer::Renderer(void)
     , mShaderProgram(new QGLShaderProgram)
     , mVertexShader(new QGLShader(QGLShader::Vertex))
     , mFragmentShader(new QGLShader(QGLShader::Fragment))
+    , mFBO(NULL)
 {
     init();
 }
@@ -32,6 +33,7 @@ Renderer::Renderer(const Renderer& o)
     , mShaderProgram(o.mShaderProgram)
     , mVertexShader(o.mVertexShader)
     , mFragmentShader(o.mFragmentShader)
+    , mFBO(NULL)
 {
     init();
 }
@@ -96,6 +98,7 @@ QImage Renderer::process(const QImage& image)
     glClear(GL_COLOR_BUFFER_BIT);
     if (mFBO == NULL || mFBO->size() != image.size())
         safeRenew(mFBO, new QGLFramebufferObject(image.size()));
+    qDebug() << "Renderer::process()" << image.size();
     mFBO->bind();
     glBindTexture(GL_TEXTURE_2D, mTextureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
