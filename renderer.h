@@ -22,9 +22,6 @@ public:
     Renderer(QWidget* parent = NULL);
     ~Renderer();
 
-    virtual QSize minimumSizeHint(void) const { return QSize(240, 160); }
-    virtual QSize sizeHint(void) const { return QSize(240, 160); }
-
     typedef QMap<QString, QVariant> UniformMap;
 
     void buildProgram(const QString& vs, const QString& fs);

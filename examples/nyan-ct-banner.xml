@@ -16,7 +16,7 @@ uniform sampler2D uTexture;
 uniform float uT;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
-uniform float uWaveLen; // 1.0, 50.0, 11.0
+uniform float uF; // 1.0, 50.0, 11.0
 uniform float uSpeed; // 1.0, 50.0, 11.0
 uniform float uShadowStrength; // 0.1, 1.0, 0.333
 uniform int uSteps; // 1, 40, 17
@@ -26,11 +26,11 @@ float stepwise(float x, int steps) {
 }
 
 void main() {
-  float x = stepwise(vTexCoord.x, uSteps) * uWaveLen;
+  float x = uF * stepwise(vTexCoord.x, uSteps);
   float offset = 0.15 * sin(uSpeed * uT + x);
   offset = stepwise(offset, 16);
   float shadow = 1.0
-     + uShadowStrength * sin(uSpeed * uT + vTexCoord.x * uWaveLen);
+     + uShadowStrength * sin(uSpeed * uT + vTexCoord.x * uF);
   vec4 color = texture2D(uTexture,
     vec2(vTexCoord.x, vTexCoord.y + offset));
   float endshadow = clamp(6.0 * vTexCoord.x * color.a, 0.0, 1.0);

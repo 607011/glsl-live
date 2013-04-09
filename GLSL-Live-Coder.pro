@@ -53,4 +53,5 @@ OTHER_FILES += \
     examples/ontoeidetik.xml \
     examples/gaussian.xml \
     examples/toad-torch.xml \
-    glsl-live_de.ts
+    glsl-live_de.ts \
+    examples/nyan-ct-banner.xml
