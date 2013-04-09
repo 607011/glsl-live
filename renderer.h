@@ -29,13 +29,12 @@ public:
 
     void buildProgram(const QString& vs, const QString& fs);
     void setUniforms(const UniformMap& uniforms);
+    void process(const QImage& inputImage, const QString& outFilename);
+
+private: // methods
     void updateUniforms(void);
-    const QImage& process(const QImage&);
 
-protected:
-    virtual void paintEvent(QPaintEvent*);
-
-private:
+private: // members
     QScopedPointer<RendererPrivate> d_ptr;
     Q_DECLARE_PRIVATE(Renderer)
     Q_DISABLE_COPY(Renderer)

@@ -34,7 +34,7 @@ class RendererPrivate {
 public:
     RendererPrivate(void)
         : textureHandle(0)
-        , shaderProgram(new QGLShaderProgram)
+        , shaderProgram(NULL)
         , vertexShader(NULL)
         , fragmentShader(NULL)
         , fbo(NULL)
@@ -52,9 +52,11 @@ public:
     QGLFramebufferObject* fbo;
     Renderer::UniformMap uniforms;
     QTime t;
-    QImage image;
 };
 
+// Man möchte meinen, dass es genügt, von QGLContext abzuleiten,
+// um OpenGL rendern zu können, aber Pustekuchen: Nur das Erben
+// von QGLWidget erlaubt das Zeichnen mit einem eigenen Kontext.
 Renderer::Renderer(QWidget* parent)
     : QGLWidget(parent)
     , d_ptr(new RendererPrivate)
@@ -73,11 +75,11 @@ Renderer::Renderer(QWidget* parent)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     d->t.start();
+    doneCurrent();
 }
 
 Renderer::~Renderer()
 {
-    makeCurrent();
     if (isValid())
         doneCurrent();
     deleteTexture(d_ptr->textureHandle);
@@ -107,9 +109,11 @@ void Renderer::updateUniforms(void)
     }
 }
 
-const QImage& Renderer::process(const QImage& image)
+void Renderer::process(const QImage& image, const QString& outFilename)
 {
     Q_D(Renderer);
+    if (!isValid())
+        return;
     makeCurrent();
     glClear(GL_COLOR_BUFFER_BIT);
     if (d->fbo == NULL || d->fbo->size() != image.size())
@@ -124,17 +128,8 @@ const QImage& Renderer::process(const QImage& image)
     glViewport(0, 0, image.width(), image.height());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     d->fbo->release();
-    d->image = d->fbo->toImage();
-    update();
-    return d->image;
-}
-
-void Renderer::paintEvent(QPaintEvent*)
-{
-    Q_D(Renderer);
-    QPainter p(this);
-    qDebug() << d->image.size();
-    p.drawImage(rect(), d->image);
+    d->fbo->toImage().save(outFilename);
+    doneCurrent();
 }
 
 void Renderer::buildProgram(const QString& vs, const QString& fs)
@@ -142,10 +137,14 @@ void Renderer::buildProgram(const QString& vs, const QString& fs)
     Q_D(Renderer);
     if (vs.isEmpty() || fs.isEmpty())
         return;
+    if (!isValid())
+        return;
     makeCurrent();
+    if (d->shaderProgram)
+        d->shaderProgram->removeAllShaders();
+    safeRenew(d->shaderProgram, new QGLShaderProgram);
     safeRenew(d->vertexShader, new QGLShader(QGLShader::Vertex));
     safeRenew(d->fragmentShader, new QGLShader(QGLShader::Fragment));
-    d->shaderProgram->removeAllShaders();
     d->shaderProgram->addShader(d->vertexShader);
     d->shaderProgram->addShader(d->fragmentShader);
     d->vertexShader->compileSourceCode(vs);
@@ -158,6 +157,7 @@ void Renderer::buildProgram(const QString& vs, const QString& fs)
     d->shaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
     d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
     d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
+    doneCurrent();
 }
 
 void Renderer::setUniforms(const Renderer::UniformMap& uniforms)

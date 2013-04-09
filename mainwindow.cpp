@@ -2,6 +2,7 @@
 // All rights reserved.
 
 #include <QSettings>
+#include <QProgressBar>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QFile>
@@ -272,16 +273,25 @@ void MainWindow::batchProcess(void)
         return;
     QCursor oldCursor = cursor();
     setCursor(Qt::WaitCursor);
-    Renderer renderer(this);
-    renderer.show();
+    QProgressBar progress(ui->logTextEdit);
+    progress.setMinimum(0);
+    progress.setMaximum(filenames.size());
+    progress.setTextVisible(false);
+    progress.resize(ui->logTextEdit->size());
+    progress.show();
+
+    // weil Renderer von QWidget ableitet, kann es nur im Hauptthread laufen, aber nicht im Hintergrund, etwa per QtConcurrent::run()
+    Renderer renderer;
     renderer.buildProgram(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor->toPlainText());
     renderer.setUniforms(d->renderWidget->uniforms());
     QStringListIterator fn(filenames);
+    i = 0;
     while (fn.hasNext()) {
         QFileInfo fInfo(fn.next());
-        const QString& outFile = QString("%1/%2").arg(outDir).arg(fInfo.fileName());
-        renderer.process(QImage(fInfo.canonicalFilePath())).save(outFile);
         ui->statusBar->showMessage(tr("Processing %1 ...").arg(fInfo.fileName()));
+        progress.setValue(++i);
+        const QString& outFile = QString("%1/%2").arg(outDir).arg(fInfo.fileName());
+        renderer.process(QImage(fInfo.canonicalFilePath()), outFile);
     }
     ui->statusBar->showMessage(tr("Batch processing completed."), 3000);
     setCursor(oldCursor);
