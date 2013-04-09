@@ -4,31 +4,36 @@
 #ifndef __RENDERER_H_
 #define __RENDERER_H_
 
+#include <QGLWidget>
 #include <QGLContext>
 #include <QImage>
 #include <QString>
 #include <QVariant>
 #include <QMap>
 #include <QScopedPointer>
-#include "util.h"
+#include <QPaintEvent>
 
 
 class RendererPrivate;
 
-class Renderer : public QGLContext
+class Renderer : public QGLWidget
 {
 public:
-    Renderer(void);
+    Renderer(QWidget* parent = NULL);
     ~Renderer();
+
+    virtual QSize minimumSizeHint(void) const { return QSize(240, 160); }
+    virtual QSize sizeHint(void) const { return QSize(240, 160); }
 
     typedef QMap<QString, QVariant> UniformMap;
 
     void buildProgram(const QString& vs, const QString& fs);
     void setUniforms(const UniformMap& uniforms);
     void updateUniforms(void);
-    QImage process(const QImage&);
+    const QImage& process(const QImage&);
 
-    virtual bool create(const QGLContext* shareContext = NULL);
+protected:
+    virtual void paintEvent(QPaintEvent*);
 
 private:
     QScopedPointer<RendererPrivate> d_ptr;

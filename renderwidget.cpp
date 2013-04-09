@@ -46,7 +46,6 @@ public:
         , fragmentShader(NULL)
         , shaderProgram(new QGLShaderProgram)
         , fbo(NULL)
-        , batchFbo(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
         , scale(1.0)
@@ -60,7 +59,6 @@ public:
     QGLShader* fragmentShader;
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
-    QGLFramebufferObject* batchFbo;
     GLuint inputTextureHandle;
     QTime time;
     QString imgFilename;
@@ -121,7 +119,6 @@ public:
         deleteShaderProgram();
         deleteShaders();
         safeDelete(fbo);
-        safeDelete(batchFbo);
     }
 
 private:
@@ -223,44 +220,6 @@ QImage RenderWidget::resultImage(void)
     glPopAttrib();
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     return d->fbo->toImage();
-}
-
-void RenderWidget::beginBatchProcessing(void)
-{
-    makeCurrent();
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-}
-
-QImage RenderWidget::processImage(const QString& filename)
-{
-    Q_D(RenderWidget);
-    qDebug() << "RenderWidget::processImage(" << filename << ")";
-    if (filename.isEmpty())
-        return QImage();
-    QImage img(filename);
-    if (img.isNull())
-        return QImage();
-    if (d->batchFbo == NULL || d->batchFbo->size() != img.size()) {
-        safeDelete(d->batchFbo);
-        d->batchFbo = new QGLFramebufferObject(img.size());
-    }
-    d->batchFbo->bind();
-    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, img.bits());
-    d->shaderProgram->setUniformValue(d->uLocResolution, QSizeF(img.size()));
-    glViewport(0, 0, img.width(), img.height());
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    d->batchFbo->release();
-    return d->batchFbo->toImage();
-}
-
-void RenderWidget::endBatchProcessing(void)
-{
-    Q_D(RenderWidget);
-    glPopAttrib();
-    d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
-    setImage(d->img);
-    safeDelete(d->batchFbo);
 }
 
 const QMap<QString, QVariant>& RenderWidget::uniforms(void) const

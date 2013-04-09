@@ -42,9 +42,6 @@ public:
     void updateUniforms(void);
     void clearUniforms(void);
     QImage resultImage(void);
-    void beginBatchProcessing(void);
-    QImage processImage(const QString& filename);
-    void endBatchProcessing(void);
     const QMap<QString, QVariant>& uniforms(void) const;
 
 public slots:

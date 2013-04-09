@@ -40,17 +40,6 @@ static void prepareEditor(GLSLEdit* editor);
 static void clearLayout(QLayout* layout);
 
 
-struct BatchOutput {
-    BatchOutput(void) {}
-    BatchOutput(const QImage& img, const QString& outfn)
-        : image(img)
-        , outFilename(outfn)
-    { /* ... */ }
-    QImage image;
-    QString outFilename;
-};
-
-
 class MainWindowPrivate {
 public:
     explicit MainWindowPrivate(void)
@@ -142,8 +131,6 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     restoreSettings();
 
-    Renderer testRenderer;
-    Q_UNUSED(testRenderer);
 }
 
 MainWindow::~MainWindow()
@@ -285,7 +272,8 @@ void MainWindow::batchProcess(void)
         return;
     QCursor oldCursor = cursor();
     setCursor(Qt::WaitCursor);
-    Renderer renderer;
+    Renderer renderer(this);
+    renderer.show();
     renderer.buildProgram(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor->toPlainText());
     renderer.setUniforms(d->renderWidget->uniforms());
     QStringListIterator fn(filenames);

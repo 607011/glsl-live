@@ -1,13 +1,14 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#include <QTime>
-#include <QGLPixelBuffer>
-#include <QPixmap>
+#include <QtCore/QDebug>
 #include <QGLFramebufferObject>
 #include <QGLShader>
 #include <QGLShaderProgram>
+#include <QPainter>
+#include <QTime>
 
+#include "util.h"
 #include "renderer.h"
 
 
@@ -34,8 +35,8 @@ public:
     RendererPrivate(void)
         : textureHandle(0)
         , shaderProgram(new QGLShaderProgram)
-        , vertexShader(new QGLShader(QGLShader::Vertex))
-        , fragmentShader(new QGLShader(QGLShader::Fragment))
+        , vertexShader(NULL)
+        , fragmentShader(NULL)
         , fbo(NULL)
     { /* ... */ }
     ~RendererPrivate() {
@@ -50,25 +51,16 @@ public:
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
     Renderer::UniformMap uniforms;
-    QTime mT;
+    QTime t;
+    QImage image;
 };
 
-Renderer::Renderer(void)
-    // : QGLContext(QGLFormat(QGL::IndirectRendering | QGL::SingleBuffer | QGL::NoDepthBuffer | QGL::NoOverlay | QGL::NoSampleBuffers | QGL::NoStencilBuffer | QGL::NoStereoBuffers, 0), new QPixmap)
-    : QGLContext(QGLFormat(QGL::SampleBuffers))
+Renderer::Renderer(QWidget* parent)
+    : QGLWidget(parent)
     , d_ptr(new RendererPrivate)
 {
     Q_D(Renderer);
-    bool ok = create();
     makeCurrent();
-    qDebug() << "Renderer " << (ok? "created" : "NOT created") << "\n"
-             << ", QGLFormat::hasOpenGL() =" << QGLFormat::hasOpenGL() << "\n"
-             << ", QGLFormat::hasOpenGLOverlays() =" << QGLFormat::hasOpenGLOverlays() << "\n"
-             << ", isValid() =" << isValid() << "\n"
-             << ", isSharing() =" << isSharing() << "\n"
-             << ", format() =" << format() << "\n"
-             << ", currentContext() =" << QGLContext::currentContext() << "\n"
-             << ", version flags =" << QGLFormat::openGLVersionFlags() << "\n";
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -80,20 +72,21 @@ Renderer::Renderer(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    d->mT.start();
+    d->t.start();
 }
 
 Renderer::~Renderer()
 {
+    makeCurrent();
     if (isValid())
         doneCurrent();
     deleteTexture(d_ptr->textureHandle);
-    reset();
 }
 
 void Renderer::updateUniforms(void)
 {
     Q_D(Renderer);
+    makeCurrent();
     QStringListIterator k(d->uniforms.keys());
     while (k.hasNext()) {
         const QString& key = k.next();
@@ -114,9 +107,10 @@ void Renderer::updateUniforms(void)
     }
 }
 
-QImage Renderer::process(const QImage& image)
+const QImage& Renderer::process(const QImage& image)
 {
     Q_D(Renderer);
+    makeCurrent();
     glClear(GL_COLOR_BUFFER_BIT);
     if (d->fbo == NULL || d->fbo->size() != image.size())
         safeRenew(d->fbo, new QGLFramebufferObject(image.size()));
@@ -125,25 +119,22 @@ QImage Renderer::process(const QImage& image)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width(), image.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, image.bits());
     d->shaderProgram->setUniformValue("uTexture", 0);
     d->shaderProgram->setUniformValue("uResolution", QSizeF(image.size()));
-    d->shaderProgram->setUniformValue("uT", GLfloat(1e-3 * d->mT.elapsed()));
+    d->shaderProgram->setUniformValue("uT", GLfloat(1e-3 * d->t.elapsed()));
     updateUniforms();
     glViewport(0, 0, image.width(), image.height());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     d->fbo->release();
-    return d->fbo->toImage();
+    d->image = d->fbo->toImage();
+    update();
+    return d->image;
 }
 
-bool Renderer::create(const QGLContext* shareContext)
+void Renderer::paintEvent(QPaintEvent*)
 {
-    if (QGLContext::create(shareContext)) {
-        makeCurrent();
-
-        qDebug() << QGLContext::currentContext();
-
-        doneCurrent();
-        return true;
-    }
-    return false;
+    Q_D(Renderer);
+    QPainter p(this);
+    qDebug() << d->image.size();
+    p.drawImage(rect(), d->image);
 }
 
 void Renderer::buildProgram(const QString& vs, const QString& fs)
@@ -151,6 +142,9 @@ void Renderer::buildProgram(const QString& vs, const QString& fs)
     Q_D(Renderer);
     if (vs.isEmpty() || fs.isEmpty())
         return;
+    makeCurrent();
+    safeRenew(d->vertexShader, new QGLShader(QGLShader::Vertex));
+    safeRenew(d->fragmentShader, new QGLShader(QGLShader::Fragment));
     d->shaderProgram->removeAllShaders();
     d->shaderProgram->addShader(d->vertexShader);
     d->shaderProgram->addShader(d->fragmentShader);
@@ -164,8 +158,6 @@ void Renderer::buildProgram(const QString& vs, const QString& fs)
     d->shaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
     d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
     d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
-    qDebug() << "Renderer::buildProgram(" << vs.left(30) << "," << fs.left(30) << ")";
-    qDebug() << "mShaderProgram->isLinked() =" << d->shaderProgram->isLinked();
 }
 
 void Renderer::setUniforms(const Renderer::UniformMap& uniforms)
