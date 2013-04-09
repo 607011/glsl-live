@@ -438,6 +438,7 @@ void RenderWidget::paintGL(void)
             goLive();
         setImage();
         d->firstPaintEventPending = false;
+        qDebug() << "RenderWidget: currentContext() =" << QGLContext::currentContext();
     }
     if (d->shaderProgram->isLinked())
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->time.elapsed());

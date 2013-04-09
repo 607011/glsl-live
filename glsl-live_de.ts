@@ -62,8 +62,8 @@
     </message>
     <message>
         <location filename="mainwindow.ui" line="268"/>
-        <location filename="mainwindow.cpp" line="531"/>
-        <location filename="mainwindow.cpp" line="540"/>
+        <location filename="mainwindow.cpp" line="541"/>
+        <location filename="mainwindow.cpp" line="550"/>
         <source>Save project</source>
         <translation>Projekt speichern</translation>
     </message>
@@ -127,120 +127,128 @@
         <translation>Bild auf Originalgröße skalieren</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="209"/>
+        <location filename="mainwindow.cpp" line="220"/>
         <source>Save before exit?</source>
         <translation>Speichern vor dem Beenden?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="209"/>
+        <location filename="mainwindow.cpp" line="220"/>
         <source>Your project has changed. Do you want to save the changes before exiting?</source>
         <translation>Sie haben Änderungen am Projekt vorgenommen. Möchten Sie sie vor dem Beenden speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="256"/>
+        <location filename="mainwindow.cpp" line="267"/>
         <source>Save image snapshot</source>
         <translation>Bild speichern unter</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="256"/>
-        <location filename="mainwindow.cpp" line="265"/>
+        <location filename="mainwindow.cpp" line="267"/>
+        <location filename="mainwindow.cpp" line="276"/>
         <source>Image files (*.png *.jpg *.jpeg *.tiff *.ppm)</source>
         <translation>Bilddateien (*.png *.jpg *.jpeg *.tiff *.ppm)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="265"/>
+        <location filename="mainwindow.cpp" line="276"/>
         <source>Select images to load</source>
         <translation>Zu verarbeitende Bilder auswählen</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="269"/>
+        <location filename="mainwindow.cpp" line="280"/>
         <source>Select save directory</source>
         <translation>Zielverzeichnis auswählen</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="280"/>
         <source>%1 written, %2 left ...</source>
-        <translation>%1 geschrieben, %2 verbleiben ...</translation>
+        <translation type="obsolete">%1 geschrieben, %2 verbleiben ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="283"/>
         <source>Batch processing complete.</source>
-        <translation>Stapelverarbeitung beendet.</translation>
+        <translation type="obsolete">Stapelverarbeitung beendet.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="431"/>
+        <location filename="mainwindow.cpp" line="291"/>
+        <source>Processing %1 ...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="293"/>
+        <source>Batch processing completed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.cpp" line="441"/>
         <source>Save before creating a new project?</source>
         <translation>Speichern vor dem Anlegen eines neuen Projekts?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="431"/>
+        <location filename="mainwindow.cpp" line="441"/>
         <source>Your project has changed. Do you want to save the changes before creating a new project?</source>
         <translation>Sie haben Änderungen am Projekt vorgenommen. Möchten Sie sie vor dem Anlegen eines neuen Projekts speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="466"/>
+        <location filename="mainwindow.cpp" line="476"/>
         <source>&amp;%1 %2</source>
         <translation>&amp;%1 %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="491"/>
+        <location filename="mainwindow.cpp" line="501"/>
         <source>Save before loading another project?</source>
         <translation>Vor dem Laden speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="491"/>
+        <location filename="mainwindow.cpp" line="501"/>
         <source>Your project has changed. Do you want to save the changes before loading another project?</source>
         <translation>Sie haben Änderungen am Projekt vorgenommen. Möchten Sie sie vor dem Laden eines anderen Projekts speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="496"/>
+        <location filename="mainwindow.cpp" line="506"/>
         <source>Load project</source>
         <translation>Projekt laden</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="496"/>
-        <location filename="mainwindow.cpp" line="531"/>
-        <location filename="mainwindow.cpp" line="540"/>
+        <location filename="mainwindow.cpp" line="506"/>
+        <location filename="mainwindow.cpp" line="541"/>
+        <location filename="mainwindow.cpp" line="550"/>
         <source>Project files (*.xml *.xmlz)</source>
         <translation>Projektdateien (*.xml *.xmlz)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="522"/>
+        <location filename="mainwindow.cpp" line="532"/>
         <source>Project &apos;%1&apos; loaded.</source>
         <translation>Projekt &apos;%1&apos; geladen.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="523"/>
+        <location filename="mainwindow.cpp" line="533"/>
         <source>Loading &apos;%1&apos; failed: %2</source>
         <translation>Laden von &apos;%1&apos; fehlgeschlagen: %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="555"/>
+        <location filename="mainwindow.cpp" line="565"/>
         <source>Project saved as &apos;%1&apos;.</source>
         <translation>Projekt gespeichert unter &apos;%1&apos;.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="556"/>
+        <location filename="mainwindow.cpp" line="566"/>
         <source>Saving failed.</source>
         <translation>Speichern fehlgeschlagen.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="571"/>
+        <location filename="mainwindow.cpp" line="581"/>
         <source>%1 %2%3</source>
         <translation>%1 %2%3</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="576"/>
+        <location filename="mainwindow.cpp" line="586"/>
         <source> - %1%2</source>
         <translation>- %1%2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="584"/>
+        <location filename="mainwindow.cpp" line="594"/>
         <source>About %1 %2%3</source>
         <translation>Über %1 %2%3</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="585"/>
+        <location filename="mainwindow.cpp" line="595"/>
         <source>&lt;p&gt;&lt;b&gt;%1&lt;/b&gt; is a live coding environment for OpenGL 1.x shaders. See &lt;a href=&quot;%2&quot; title=&quot;%1 project homepage&quot;&gt;%2&lt;/a&gt; for more info.&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2013 %3 &amp;lt;%4&amp;gt;, Heise Zeitschriften Verlag.&lt;/p&gt;&lt;p&gt;This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.&lt;/p&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.&lt;/p&gt;You should have received a copy of the GNU General Public License along with this program. If not, see &lt;a href=&quot;http://www.gnu.org/licenses/gpl-3.0&quot;&gt;http://www.gnu.org/licenses&lt;/a&gt;.&lt;/p&gt;</source>
         <translation>&lt;p&gt;&lt;b&gt;%1&lt;/b&gt; ist eine Live-Coding-Umgebung für OpenGL-1.x-Shader. Besuchen Sie &lt;a href=&quot;%2&quot; title=&quot;%1-Projekt-Homepage&quot;&gt;%2&lt;/a&gt; für weitere Informationen.&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2013 %3 &amp;lt;%4&amp;gt;, Heise Zeitschriften Verlag.&lt;/p&gt;&lt;p&gt;Dieses Programm ist freie Software. Sie können es unter den Bedingungen der GNU General Public License, wie von der Free Software Foundation veröffentlicht, weitergeben und/oder modifizieren, entweder gemäß Version 3 der Lizenz oder (nach Ihrer Wahl) jeder späteren Version.&lt;/p&gt;&lt;p&gt;Die Software wurde zu Lehr-, Lern- und Demonstrationszwecken geschaffen und ist nicht für den produktiven Einsatz vorgesehen. Der Autor und der Heise Zeitschriften Verlag haften nicht für Schäden, die aus der Nutzung der Software entstehen, und übernehmen keine Gewähr für ihre Vollständigkeit, Fehlerfreiheit und Eignung für einen bestimmten Zweck.&lt;/p&gt;&lt;p&gt;Sie sollten ein Exemplar der GNU General Public License zusammen mit diesem Programm erhalten haben. Falls nicht, siehe &lt;a href=&quot;http://www.gnu.org/licenses/gpl-3.0&quot;&gt;http://www.gnu.org/licenses&lt;/a&gt;.&lt;/p&gt;</translation>
     </message>
