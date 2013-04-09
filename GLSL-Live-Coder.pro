@@ -1,7 +1,7 @@
 # Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 # All rights reserved.
 
-QT       += core gui opengl xml
+QT       += core gui opengl xml concurrent
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     project.cpp \
     glsledit/glslhighlighter.cpp \
     glsledit/sidebarwidget.cpp \
-    glsledit/glsldoclayout.cpp
+    glsledit/glsldoclayout.cpp \
+    renderer.cpp
 
 HEADERS  += mainwindow.h \
     renderwidget.h \
@@ -31,7 +32,8 @@ HEADERS  += mainwindow.h \
     glsledit/glslhighlighter.h \
     glsledit/sidebarwidget.h \
     glsledit/glsldoclayout.h \
-    util.h
+    util.h \
+    renderer.h
 
 FORMS    += mainwindow.ui
 

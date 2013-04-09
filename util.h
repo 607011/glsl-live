@@ -22,4 +22,13 @@ inline void safeDeleteArray(T& a)
     a = 0;
 }
 
+template <class T>
+inline void safeRenew(T& a, T obj)
+{
+    if (a)
+        delete a;
+    a = obj;
+}
+
+
 #endif // __UTIL_H_

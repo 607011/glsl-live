@@ -209,6 +209,7 @@
     <addaction name="actionSaveProjectAs"/>
     <addaction name="separator"/>
     <addaction name="actionSaveImageSnapshot"/>
+    <addaction name="actionBatchProcess"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -360,6 +361,11 @@
    </property>
    <property name="shortcut">
     <string notr="true">Ctrl+I, 1</string>
+   </property>
+  </action>
+  <action name="actionBatchProcess">
+   <property name="text">
+    <string>Batch process ...</string>
    </property>
   </action>
  </widget>

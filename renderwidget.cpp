@@ -46,7 +46,6 @@ public:
         , fragmentShader(NULL)
         , shaderProgram(new QGLShaderProgram)
         , fbo(NULL)
-        , resultImageData(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
         , scale(1.0)
@@ -60,7 +59,6 @@ public:
     QGLShader* fragmentShader;
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
-    GLuint* resultImageData;
     GLuint inputTextureHandle;
     QTime time;
     QString imgFilename;
@@ -121,7 +119,6 @@ public:
         deleteShaderProgram();
         deleteShaders();
         safeDelete(fbo);
-        safeDeleteArray(resultImageData);
     }
 
 private:
@@ -190,8 +187,6 @@ void RenderWidget::makeImageFBO(void)
     if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
         safeDelete(d->fbo);
         d->fbo = new QGLFramebufferObject(d->img.size());
-        safeDeleteArray(d->resultImageData);
-        d->resultImageData = new GLuint[d->img.width() * d->img.height()];
     }
 }
 
@@ -227,7 +222,12 @@ QImage RenderWidget::resultImage(void)
     return d->fbo->toImage();
 }
 
-void RenderWidget::updateUniforms()
+const QMap<QString, QVariant>& RenderWidget::uniforms(void) const
+{
+    return d_ptr->uniforms;
+}
+
+void RenderWidget::updateUniforms(void)
 {
     Q_D(RenderWidget);
     if (!d->shaderProgram->isLinked())
@@ -397,6 +397,7 @@ void RenderWidget::paintGL(void)
             goLive();
         setImage();
         d->firstPaintEventPending = false;
+        qDebug() << "RenderWidget: currentContext() =" << QGLContext::currentContext();
     }
     if (d->shaderProgram->isLinked())
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->time.elapsed());

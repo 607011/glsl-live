@@ -2,6 +2,7 @@
 // All rights reserved.
 
 #include <QSettings>
+#include <QProgressBar>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QFile>
@@ -10,6 +11,7 @@
 #include <QByteArray>
 #include <QTextStream>
 #include <QRegExp>
+#include <QStringListIterator>
 #include <QCryptographicHash>
 #include <QSlider>
 #include <QSpinBox>
@@ -30,6 +32,7 @@
 #include "doubleslider.h"
 #include "project.h"
 #include "renderwidget.h"
+#include "renderer.h"
 #include "glsledit/glsledit.h"
 #include "util.h"
 
@@ -52,7 +55,6 @@ public:
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
     }
-
     Project project;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
@@ -124,10 +126,12 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
+    QObject::connect(ui->actionBatchProcess, SIGNAL(triggered()), SLOT(batchProcess()));
     QObject::connect(ui->actionHelp, SIGNAL(triggered()), d->docBrowser, SLOT(show()));
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     restoreSettings();
+
 }
 
 MainWindow::~MainWindow()
@@ -255,6 +259,42 @@ void MainWindow::saveImageSnapshot(void)
     if (filename.isNull())
         return;
     d_ptr->renderWidget->resultImage().save(filename);
+}
+
+void MainWindow::batchProcess(void)
+{
+    Q_D(MainWindow);
+    const QList<QString>& filenames = QFileDialog::getOpenFileNames(this, tr("Select images to load"), QString(), tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
+    int i = filenames.size();
+    if (i == 0)
+        return;
+    const QString& outDir = QFileDialog::getExistingDirectory(this, tr("Select save directory"));
+    if (outDir.isEmpty())
+        return;
+    QCursor oldCursor = cursor();
+    setCursor(Qt::WaitCursor);
+    QProgressBar progress(ui->logTextEdit);
+    progress.setMinimum(0);
+    progress.setMaximum(filenames.size());
+    progress.setTextVisible(false);
+    progress.resize(ui->logTextEdit->size());
+    progress.show();
+
+    // weil Renderer von QWidget ableitet, kann es nur im Hauptthread laufen, aber nicht im Hintergrund, etwa per QtConcurrent::run()
+    Renderer renderer;
+    renderer.buildProgram(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor->toPlainText());
+    renderer.setUniforms(d->renderWidget->uniforms());
+    QStringListIterator fn(filenames);
+    i = 0;
+    while (fn.hasNext()) {
+        QFileInfo fInfo(fn.next());
+        ui->statusBar->showMessage(tr("Processing %1 ...").arg(fInfo.fileName()));
+        progress.setValue(++i);
+        const QString& outFile = QString("%1/%2").arg(outDir).arg(fInfo.fileName());
+        renderer.process(QImage(fInfo.canonicalFilePath()), outFile);
+    }
+    ui->statusBar->showMessage(tr("Batch processing completed."), 3000);
+    setCursor(oldCursor);
 }
 
 void MainWindow::parseShadersForParameters(void)

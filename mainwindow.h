@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QCloseEvent>
 #include <QScopedPointer>
+#include <QList>
 #include <QString>
 #include <QAction>
 #include <QMenu>
@@ -51,11 +52,13 @@ private slots:
     void valueChanged(bool);
     void imageDropped(const QImage&);
     void saveImageSnapshot(void);
+    void batchProcess(void);
 
 private: //methods
     void saveSettings(void);
     void restoreSettings(void);
     void updateWindowTitle(void);
+    void processBatch(const QList<QString>& filenames, const QString& outDir);
 
 private:
     Ui::MainWindow *ui;
