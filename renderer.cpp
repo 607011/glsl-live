@@ -58,7 +58,7 @@ public:
 // um OpenGL rendern zu können, aber Pustekuchen: Nur das Erben
 // von QGLWidget erlaubt das Zeichnen mit einem eigenen Kontext.
 Renderer::Renderer(QWidget* parent)
-    : QGLWidget(parent)
+    : QGLWidget(QGLFormat(QGL::SingleBuffer | QGL::NoDepthBuffer | QGL::NoAlphaChannel | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers | QGL::IndirectRendering |  QGL::NoOverlay | QGL::NoSampleBuffers), parent)
     , d_ptr(new RendererPrivate)
 {
     Q_D(Renderer);

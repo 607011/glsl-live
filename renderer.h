@@ -5,17 +5,22 @@
 #define __RENDERER_H_
 
 #include <QGLWidget>
-#include <QGLContext>
 #include <QImage>
 #include <QString>
 #include <QVariant>
 #include <QMap>
 #include <QScopedPointer>
-#include <QPaintEvent>
 
 
 class RendererPrivate;
 
+// In Renderer wird ein QImage durch das Shader-Programm gejagt und als Datei gespeichert.
+// Das hätte man grundsätzlich auch im RenderWidget erledigen können, doch dort hätte man
+// den gesamten GL-Kontext für die Dauer der Nutzung von Renderer::process() sichern und
+// anschließend wiederherstellen müssen. Da schien mir die Verwendung eines separaten GL-
+// Kontextes in einem weiteren QGLWidget die sauberere Lösung zu sein, auch wenn das
+// bedeutet, die Mimik zum Kompilieren der Shader (buildProgram()) und Setzen der Uniforms
+// doppelt zu implementieren.
 class Renderer : public QGLWidget
 {
 public:
