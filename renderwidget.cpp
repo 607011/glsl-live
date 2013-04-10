@@ -41,7 +41,8 @@ static const QVector2D Vertices[4] =
 class RenderWidgetPrivate {
 public:
     explicit RenderWidgetPrivate(void)
-        : firstPaintEventPending(true)
+        : alphaEnabled(true)
+        , firstPaintEventPending(true)
         , vertexShader(NULL)
         , fragmentShader(NULL)
         , shaderProgram(new QGLShaderProgram)
@@ -53,7 +54,8 @@ public:
         , mouseMovedWhileLeftButtonPressed(false)
         , mouseMoveTimerId(0)
     { /* ... */ }
-
+    QColor backgroundColor;
+    bool alphaEnabled;
     bool firstPaintEventPending;
     QGLShader* vertexShader;
     QGLShader* fragmentShader;
@@ -143,7 +145,7 @@ const int RenderWidgetPrivate::NumKineticDataSamples = 4;
 
 
 RenderWidget::RenderWidget(QWidget* parent)
-    : QGLWidget(parent)
+    : QGLWidget(QGLFormat(QGL::DoubleBuffer | QGL::NoDepthBuffer | QGL::AlphaChannel | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers | QGL::HasOverlay | QGL::NoSampleBuffers), parent)
     , d_ptr(new RenderWidgetPrivate)
 {
     setFocusPolicy(Qt::StrongFocus);
@@ -158,6 +160,28 @@ RenderWidget::~RenderWidget()
 {
     stopMotion();
     stopCode();
+}
+
+void RenderWidget::enableAlpha(bool enabled)
+{
+    makeCurrent();
+    d_ptr->alphaEnabled = enabled;
+    if (d_ptr->alphaEnabled) {
+        glEnable(GL_ALPHA_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    else {
+        glDisable(GL_BLEND);
+    }
+    update();
+}
+
+void RenderWidget::setBackgroundColor(const QColor& color)
+{
+    makeCurrent();
+    d_ptr->backgroundColor = color;
+    qglClearColor(color);
 }
 
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
@@ -225,6 +249,11 @@ QImage RenderWidget::resultImage(void)
 const QMap<QString, QVariant>& RenderWidget::uniforms(void) const
 {
     return d_ptr->uniforms;
+}
+
+double RenderWidget::scale(void) const
+{
+    return d_ptr->scale;
 }
 
 void RenderWidget::updateUniforms(void)
@@ -316,17 +345,17 @@ void RenderWidget::stopCode()
     }
 }
 
-void RenderWidget::calcViewport(void)
+void RenderWidget::updateViewport(void)
 {
-    calcViewport(width(), height());
+    updateViewport(width(), height());
 }
 
-void RenderWidget::calcViewport(const QSize& size)
+void RenderWidget::updateViewport(const QSize& size)
 {
-    calcViewport(size.width(), size.height());
+    updateViewport(size.width(), size.height());
 }
 
-void RenderWidget::calcViewport(int w, int h)
+void RenderWidget::updateViewport(int w, int h)
 {
     Q_D(RenderWidget);
     const QSizeF& glSize = d->scale * QSizeF(d->img.size());
@@ -341,7 +370,14 @@ void RenderWidget::calcViewport(int w, int h)
 
 void RenderWidget::resizeEvent(QResizeEvent* e)
 {
-    calcViewport(e->size());
+    updateViewport(e->size());
+}
+
+void RenderWidget::zoomTo(double factor)
+{
+    Q_D(RenderWidget);
+    d->scale = factor;
+    updateViewport();
 }
 
 void RenderWidget::fitImageToWindow(void)
@@ -353,27 +389,26 @@ void RenderWidget::fitImageToWindow(void)
             ? double(width()) / d->img.width()
             : double(height()) / d->img.height();
     d->offset = QPoint(0, 0);
-    calcViewport();
+    updateViewport();
 }
 
 void RenderWidget::resizeToOriginalImageSize(void)
 {
     Q_D(RenderWidget);
-    d->scale = 1.0;
     d->offset = QPoint();
-    calcViewport();
+    zoomTo(1.0);
 }
 
 void RenderWidget::resizeGL(int w, int h)
 {
-    calcViewport(w, h);
+    updateViewport(w, h);
     updateGL();
 }
 
 void RenderWidget::initializeGL(void)
 {
     Q_D(RenderWidget);
-    qglClearColor(QColor(20, 20, 20));
+    qglClearColor(d->backgroundColor);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -392,6 +427,7 @@ void RenderWidget::paintGL(void)
     Q_D(RenderWidget);
     glClear(GL_COLOR_BUFFER_BIT);
     if (d->firstPaintEventPending) {
+        enableAlpha(d->alphaEnabled);
         buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
         if (d->shaderProgram->isLinked())
             goLive();
@@ -452,7 +488,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
         d->kineticData.append(RenderWidgetPrivate::KineticData(e->pos(), d->mouseMoveTimer.elapsed()));
         if (d->kineticData.size() > RenderWidgetPrivate::NumKineticDataSamples)
             d->kineticData.erase(d->kineticData.begin());
-        calcViewport();
+        updateViewport();
         d->lastMousePos = e->pos();
         setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::ClosedHandCursor);
     }
@@ -535,7 +571,7 @@ void RenderWidget::wheelEvent(QWheelEvent* e)
         return;
     double f = e->delta() * (e->modifiers() & Qt::ControlModifier)? 0.1 : 0.05;
     d->scale *= (e->delta() < 0)? 1-f : 1+f;
-    calcViewport();
+    updateViewport();
 }
 
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)
@@ -626,5 +662,5 @@ void RenderWidget::scrollBy(const QPoint& offset)
 {
     Q_D(RenderWidget);
     d->offset -= QPoint(offset.x(), -offset.y());
-    calcViewport();
+    updateViewport();
 }

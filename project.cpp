@@ -149,7 +149,7 @@ void Project::resetErrors(void)
     d_ptr->errorString = QString();
 }
 
-void Project::raiseError(const QString & msg)
+void Project::raiseError(const QString& msg)
 {
     d_ptr->errorString = msg;
 }

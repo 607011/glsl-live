@@ -4,6 +4,7 @@
 #include <QSettings>
 #include <QProgressBar>
 #include <QMessageBox>
+#include <QColorDialog>
 #include <QFileDialog>
 #include <QFile>
 #include <QFileInfo>
@@ -44,7 +45,8 @@ static void clearLayout(QLayout* layout);
 class MainWindowPrivate {
 public:
     explicit MainWindowPrivate(void)
-        : renderWidget(new RenderWidget)
+        : colorDialog(new QColorDialog)
+        , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
@@ -56,6 +58,7 @@ public:
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
     }
     Project project;
+    QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
     QString vertexShaderFilename;
@@ -71,6 +74,7 @@ public:
 
     virtual ~MainWindowPrivate()
     {
+        safeDelete(colorDialog);
         safeDelete(renderWidget);
         safeDelete(paramWidget);
         safeDelete(vertexShaderEditor);
@@ -130,6 +134,19 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionHelp, SIGNAL(triggered()), d->docBrowser, SLOT(show()));
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
+    QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableAlpha(bool)));
+    QObject::connect(ui->actionZoom5, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionZoom10, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionZoom25, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionZoom50, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionZoom100, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionZoom150, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionZoom200, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionZoom500, SIGNAL(triggered()), SLOT(zoom()));
+    QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
+    QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
+    QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
+
     restoreSettings();
 
 }
@@ -174,6 +191,9 @@ void MainWindow::restoreSettings(void)
         openProject(projectFilename);
     }
     d_ptr->project.setDirty(false);
+    d->renderWidget->zoomTo(settings.value("Options/zoom", 1.0).toDouble());
+    ui->actionEnableAlpha->setChecked((settings.value("Options/alphaEnabled", true).toBool()));
+    d->colorDialog->setCurrentColor(settings.value("Options/backgroundColor", QColor(20, 20, 20)).value<QColor>());
     updateWindowTitle();
 }
 
@@ -202,6 +222,9 @@ void MainWindow::saveSettings(void)
         settings.setValue("MainWindow/vsplitter/sizes", vSizes);
     }
     settings.setValue("Project/filename", d_ptr->project.filename());
+    settings.setValue("Options/zoom", d->renderWidget->scale());
+    settings.setValue("Options/alphaEnabled", ui->actionEnableAlpha->isChecked());
+    settings.setValue("Options/backgroundColor", d->colorDialog->currentColor());
 }
 
 void MainWindow::closeEvent(QCloseEvent* e)
@@ -213,9 +236,10 @@ void MainWindow::closeEvent(QCloseEvent* e)
     if (rc == QMessageBox::Yes)
         saveProject();
     if (rc != QMessageBox::Cancel) {
-        QMainWindow::closeEvent(e);
         saveSettings();
         safeDelete(d->docBrowser);
+        safeDelete(d->colorDialog);
+        QMainWindow::closeEvent(e);
         e->accept();
     }
     else {
@@ -280,7 +304,7 @@ void MainWindow::batchProcess(void)
     progress.resize(ui->logTextEdit->size());
     progress.show();
 
-    // weil Renderer von QWidget ableitet, kann es nur im Hauptthread laufen, aber nicht im Hintergrund, etwa per QtConcurrent::run()
+    // weil Renderer von QWidget ableitet, kann er nur im Hauptthread laufen, aber nicht im Hintergrund, etwa per QtConcurrent::run()
     Renderer renderer;
     renderer.buildProgram(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor->toPlainText());
     renderer.setUniforms(d->renderWidget->uniforms());
@@ -295,6 +319,20 @@ void MainWindow::batchProcess(void)
     }
     ui->statusBar->showMessage(tr("Batch processing completed."), 3000);
     setCursor(oldCursor);
+}
+
+void MainWindow::zoom(void)
+{
+    if (sender()) {
+        QRegExp re("(\\d+)$");
+        re.indexIn(sender()->objectName());
+        d_ptr->renderWidget->zoomTo(1e-2 * re.cap(1).toDouble());
+    }
+}
+
+void MainWindow::chooseBackgroundColor(void)
+{
+    d_ptr->colorDialog->show();
 }
 
 void MainWindow::parseShadersForParameters(void)

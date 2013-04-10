@@ -29,8 +29,8 @@ public:
     explicit RenderWidget(QWidget* parent = NULL);
     ~RenderWidget();
 
-    QSize minimumSizeHint(void) const { return QSize(240, 160); }
-    QSize sizeHint(void) const  { return QSize(640, 480); }
+    virtual QSize minimumSizeHint(void) const { return QSize(240, 160); }
+    virtual QSize sizeHint(void) const  { return QSize(640, 480); }
     void setShaderSources(const QString& vs, const QString& fs);
     void setImage(const QImage& = QImage());
     const QString& imageFileName(void) const;
@@ -43,10 +43,14 @@ public:
     void clearUniforms(void);
     QImage resultImage(void);
     const QMap<QString, QVariant>& uniforms(void) const;
+    double scale(void) const;
 
 public slots:
+    void zoomTo(double factor);
     void fitImageToWindow(void);
     void resizeToOriginalImageSize(void);
+    void enableAlpha(bool enabled = true);
+    void setBackgroundColor(const QColor&);
 
 signals:
     void vertexShaderError(QString);
@@ -76,9 +80,9 @@ private: // methods
     void stopCode(void);
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
-    void calcViewport(void);
-    void calcViewport(const QSize&);
-    void calcViewport(int w, int h);
+    void updateViewport(void);
+    void updateViewport(const QSize&);
+    void updateViewport(int w, int h);
     void scrollBy(const QPoint&);
     void startMotion(const QPointF& velocity);
     void stopMotion(void);

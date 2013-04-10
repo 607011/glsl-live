@@ -53,6 +53,8 @@ private slots:
     void imageDropped(const QImage&);
     void saveImageSnapshot(void);
     void batchProcess(void);
+    void zoom(void);
+    void chooseBackgroundColor(void);
 
 private: //methods
     void saveSettings(void);
