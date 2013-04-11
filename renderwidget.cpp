@@ -42,6 +42,8 @@ class RenderWidgetPrivate {
 public:
     explicit RenderWidgetPrivate(void)
         : alphaEnabled(true)
+        , imageRecyclingEnabled(false)
+        , instantUpdate(false)
         , firstPaintEventPending(true)
         , vertexShader(NULL)
         , fragmentShader(NULL)
@@ -56,6 +58,8 @@ public:
     { /* ... */ }
     QColor backgroundColor;
     bool alphaEnabled;
+    bool imageRecyclingEnabled;
+    bool instantUpdate;
     bool firstPaintEventPending;
     QGLShader* vertexShader;
     QGLShader* fragmentShader;
@@ -174,6 +178,18 @@ void RenderWidget::enableAlpha(bool enabled)
     else {
         glDisable(GL_BLEND);
     }
+    update();
+}
+
+void RenderWidget::enableImageRecycling(bool enabled)
+{
+    d_ptr->imageRecyclingEnabled = enabled;
+    update();
+}
+
+void RenderWidget::enableInstantUpdate(bool enabled)
+{
+    d_ptr->instantUpdate = enabled;
     update();
 }
 
@@ -373,10 +389,10 @@ void RenderWidget::resizeEvent(QResizeEvent* e)
     updateViewport(e->size());
 }
 
-void RenderWidget::zoomTo(double factor)
+void RenderWidget::setScale(double scale)
 {
     Q_D(RenderWidget);
-    d->scale = factor;
+    d->scale = scale;
     updateViewport();
 }
 
@@ -396,7 +412,7 @@ void RenderWidget::resizeToOriginalImageSize(void)
 {
     Q_D(RenderWidget);
     d->offset = QPoint();
-    zoomTo(1.0);
+    setScale(1.0);
 }
 
 void RenderWidget::resizeGL(int w, int h)
@@ -437,6 +453,13 @@ void RenderWidget::paintGL(void)
     if (d->shaderProgram->isLinked())
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->time.elapsed());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    if (d->imageRecyclingEnabled) {
+        glReadPixels(0, 0, d->img.width(), d->img.height(), GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
+        glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
+    }
+    if (d->instantUpdate)
+        update();
 }
 
 void RenderWidget::keyPressEvent(QKeyEvent* e)

@@ -46,10 +46,12 @@ public:
     double scale(void) const;
 
 public slots:
-    void zoomTo(double factor);
+    void setScale(double factor);
     void fitImageToWindow(void);
     void resizeToOriginalImageSize(void);
     void enableAlpha(bool enabled = true);
+    void enableImageRecycling(bool enabled = true);
+    void enableInstantUpdate(bool enabled = true);
     void setBackgroundColor(const QColor&);
 
 signals:

@@ -233,12 +233,19 @@
     <addaction name="actionFitImageToWindow"/>
     <addaction name="actionResizeToOriginalImageSize"/>
     <addaction name="menuZoom"/>
-    <addaction name="separator"/>
-    <addaction name="actionEnableAlpha"/>
+   </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>Options</string>
+    </property>
     <addaction name="actionChooseBackgroundColor"/>
+    <addaction name="actionEnableAlpha"/>
+    <addaction name="actionRecycleImage"/>
+    <addaction name="actionInstantUpdate"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
+   <addaction name="menuOptions"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -444,6 +451,22 @@
   <action name="actionChooseBackgroundColor">
    <property name="text">
     <string>Choose background color ...</string>
+   </property>
+  </action>
+  <action name="actionRecycleImage">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Recycle image</string>
+   </property>
+  </action>
+  <action name="actionInstantUpdate">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Instant update</string>
    </property>
   </action>
  </widget>

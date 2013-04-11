@@ -5,6 +5,7 @@
 #define __PROJECT_H_
 
 #include <QObject>
+#include <QColor>
 #include <QImage>
 #include <QString>
 #include <QIODevice>
@@ -35,6 +36,16 @@ public:
     void setFragmentShaderSource(const QString&);
     void setImage(const QImage&);
     void setFilename(const QString&);
+    bool alphaEnabled(void) const;
+    bool imageRecyclingEnabled(void) const;
+    bool instantUpdateEnabled(void) const;
+    const QColor& backgroundColor(void) const;
+
+public slots:
+    void enableAlpha(bool enabled = true);
+    void enableImageRecycling(bool enabled = true);
+    void enableInstantUpdate(bool enabled = true);
+    void setBackgroundColor(const QColor&);
 
 private: // methods
     void read(void);

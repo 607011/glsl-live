@@ -15,12 +15,19 @@ class ProjectPrivate {
 public:
     ProjectPrivate(void)
         : dirty(false)
+        , alphaEnabled(true)
+        , imageRecyclingEnabled(false)
+        , instantUpdate(false)
     { /* ... */ }
     bool dirty;
     QXmlStreamReader xml;
     QString vertexShaderSource;
     QString fragmentShaderSource;
     QImage image;
+    QColor backgroundColor;
+    bool alphaEnabled;
+    bool imageRecyclingEnabled;
+    bool instantUpdate;
     QString filename;
     QString errorString;
 };
@@ -319,3 +326,44 @@ void Project::readInputImage(void)
         d->xml.raiseError(QObject::tr("empty image: %1").arg(str));
     }
 }
+
+void Project::enableAlpha(bool enabled)
+{
+    d_ptr->alphaEnabled = enabled;
+}
+
+void Project::enableImageRecycling(bool enabled)
+{
+    d_ptr->imageRecyclingEnabled = enabled;
+}
+
+void Project::enableInstantUpdate(bool enabled)
+{
+    d_ptr->instantUpdate = enabled;
+}
+
+void Project::setBackgroundColor(const QColor& color)
+{
+    d_ptr->backgroundColor = color;
+}
+
+bool Project::alphaEnabled(void) const
+{
+    return d_ptr->alphaEnabled;
+}
+
+bool Project::imageRecyclingEnabled(void) const
+{
+    return d_ptr->imageRecyclingEnabled;
+}
+
+bool Project::instantUpdateEnabled(void) const
+{
+    return d_ptr->instantUpdate;
+}
+
+const QColor& Project::backgroundColor(void) const
+{
+    return d_ptr->backgroundColor;
+}
+

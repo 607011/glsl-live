@@ -45,19 +45,21 @@ static void clearLayout(QLayout* layout);
 class MainWindowPrivate {
 public:
     explicit MainWindowPrivate(void)
-        : colorDialog(new QColorDialog)
+        : project(new Project)
+        , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
         , docBrowser(new QTextBrowser)
     {
-        calcSteps();
+        for (int i = -9; i < 10; ++i)
+            steps << qPow(10, i);
         docBrowser->setOpenExternalLinks(true);
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
     }
-    Project project;
+    Project* project;
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
@@ -72,8 +74,9 @@ public:
     static const int MaxRecentFiles = 16;
     QAction* recentProjectsActs[MaxRecentFiles];
 
-    virtual ~MainWindowPrivate()
+    ~MainWindowPrivate()
     {
+        safeDelete(project);
         safeDelete(colorDialog);
         safeDelete(renderWidget);
         safeDelete(paramWidget);
@@ -81,14 +84,6 @@ public:
         safeDelete(fragmentShaderEditor);
         safeDelete(docBrowser);
     }
-
-private:
-    void calcSteps(void)
-    {
-        for (int i = -9; i < 10; ++i)
-            steps << qPow(10, i);
-    }
-
 };
 
 
@@ -135,6 +130,11 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableAlpha(bool)));
+    QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableImageRecycling(bool)));
+    QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableInstantUpdate(bool)));
+    QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
+    QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->project, SLOT(enableImageRecycling(bool)));
+    QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->project, SLOT(enableInstantUpdate(bool)));
     QObject::connect(ui->actionZoom5, SIGNAL(triggered()), SLOT(zoom()));
     QObject::connect(ui->actionZoom10, SIGNAL(triggered()), SLOT(zoom()));
     QObject::connect(ui->actionZoom25, SIGNAL(triggered()), SLOT(zoom()));
@@ -190,8 +190,8 @@ void MainWindow::restoreSettings(void)
     else {
         openProject(projectFilename);
     }
-    d_ptr->project.setDirty(false);
-    d->renderWidget->zoomTo(settings.value("Options/zoom", 1.0).toDouble());
+    d_ptr->project->setDirty(false);
+    d->renderWidget->setScale(settings.value("Options/zoom", 1.0).toDouble());
     ui->actionEnableAlpha->setChecked((settings.value("Options/alphaEnabled", true).toBool()));
     d->colorDialog->setCurrentColor(settings.value("Options/backgroundColor", QColor(20, 20, 20)).value<QColor>());
     updateWindowTitle();
@@ -221,7 +221,7 @@ void MainWindow::saveSettings(void)
             vSizes.append(v.next());
         settings.setValue("MainWindow/vsplitter/sizes", vSizes);
     }
-    settings.setValue("Project/filename", d_ptr->project.filename());
+    settings.setValue("Project/filename", d_ptr->project->filename());
     settings.setValue("Options/zoom", d->renderWidget->scale());
     settings.setValue("Options/alphaEnabled", ui->actionEnableAlpha->isChecked());
     settings.setValue("Options/backgroundColor", d->colorDialog->currentColor());
@@ -230,7 +230,7 @@ void MainWindow::saveSettings(void)
 void MainWindow::closeEvent(QCloseEvent* e)
 {
     Q_D(MainWindow);
-    int rc = (d->project.isDirty())
+    int rc = (d->project->isDirty())
             ? QMessageBox::question(this, tr("Save before exit?"), tr("Your project has changed. Do you want to save the changes before exiting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
@@ -326,7 +326,7 @@ void MainWindow::zoom(void)
     if (sender()) {
         QRegExp re("(\\d+)$");
         re.indexIn(sender()->objectName());
-        d_ptr->renderWidget->zoomTo(1e-2 * re.cap(1).toDouble());
+        d_ptr->renderWidget->setScale(1e-2 * re.cap(1).toDouble());
     }
 }
 
@@ -449,7 +449,7 @@ void MainWindow::processShaderChange(void)
     Q_D(MainWindow);
     parseShadersForParameters();
     updateShaderSources();
-    d->project.setDirty();
+    d->project->setDirty();
     ui->actionSave->setEnabled(true);
     updateWindowTitle();
 }
@@ -479,18 +479,18 @@ void MainWindow::successfullyLinkedShader(void)
 void MainWindow::newProject(void)
 {
     Q_D(MainWindow);
-    int rc = (d->project.isDirty())
+    int rc = (d->project->isDirty())
             ? QMessageBox::question(this, tr("Save before creating a new project?"), tr("Your project has changed. Do you want to save the changes before creating a new project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
         saveProject();
     if (rc != QMessageBox::Cancel) {
-        d->project.reset();
-        d->vertexShaderEditor->setPlainText(d->project.vertexShaderSource());
-        d->fragmentShaderEditor->setPlainText(d->project.fragmentShaderSource());
-        d->renderWidget->setImage(d->project.image());
+        d->project->reset();
+        d->vertexShaderEditor->setPlainText(d->project->vertexShaderSource());
+        d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
+        d->renderWidget->setImage(d->project->image());
         processShaderChange();
-        d->project.setClean();
+        d->project->setClean();
         updateWindowTitle();
     }
 }
@@ -539,7 +539,7 @@ void MainWindow::openRecentProject(void)
 void MainWindow::openProject(void)
 {
     Q_D(MainWindow);
-    int rc = (d->project.isDirty())
+    int rc = (d->project->isDirty())
             ? QMessageBox::question(this, tr("Save before loading another project?"), tr("Your project has changed. Do you want to save the changes before loading another project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
@@ -556,29 +556,29 @@ void MainWindow::openProject(const QString& filename)
 {
     Q_ASSERT(!filename.isEmpty());
     Q_D(MainWindow);
-    bool ok = d->project.load(filename);
+    bool ok = d->project->load(filename);
     if (ok) {
         d->vertexShaderEditor->blockSignals(true);
-        d->vertexShaderEditor->setPlainText(d->project.vertexShaderSource());
+        d->vertexShaderEditor->setPlainText(d->project->vertexShaderSource());
         d->vertexShaderEditor->blockSignals(false);
         d->fragmentShaderEditor->blockSignals(true);
-        d->fragmentShaderEditor->setPlainText(d->project.fragmentShaderSource());
+        d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
         d->fragmentShaderEditor->blockSignals(false);
-        d->renderWidget->setImage(d->project.image());
+        d->renderWidget->setImage(d->project->image());
         processShaderChange();
-        d->project.setClean();
+        d->project->setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
         d->renderWidget->resizeToOriginalImageSize();
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())
-                               : tr("Loading '%1' failed: %2").arg(QFileInfo(filename).fileName()).arg(d->project.errorString()), 10000);
+                               : tr("Loading '%1' failed: %2").arg(QFileInfo(filename).fileName()).arg(d->project->errorString()), 10000);
     updateWindowTitle();
 }
 
 void MainWindow::saveProject(void)
 {
-    QString filename = d_ptr->project.filename();
+    QString filename = d_ptr->project->filename();
     if (filename.isEmpty()) {
         filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
         if (filename.isNull())
@@ -598,11 +598,11 @@ void MainWindow::saveProjectAs(void)
 void MainWindow::saveProject(const QString &filename)
 {
     Q_D(MainWindow);
-    d->project.setFilename(filename);
-    d->project.setVertexShaderSource(d->vertexShaderEditor->toPlainText());
-    d->project.setFragmentShaderSource(d->fragmentShaderEditor->toPlainText());
-    d->project.setImage(d->renderWidget->image());
-    bool ok = d->project.save();
+    d->project->setFilename(filename);
+    d->project->setVertexShaderSource(d->vertexShaderEditor->toPlainText());
+    d->project->setFragmentShaderSource(d->fragmentShaderEditor->toPlainText());
+    d->project->setImage(d->renderWidget->image());
+    bool ok = d->project->save();
     ui->statusBar->showMessage(ok
                                ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
                                : tr("Saving failed."), 3000);
@@ -623,11 +623,11 @@ void MainWindow::updateWindowTitle()
     setWindowTitle(tr("%1 %2%3")
                    .arg(AppName)
                    .arg(AppVersion)
-                   .arg(d_ptr->project.filename().isEmpty()
+                   .arg(d_ptr->project->filename().isEmpty()
                         ? ""
                         : tr(" - %1%2")
-                          .arg(d_ptr->project.filename())
-                          .arg(d_ptr->project.isDirty()? "*" : "")));
+                          .arg(d_ptr->project->filename())
+                          .arg(d_ptr->project->isDirty()? "*" : "")));
 }
 
 
