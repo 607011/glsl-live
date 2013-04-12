@@ -516,7 +516,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Recycle image</string>
+    <string>Feedback image</string>
    </property>
   </action>
   <action name="actionInstantUpdate">
