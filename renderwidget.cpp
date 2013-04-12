@@ -49,12 +49,14 @@ public:
         , fragmentShader(NULL)
         , shaderProgram(new QGLShaderProgram)
         , fbo(NULL)
+        , imgData(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
         , scale(1.0)
         , leftMouseButtonPressed(false)
         , mouseMovedWhileLeftButtonPressed(false)
         , mouseMoveTimerId(0)
+        , nFrame(0)
     { /* ... */ }
     QColor backgroundColor;
     bool alphaEnabled;
@@ -65,8 +67,10 @@ public:
     QGLShader* fragmentShader;
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
+    GLuint* imgData;
     GLuint inputTextureHandle;
-    QTime time;
+    QTime totalTime;
+    QTime frameTime;
     QString imgFilename;
     QImage img;
     int liveTimerId;
@@ -103,6 +107,7 @@ public:
     QTime mouseMoveTimer;
     int mouseMoveTimerId;
     QPointF velocity;
+    qint64 nFrame;
 
     static const double Friction;
     static const int TimeInterval;
@@ -125,6 +130,7 @@ public:
         deleteShaderProgram();
         deleteShaders();
         safeDelete(fbo);
+        safeDelete(imgData);
     }
 
 private:
@@ -157,7 +163,8 @@ RenderWidget::RenderWidget(QWidget* parent)
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
     setAcceptDrops(true);
     setCursor(Qt::OpenHandCursor);
-    d_ptr->time.start();
+    d_ptr->totalTime.start();
+    d_ptr->frameTime.start();
 }
 
 RenderWidget::~RenderWidget()
@@ -225,8 +232,8 @@ void RenderWidget::makeImageFBO(void)
     Q_D(RenderWidget);
     makeCurrent();
     if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
-        safeDelete(d->fbo);
-        d->fbo = new QGLFramebufferObject(d->img.size());
+        safeRenew(d->fbo, new QGLFramebufferObject(d->img.size()));
+        safeRenew(d->imgData, new GLuint[d->fbo->width() * d->fbo->height()]);
     }
 }
 
@@ -441,6 +448,11 @@ void RenderWidget::initializeGL(void)
 void RenderWidget::paintGL(void)
 {
     Q_D(RenderWidget);
+    static const qint64 FRAMESTEP = 10;
+    if (d->nFrame++ % FRAMESTEP == 0) {
+        emit fpsChanged(FRAMESTEP * 1e3 / d->frameTime.elapsed());
+        d->frameTime.start();
+    }
     glClear(GL_COLOR_BUFFER_BIT);
     if (d->firstPaintEventPending) {
         enableAlpha(d->alphaEnabled);
@@ -451,12 +463,26 @@ void RenderWidget::paintGL(void)
         d->firstPaintEventPending = false;
     }
     if (d->shaderProgram->isLinked())
-        d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->time.elapsed());
+        d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->totalTime.elapsed());
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     if (d->imageRecyclingEnabled) {
-        glReadPixels(0, 0, d->img.width(), d->img.height(), GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
+        // draw into FBO
+        d->fbo->bind();
+        glViewport(0, 0, d->fbo->width(), d->fbo->height());
+        d->shaderProgram->setUniformValue(d->uLocResolution, QSizeF(d->fbo->size()));
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+        // retrieve pixel data from FBO
+        glReadPixels(0, 0, d->fbo->width(), d->fbo->height(), GL_BGRA, GL_UNSIGNED_BYTE, d->imgData);
+        d->fbo->release();
+
+        // load FBO into texture
         glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->fbo->width(), d->fbo->height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->imgData);
+
+        // restore viewport and uResolution
+        glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
+        d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     }
     if (d->instantUpdate)
         update();

@@ -60,6 +60,7 @@ signals:
     void linkerError(QString);
     void linkingSuccessful(void);
     void imageDropped(const QImage&);
+    void fpsChanged(double);
 
 protected:
     void resizeEvent(QResizeEvent*);

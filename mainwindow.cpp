@@ -117,6 +117,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
     QObject::connect(d->renderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(d->renderWidget, SIGNAL(imageDropped(QImage)), SLOT(imageDropped(QImage)));
+    QObject::connect(d->renderWidget, SIGNAL(fpsChanged(double)), SLOT(setFPS(double)));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
@@ -333,6 +334,11 @@ void MainWindow::zoom(void)
 void MainWindow::chooseBackgroundColor(void)
 {
     d_ptr->colorDialog->show();
+}
+
+void MainWindow::setFPS(double fps)
+{
+    ui->labelFPS->setText(QString("%1").arg(fps, 0, 'g', 3));
 }
 
 void MainWindow::parseShadersForParameters(void)

@@ -55,6 +55,7 @@ private slots:
     void batchProcess(void);
     void zoom(void);
     void chooseBackgroundColor(void);
+    void setFPS(double);
 
 private: //methods
     void saveSettings(void);
