@@ -54,4 +54,5 @@ OTHER_FILES += \
     examples/gaussian.xml \
     examples/toad-torch.xml \
     glsl-live_de.ts \
-    examples/nyan-ct-banner.xml
+    examples/nyan-ct-banner.xml \
+    examples/game-of-life.xml

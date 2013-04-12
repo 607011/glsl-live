@@ -636,7 +636,6 @@ void MainWindow::updateWindowTitle()
                           .arg(d_ptr->project->isDirty()? "*" : "")));
 }
 
-
 void MainWindow::about(void)
 {
     QMessageBox::about(this, tr("About %1 %2%3").arg(AppName).arg(AppVersionNoDebug).arg(AppMinorVersion),
