@@ -1,23 +1,22 @@
-<glsl-live-coder-project version="0.9.3">
+<glsl-live-coder-project version="0.9.5">
   <shaders>
     <vertex><![CDATA[// Crosshatch effect vertex shader
-// Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
-// All rights reserved.
 	   
 attribute vec4 aVertex;
 attribute vec4 aTexCoord;
 varying vec4 vTexCoord;
 
+uniform bool uFlip; // false
+
 void main(void)
 {
-    vTexCoord.x = aTexCoord.x;
-    vTexCoord.y = 1.0 - aTexCoord.y;
+    vTexCoord = aTexCoord;
+    if (uFlip)
+      vTexCoord.y = 1.0 - aTexCoord.y;
     gl_Position = aVertex;
 }
 ]]></vertex>
     <fragment><![CDATA[// Crosshatch effect fragment shader
-// Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
-// All rights reserved.
 
 const float SQRT2 = 1.41421356237;
 

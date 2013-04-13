@@ -24,17 +24,17 @@ static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
 static const int PROGRAM_TEXCOORD_ATTRIBUTE = 1;
 static const QVector2D TexCoords[4] =
 {
-    QVector2D(0, 0),
-    QVector2D(0, 1),
     QVector2D(1, 0),
-    QVector2D(1, 1)
+    QVector2D(1, 1),
+    QVector2D(0, 0),
+    QVector2D(0, 1)
 };
 static const QVector2D Vertices[4] =
 {
-    QVector2D(-1.0, -1.0),
-    QVector2D(-1.0,  1.0),
+    QVector2D( 1.0,  1.0),
     QVector2D( 1.0, -1.0),
-    QVector2D( 1.0,  1.0)
+    QVector2D(-1.0,  1.0),
+    QVector2D(-1.0, -1.0)
 };
 
 
