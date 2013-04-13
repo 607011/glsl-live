@@ -44,6 +44,7 @@ public:
     QImage resultImage(void);
     const QMap<QString, QVariant>& uniforms(void) const;
     double scale(void) const;
+    void stopCode(void);
 
 public slots:
     void setScale(double factor);
@@ -53,6 +54,7 @@ public slots:
     void enableImageRecycling(bool enabled = true);
     void enableInstantUpdate(bool enabled = true);
     void setBackgroundColor(const QColor&);
+    void feedbackOneFrame(void);
 
 signals:
     void vertexShaderError(QString);
@@ -80,7 +82,6 @@ protected:
 
 private: // methods
     void goLive(void);
-    void stopCode(void);
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
     void updateViewport(void);
@@ -94,7 +95,6 @@ private:
     QScopedPointer<RenderWidgetPrivate> d_ptr;
     Q_DECLARE_PRIVATE(RenderWidget)
     Q_DISABLE_COPY(RenderWidget)
-
 };
 
 #endif // __RENDERWIDGET_H_

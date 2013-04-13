@@ -133,6 +133,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableAlpha(bool)));
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableInstantUpdate(bool)));
+    QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->project, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->project, SLOT(enableInstantUpdate(bool)));
@@ -338,7 +339,7 @@ void MainWindow::chooseBackgroundColor(void)
 
 void MainWindow::setFPS(double fps)
 {
-    ui->labelFPS->setText(QString("%1").arg(fps, 0, 'g', 3));
+    ui->labelFPS->setText(QString("%1 fps").arg(fps, 7, 'f', 1));
 }
 
 void MainWindow::parseShadersForParameters(void)
@@ -564,6 +565,9 @@ void MainWindow::openProject(const QString& filename)
     Q_D(MainWindow);
     bool ok = d->project->load(filename);
     if (ok) {
+        ui->actionInstantUpdate->setChecked(false);
+        ui->actionRecycleImage->setChecked(false);
+        d->renderWidget->stopCode();
         d->vertexShaderEditor->blockSignals(true);
         d->vertexShaderEditor->setPlainText(d->project->vertexShaderSource());
         d->vertexShaderEditor->blockSignals(false);

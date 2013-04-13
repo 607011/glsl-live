@@ -21,8 +21,12 @@ uniform float uT;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
 
-vec2 barrelDistortion(vec2 coord, float amt) {
-	  vec2 cc = coord - 0.5;
+uniform float uDistort; // 0.0, 3.0, 0.9
+uniform int uIterations; // 3, 60, 30
+
+
+vec2 barrelDistortion(vec2 coord, float amt, vec2 center) {
+	  vec2 cc = coord - center;
 	  float dist = dot(cc, cc);
   	return coord + cc * dist * amt;
 }
@@ -49,11 +53,9 @@ vec3 spectrum_offset(float t) {
   	return pow(ret, vec3(1.0/2.2));
 }
 
-uniform float uDistort; // 0.0, 3.0, 0.9
-uniform int uIterations; // 3, 60, 30
-
 void main()
 {	
+  vec2 center = uMouse / uResolution;
   float reci_num_iter_f = 1.0 / float(uIterations);
   	vec2 uv = vTexCoord.st;
   	vec3 sumcol = vec3(0.0);
@@ -62,7 +64,7 @@ void main()
 		    float t = float(i) * reci_num_iter_f;
     		vec3 w = spectrum_offset(t);
     		sumw += w;
-    		sumcol += w * texture2D(uTexture, barrelDistortion(uv, uDistort*t)).rgb;
+    		sumcol += w * texture2D(uTexture, barrelDistortion(uv, uDistort*t, center)).rgb;
   	}
 	  	gl_FragColor = vec4(sumcol.rgb / sumw, 1.0);
 }

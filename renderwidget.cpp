@@ -29,6 +29,13 @@ static const QVector2D TexCoords[4] =
     QVector2D(0, 0),
     QVector2D(0, 1)
 };
+static const QVector2D TexCoords4FBO[4] =
+{
+    QVector2D(1, 1),
+    QVector2D(1, 0),
+    QVector2D(0, 1),
+    QVector2D(0, 0)
+};
 static const QVector2D Vertices[4] =
 {
     QVector2D( 1.0,  1.0),
@@ -43,13 +50,13 @@ public:
     explicit RenderWidgetPrivate(void)
         : alphaEnabled(true)
         , imageRecyclingEnabled(false)
+        , goAheadOneFrame(false)
         , instantUpdate(false)
         , firstPaintEventPending(true)
         , vertexShader(NULL)
         , fragmentShader(NULL)
         , shaderProgram(new QGLShaderProgram)
         , fbo(NULL)
-        , imgData(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
         , scale(1.0)
@@ -57,17 +64,19 @@ public:
         , mouseMovedWhileLeftButtonPressed(false)
         , mouseMoveTimerId(0)
         , nFrame(0)
+        , glVersionMajor(0)
+        , glVersionMinor(0)
     { /* ... */ }
     QColor backgroundColor;
     bool alphaEnabled;
     bool imageRecyclingEnabled;
+    bool goAheadOneFrame;
     bool instantUpdate;
     bool firstPaintEventPending;
     QGLShader* vertexShader;
     QGLShader* fragmentShader;
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
-    GLuint* imgData;
     GLuint inputTextureHandle;
     QTime totalTime;
     QTime frameTime;
@@ -108,6 +117,8 @@ public:
     int mouseMoveTimerId;
     QPointF velocity;
     qint64 nFrame;
+    GLint glVersionMajor;
+    GLint glVersionMinor;
 
     static const double Friction;
     static const int TimeInterval;
@@ -130,7 +141,6 @@ public:
         deleteShaderProgram();
         deleteShaders();
         safeDelete(fbo);
-        safeDelete(imgData);
     }
 
 private:
@@ -155,7 +165,7 @@ const int RenderWidgetPrivate::NumKineticDataSamples = 4;
 
 
 RenderWidget::RenderWidget(QWidget* parent)
-    : QGLWidget(QGLFormat(QGL::DoubleBuffer | QGL::NoDepthBuffer | QGL::AlphaChannel | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers | QGL::HasOverlay | QGL::NoSampleBuffers), parent)
+    : QGLWidget(QGLFormat(QGL::SingleBuffer | QGL::NoDepthBuffer | QGL::AlphaChannel | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers | QGL::HasOverlay | QGL::NoSampleBuffers), parent)
     , d_ptr(new RenderWidgetPrivate)
 {
     setFocusPolicy(Qt::StrongFocus);
@@ -207,6 +217,11 @@ void RenderWidget::setBackgroundColor(const QColor& color)
     qglClearColor(color);
 }
 
+void RenderWidget::feedbackOneFrame(void)
+{
+    d_ptr->goAheadOneFrame = true;
+}
+
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
@@ -231,10 +246,8 @@ void RenderWidget::makeImageFBO(void)
 {
     Q_D(RenderWidget);
     makeCurrent();
-    if (d->fbo == NULL || d->fbo->size() != d->img.size()) {
+    if (d->fbo == NULL || d->fbo->size() != d->img.size())
         safeRenew(d->fbo, new QGLFramebufferObject(d->img.size()));
-        safeRenew(d->imgData, new GLuint[d->fbo->width() * d->fbo->height()]);
-    }
 }
 
 void RenderWidget::setImage(const QImage& img)
@@ -344,7 +357,6 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
     d->shaderProgram->enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
     d->shaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
     d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
-    d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
     d->uLocT = d->shaderProgram->uniformLocation("uT");
     d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
     d->uLocMouse = d->shaderProgram->uniformLocation("uMouse");
@@ -353,14 +365,14 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
     d->uLocMarksCount = d->shaderProgram->uniformLocation("uMarksCount");
 }
 
-void RenderWidget::goLive()
+void RenderWidget::goLive(void)
 {
     if (d_ptr->liveTimerId == 0) {
         d_ptr->liveTimerId = startTimer(1000/50);
     }
 }
 
-void RenderWidget::stopCode()
+void RenderWidget::stopCode(void)
 {
     if (d_ptr->liveTimerId != 0) {
         killTimer(d_ptr->liveTimerId);
@@ -431,6 +443,10 @@ void RenderWidget::resizeGL(int w, int h)
 void RenderWidget::initializeGL(void)
 {
     Q_D(RenderWidget);
+    glGetIntegerv(GL_MAJOR_VERSION, &d->glVersionMajor);
+    glGetIntegerv(GL_MINOR_VERSION, &d->glVersionMinor);
+    qDebug() << QString("OpenGL %1.%2" ).arg(d->glVersionMajor).arg(d->glVersionMinor);
+
     qglClearColor(d->backgroundColor);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
@@ -441,19 +457,19 @@ void RenderWidget::initializeGL(void)
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 void RenderWidget::paintGL(void)
 {
     Q_D(RenderWidget);
-    static const qint64 FRAMESTEP = 10;
-    if (d->nFrame++ % FRAMESTEP == 0) {
-        emit fpsChanged(FRAMESTEP * 1e3 / d->frameTime.elapsed());
+    ++d->nFrame;
+    if (d->frameTime.elapsed() > 500) {
+        emit fpsChanged(d->nFrame * 1e3 / d->frameTime.elapsed());
         d->frameTime.start();
+        d->nFrame = 0;
     }
-    glClear(GL_COLOR_BUFFER_BIT);
     if (d->firstPaintEventPending) {
         enableAlpha(d->alphaEnabled);
         buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
@@ -462,28 +478,34 @@ void RenderWidget::paintGL(void)
         setImage();
         d->firstPaintEventPending = false;
     }
-    if (d->shaderProgram->isLinked())
+    if (d->shaderProgram->isLinked()) {
+        d->shaderProgram->bind();
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->totalTime.elapsed());
+    }
+
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // draw onto screen
+    d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
+    d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
+    glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
+    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    if (d->imageRecyclingEnabled) {
+
+    if (d->imageRecyclingEnabled || d->goAheadOneFrame) {
         // draw into FBO
-        d->fbo->bind();
         glViewport(0, 0, d->fbo->width(), d->fbo->height());
         d->shaderProgram->setUniformValue(d->uLocResolution, QSizeF(d->fbo->size()));
+        d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords4FBO);
+        d->fbo->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-        // retrieve pixel data from FBO
-        glReadPixels(0, 0, d->fbo->width(), d->fbo->height(), GL_BGRA, GL_UNSIGNED_BYTE, d->imgData);
+        glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, d->fbo->width(), d->fbo->height(), 0);
         d->fbo->release();
 
-        // load FBO into texture
-        glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->fbo->width(), d->fbo->height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->imgData);
-
-        // restore viewport and uResolution
-        glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
-        d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
+        d->goAheadOneFrame = false;
     }
+
     if (d->instantUpdate)
         update();
 }

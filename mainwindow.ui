@@ -120,7 +120,7 @@
             <widget class="QLabel" name="labelFPS">
              <property name="minimumSize">
               <size>
-               <width>40</width>
+               <width>70</width>
                <height>0</height>
               </size>
              </property>
@@ -135,13 +135,6 @@
              </property>
              <property name="alignment">
               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>fps</string>
              </property>
             </widget>
            </item>
@@ -291,6 +284,8 @@
     <addaction name="actionFitImageToWindow"/>
     <addaction name="actionResizeToOriginalImageSize"/>
     <addaction name="menuZoom"/>
+    <addaction name="separator"/>
+    <addaction name="actionNextFrame"/>
    </widget>
    <widget class="QMenu" name="menuOptions">
     <property name="title">
@@ -525,6 +520,14 @@
    </property>
    <property name="text">
     <string>Instant update</string>
+   </property>
+  </action>
+  <action name="actionNextFrame">
+   <property name="text">
+    <string>Next frame</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Right</string>
    </property>
   </action>
  </widget>
