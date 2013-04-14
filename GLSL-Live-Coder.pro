@@ -55,4 +55,15 @@ OTHER_FILES += \
     examples/toad-torch.xml \
     glsl-live_de.ts \
     examples/nyan-ct-banner.xml \
-    examples/game-of-life.xml
+    examples/game-of-life.xml \
+    examples/wobble-and-zoom.xml \
+    examples/warholizer.xml \
+    examples/spotlight-by-rasmuskaae.xml \
+    examples/skip.xml \
+    examples/scanline-effect.xml \
+    examples/rgb-separation-grey.xml \
+    examples/rgb-separation.xml \
+    examples/glitch2.xml \
+    examples/glitch.xml \
+    examples/fractalmorph.xml \
+    examples/aberration.xml

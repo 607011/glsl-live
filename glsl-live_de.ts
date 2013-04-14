@@ -20,204 +20,191 @@
         <translation>Fragment-Shader</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="144"/>
-        <source>fps</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="166"/>
+        <location filename="mainwindow.ui" line="159"/>
         <source>Errors</source>
         <translation>Fehlermeldungen</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="247"/>
-        <location filename="mainwindow.ui" line="425"/>
+        <location filename="mainwindow.ui" line="240"/>
+        <location filename="mainwindow.ui" line="418"/>
         <source>Help</source>
         <translation>Hilfe</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="256"/>
+        <location filename="mainwindow.ui" line="249"/>
         <source>File</source>
         <translation>Datei</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="260"/>
+        <location filename="mainwindow.ui" line="253"/>
         <source>Recent projects</source>
         <translation>Letzte Projekte</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="276"/>
+        <location filename="mainwindow.ui" line="269"/>
         <source>View</source>
         <translation>Ansicht</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="280"/>
+        <location filename="mainwindow.ui" line="273"/>
         <source>Zoom</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="299"/>
+        <location filename="mainwindow.ui" line="292"/>
         <source>Options</source>
         <translation>Optionen</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="322"/>
+        <location filename="mainwindow.ui" line="315"/>
         <source>About</source>
         <translation>Über</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="330"/>
+        <location filename="mainwindow.ui" line="323"/>
         <source>About Qt</source>
         <translation>Über Qt</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="341"/>
+        <location filename="mainwindow.ui" line="334"/>
         <source>Exit</source>
         <translation>Beenden</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="352"/>
+        <location filename="mainwindow.ui" line="345"/>
         <location filename="mainwindow.cpp" line="593"/>
         <location filename="mainwindow.cpp" line="602"/>
         <source>Save project</source>
         <translation>Projekt speichern</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="452"/>
+        <location filename="mainwindow.ui" line="445"/>
         <source>Batch process ...</source>
         <translation>Stapelverarbeitung ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="463"/>
+        <location filename="mainwindow.ui" line="456"/>
         <source>Enable alpha</source>
         <translation>Alpha-Kanal verwenden</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="468"/>
+        <location filename="mainwindow.ui" line="461"/>
         <source>500%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="473"/>
+        <location filename="mainwindow.ui" line="466"/>
         <source>200%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="478"/>
+        <location filename="mainwindow.ui" line="471"/>
         <source>150%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="483"/>
+        <location filename="mainwindow.ui" line="476"/>
         <source>100%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="488"/>
+        <location filename="mainwindow.ui" line="481"/>
         <source>50%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="493"/>
+        <location filename="mainwindow.ui" line="486"/>
         <source>25%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="498"/>
+        <location filename="mainwindow.ui" line="491"/>
         <source>10%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="503"/>
+        <location filename="mainwindow.ui" line="496"/>
         <source>5%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="508"/>
+        <location filename="mainwindow.ui" line="501"/>
         <source>1%</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="513"/>
+        <location filename="mainwindow.ui" line="506"/>
         <source>Choose background color ...</source>
         <oldsource>Choose background color</oldsource>
         <translation>Hintergrundfarbe wählen ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="521"/>
+        <location filename="mainwindow.ui" line="514"/>
         <source>Feedback image</source>
         <translation>Bild zurückspeisen</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="534"/>
+        <location filename="mainwindow.ui" line="527"/>
         <source>Next frame</source>
         <translation>Nächster Frame</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="537"/>
+        <location filename="mainwindow.ui" line="530"/>
         <source>Ctrl+Right</source>
         <translation></translation>
     </message>
     <message>
-        <source>Recycle image</source>
-        <translation type="obsolete">Bild zurückspeisen</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="529"/>
+        <location filename="mainwindow.ui" line="522"/>
         <source>Instant update</source>
         <translation>Schnellstmögliche Updates</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="363"/>
+        <location filename="mainwindow.ui" line="356"/>
         <source>Save as project ...</source>
         <translation>Projekt speichern unter ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="366"/>
+        <location filename="mainwindow.ui" line="359"/>
         <source>Ctrl+Alt+Shift+S</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="371"/>
+        <location filename="mainwindow.ui" line="364"/>
         <source>Open project</source>
         <translation>Projekt öffnen</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="382"/>
+        <location filename="mainwindow.ui" line="375"/>
         <source>New project</source>
         <translation>Neues Projekt</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="393"/>
+        <location filename="mainwindow.ui" line="386"/>
         <source>Save project as ...</source>
         <translation>Projekt speichern unter ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="404"/>
+        <location filename="mainwindow.ui" line="397"/>
         <source>Remove image</source>
         <translation>Bild entfernen</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="409"/>
+        <location filename="mainwindow.ui" line="402"/>
         <source>Save image snapshot ...</source>
         <translation>Bild speichern unter ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="420"/>
+        <location filename="mainwindow.ui" line="413"/>
         <source>Resize window to original image size</source>
         <translation>Fenster an Bildgröße anpassen</translation>
     </message>
     <message>
-        <source>F1</source>
-        <translation type="obsolete">F1</translation>
-    </message>
-    <message>
-        <location filename="mainwindow.ui" line="436"/>
+        <location filename="mainwindow.ui" line="429"/>
         <source>Fit image to window</source>
         <translation>Bild in Fenster einpassen</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="444"/>
+        <location filename="mainwindow.ui" line="437"/>
         <source>Resize image to original size</source>
         <translation>Bild auf Originalgröße skalieren</translation>
     </message>
@@ -251,14 +238,6 @@
         <location filename="mainwindow.cpp" line="297"/>
         <source>Select save directory</source>
         <translation>Zielverzeichnis auswählen</translation>
-    </message>
-    <message>
-        <source>%1 written, %2 left ...</source>
-        <translation type="obsolete">%1 geschrieben, %2 verbleiben ...</translation>
-    </message>
-    <message>
-        <source>Batch processing complete.</source>
-        <translation type="obsolete">Stapelverarbeitung beendet.</translation>
     </message>
     <message>
         <location filename="mainwindow.cpp" line="317"/>

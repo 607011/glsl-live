@@ -254,6 +254,7 @@ void RenderWidget::setImage(const QImage& img)
 {
     Q_D(RenderWidget);
     if (!img.isNull()) {
+        qDebug() << img.size();
         d->img = img.convertToFormat(QImage::Format_ARGB32);
         makeImageFBO();
     }
@@ -445,8 +446,6 @@ void RenderWidget::initializeGL(void)
     Q_D(RenderWidget);
     glGetIntegerv(GL_MAJOR_VERSION, &d->glVersionMajor);
     glGetIntegerv(GL_MINOR_VERSION, &d->glVersionMinor);
-    qDebug() << QString("OpenGL %1.%2" ).arg(d->glVersionMajor).arg(d->glVersionMinor);
-
     qglClearColor(d->backgroundColor);
     glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
@@ -499,10 +498,8 @@ void RenderWidget::paintGL(void)
         d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords4FBO);
         d->fbo->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, d->fbo->width(), d->fbo->height(), 0);
         d->fbo->release();
-
         d->goAheadOneFrame = false;
     }
 

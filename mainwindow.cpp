@@ -273,9 +273,8 @@ void MainWindow::valueChanged(bool v)
     }
 }
 
-void MainWindow::imageDropped(const QImage& img)
+void MainWindow::imageDropped(const QImage&)
 {
-    Q_UNUSED(img);
     processShaderChange();
 }
 
@@ -350,11 +349,12 @@ void MainWindow::parseShadersForParameters(void)
             .append(d->fragmentShaderEditor->toPlainText().toUtf8());
     QTextStream in(&ba);
     QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)\\s*$");
+    QRegExp rePragma("#pragma\\s+size\\s*\\((\\d+)\\s*,\\s*(\\d+)\\)");
     // check if variables' definitions have changed in shader
     QCryptographicHash hash(QCryptographicHash::Sha1);
     while (!in.atEnd()) {
         const QString& line = in.readLine();
-        if (re0.indexIn(line) > -1)
+        if (re0.indexIn(line) > -1 || rePragma.indexIn(line) > -1)
             hash.addData(line.toUtf8());
     }
     // if changes occured regenerate widgets
@@ -442,6 +442,12 @@ void MainWindow::parseShadersForParameters(void)
                             qWarning() << "invalid type:" << type;
                     }
                 }
+            }
+            else if (rePragma.indexIn(line) > -1) {
+                const int w = rePragma.cap(1).toInt();
+                const int h = rePragma.cap(2).toInt();
+                d->renderWidget->setImage(QImage(w, h, QImage::Format_ARGB32));
+                d->renderWidget->fitImageToWindow();
             }
         }
         layout->addStretch(1);
