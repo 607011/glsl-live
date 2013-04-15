@@ -60,6 +60,7 @@ public slots:
     void setBackgroundColor(const QColor&);
     void feedbackOneFrame(void);
     void setTimerActive(bool);
+    void clampToBorder(bool);
 
 signals:
     void vertexShaderError(QString);
@@ -88,6 +89,7 @@ protected:
 private: // methods
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
+    void configureTexture(void);
     void updateViewport(const QSize&);
     void updateViewport(int w, int h);
     void scrollBy(const QPoint&);

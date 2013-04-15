@@ -3,14 +3,14 @@
    <autoclose >0</>
    <compname >Heise Zeitschriften Verlag</>
    <produrl >https://code.google.com/p/glsl-live/</>
-   <ver >0.9.6</>
+   <ver >0.9.7</>
    <supurl >https://code.google.com/p/glsl-live/</>
    <updurl >https://code.google.com/p/glsl-live/</>
    <dlgfont >verdana</>
    <headlogo >default - 1</>
    <dlgfontsize >s8</>
    <output >D:\Workspace\glsl-live\deploy</>
-   <exename >glsl-live-coder-0.9.6.exe</>
+   <exename >glsl-live-coder-0.9.7.exe</>
    <beffile ></>
    <aftfile ></>
    <uninclude >1</>

@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9.5">
+<glsl-live-coder-project version="0.9.7">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
 attribute vec4 aTexCoord;
@@ -26,7 +26,7 @@ float stepwise(float x, int steps) {
 
 void main() {
   float x = uF * stepwise(vTexCoord.x, uSteps);
-  float offset = 0.15 * sin(uSpeed * uT + x);
+  float offset = 0.12 * sin(uSpeed * uT + x);
   offset = stepwise(offset, 16);
   float shadow = 1.0
      + uShadowStrength * sin(uSpeed * uT + vTexCoord.x * uF);

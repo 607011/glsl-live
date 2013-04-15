@@ -49,6 +49,7 @@ class RenderWidgetPrivate {
 public:
     explicit RenderWidgetPrivate(void)
         : alphaEnabled(true)
+        , clampToBorder(true)
         , imageRecyclingEnabled(false)
         , goAheadOneFrame(false)
         , instantUpdate(false)
@@ -69,6 +70,7 @@ public:
     { /* ... */ }
     QColor backgroundColor;
     bool alphaEnabled;
+    bool clampToBorder;
     bool imageRecyclingEnabled;
     bool goAheadOneFrame;
     bool instantUpdate;
@@ -228,6 +230,13 @@ void RenderWidget::setTimerActive(bool active)
         goLive();
     else
         stopCode();
+}
+
+void RenderWidget::clampToBorder(bool enabled)
+{
+    Q_D(RenderWidget);
+    d->clampToBorder = enabled;
+    configureTexture();
 }
 
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
@@ -454,6 +463,21 @@ void RenderWidget::resizeToOriginalImageSize(void)
     setScale(1.0);
 }
 
+
+void RenderWidget::configureTexture(void)
+{
+    Q_D(RenderWidget);
+    makeCurrent();
+    if (d->clampToBorder) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    }
+    else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+}
+
 void RenderWidget::resizeGL(int w, int h)
 {
     updateViewport(w, h);
@@ -475,8 +499,7 @@ void RenderWidget::initializeGL(void)
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    configureTexture();
 }
 
 void RenderWidget::paintGL(void)

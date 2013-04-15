@@ -139,6 +139,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableInstantUpdate(bool)));
     QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
     QObject::connect(ui->actionTimerActive, SIGNAL(toggled(bool)), d->renderWidget, SLOT(setTimerActive(bool)));
+    QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->renderWidget, SLOT(clampToBorder(bool)));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->project, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->project, SLOT(enableInstantUpdate(bool)));
@@ -202,6 +203,7 @@ void MainWindow::restoreSettings(void)
     d->project->setClean();
     d->renderWidget->setScale(settings.value("Options/zoom", 1.0).toDouble());
     ui->actionEnableAlpha->setChecked((settings.value("Options/alphaEnabled", true).toBool()));
+    ui->actionClampToBorder->setChecked((settings.value("Options/clampToBorder", true).toBool()));
     d->colorDialog->setCurrentColor(settings.value("Options/backgroundColor", QColor(20, 20, 20)).value<QColor>());
     updateWindowTitle();
 }
@@ -235,7 +237,7 @@ void MainWindow::saveSettings(void)
     settings.setValue("Project/filename", d->project->filename());
     settings.setValue("Options/zoom", d->renderWidget->scale());
     settings.setValue("Options/alphaEnabled", ui->actionEnableAlpha->isChecked());
-    settings.setValue("Options/timerActive", d->renderWidget->isTimerActive());
+    settings.setValue("Options/clampToBorder", ui->actionClampToBorder->isChecked());
     settings.setValue("Options/backgroundColor", d->colorDialog->currentColor());
 }
 

@@ -269,6 +269,7 @@
     <addaction name="actionRecycleImage"/>
     <addaction name="actionInstantUpdate"/>
     <addaction name="actionTimerActive"/>
+    <addaction name="actionClampToBorder"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -513,6 +514,17 @@
    </property>
    <property name="text">
     <string>Timer active</string>
+   </property>
+  </action>
+  <action name="actionClampToBorder">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Clamp image to borders</string>
    </property>
   </action>
  </widget>
