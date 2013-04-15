@@ -52,6 +52,7 @@ public:
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
         , docBrowser(new QTextBrowser)
+        , programHasJustStarted(3)
     {
         for (int i = -9; i < 10; ++i)
             steps << qPow(10, i);
@@ -75,6 +76,7 @@ public:
     QAction* recentProjectsActs[MaxRecentFiles];
     QString lastProjectOpenDir;
     QString lastProjectSaveDir;
+    int programHasJustStarted;
 
     ~MainWindowPrivate()
     {
@@ -197,7 +199,7 @@ void MainWindow::restoreSettings(void)
     else {
         openProject(projectFilename);
     }
-    d->project->setDirty(false);
+    d->project->setClean();
     d->renderWidget->setScale(settings.value("Options/zoom", 1.0).toDouble());
     ui->actionEnableAlpha->setChecked((settings.value("Options/alphaEnabled", true).toBool()));
     d->colorDialog->setCurrentColor(settings.value("Options/backgroundColor", QColor(20, 20, 20)).value<QColor>());
@@ -470,7 +472,7 @@ void MainWindow::processShaderChange(void)
     Q_D(MainWindow);
     parseShadersForParameters();
     updateShaderSources();
-    d->project->setDirty();
+    d->project->setDirty(--d->programHasJustStarted < 0);
     ui->actionSave->setEnabled(true);
     updateWindowTitle();
 }
