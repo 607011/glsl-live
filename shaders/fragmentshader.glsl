@@ -14,7 +14,5 @@ uniform vec2 uMouse;
 void main(void)
 {
   vec2 mouse = uMouse / uResolution;
-  float dist = 1.0 - distance(mouse, vTexCoord.st);
-  vec4 color = texture2D(uTexture, vTexCoord.st);
-  gl_FragColor = color * clamp(2.0*dist, 0.1, 1.0);
+  gl_FragColor = vec4(vTexCoord.s, 0.5 + 0.5 * sin(uT) * vTexCoord.y, mouse.x, 1.0);
 }

@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9.5">
+<glsl-live-coder-project version="0.9.6">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
 attribute vec4 aTexCoord;

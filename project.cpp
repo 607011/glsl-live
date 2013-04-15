@@ -44,7 +44,7 @@ void Project::reset(void)
 {
     Q_D(Project);
     setClean();
-    d->image = QImage(":/images/toad.png");
+    d->image = QImage();
     d->filename = QString();
     QFile vf(":/shaders/vertexshader.glsl");
     vf.open(QIODevice::ReadOnly | QIODevice::Text);

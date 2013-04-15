@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9.3">
+<glsl-live-coder-project version="0.9.6">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
 attribute vec4 aTexCoord;
@@ -6,7 +6,8 @@ varying vec4 vTexCoord;
 
 void main(void)
 {
-    vTexCoord = aTexCoord;
+    vTexCoord.x = aTexCoord.x;
+    vTexCoord.y = 1.0 - aTexCoord.y;
     gl_Position = aVertex;
 }
 ]]></vertex>

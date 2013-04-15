@@ -73,6 +73,7 @@ public:
     QVector<double> steps;
     static const int MaxRecentFiles = 16;
     QAction* recentProjectsActs[MaxRecentFiles];
+    QString lastProjectOpenDir;
 
     ~MainWindowPrivate()
     {
@@ -185,6 +186,7 @@ void MainWindow::restoreSettings(void)
     }
     ui->tabWidget->setCurrentIndex(settings.value("MainWindow/tabwidget/currentIndex").toInt());
     appendToRecentFileList(QString(), "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
+    d->lastProjectOpenDir = settings.value("Project/lastOpenDir").toString();
     const QString& projectFilename = settings.value("Project/filename").toString();
     if (projectFilename.isEmpty()) {
         newProject();
@@ -223,6 +225,7 @@ void MainWindow::saveSettings(void)
             vSizes.append(v.next());
         settings.setValue("MainWindow/vsplitter/sizes", vSizes);
     }
+    settings.setValue("Project/lastOpenDir", d_ptr->lastProjectOpenDir);
     settings.setValue("Project/filename", d_ptr->project->filename());
     settings.setValue("Options/zoom", d->renderWidget->scale());
     settings.setValue("Options/alphaEnabled", ui->actionEnableAlpha->isChecked());
@@ -558,9 +561,10 @@ void MainWindow::openProject(void)
     if (rc == QMessageBox::Yes)
         saveProject();
     if (rc != QMessageBox::Cancel) {
-        const QString& filename = QFileDialog::getOpenFileName(this, tr("Load project"), QString(), tr("Project files (*.xml *.xmlz)"));
+        const QString& filename = QFileDialog::getOpenFileName(this, tr("Load project"), d->lastProjectOpenDir, tr("Project files (*.xml *.xmlz)"));
         if (filename.isEmpty())
             return;
+        d->lastProjectOpenDir = QFileInfo(filename).path();
         openProject(filename);
     }
 }
