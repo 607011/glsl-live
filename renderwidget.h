@@ -45,6 +45,7 @@ public:
     const QMap<QString, QVariant>& uniforms(void) const;
     double scale(void) const;
     void stopCode(void);
+    void updateViewport(void);
 
 public slots:
     void setScale(double factor);
@@ -84,7 +85,6 @@ private: // methods
     void goLive(void);
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
-    void updateViewport(void);
     void updateViewport(const QSize&);
     void updateViewport(int w, int h);
     void scrollBy(const QPoint&);

@@ -12,64 +12,46 @@ void main(void)
   gl_Position = aVertex;
 }
 ]]></vertex>
-    <fragment><![CDATA[// Fractal morphing shader by David Alloza
+    <fragment><![CDATA[// Fractal morphing shader.
+// Original implementation by by David Alloza
 // http://david.alloza.eu/WebGL/morphing.html
 
-// texture coordinate (0;0)..(1;1)
+#pragma size(1024, 1024)
+
 varying vec4 vTexCoord;
-// texture
 uniform sampler2D uTexture;
-// elapsed time since program start in seconds (with fractions)
 uniform float uT;
-// width by height of texture
 uniform vec2 uResolution;
 
 uniform int uMaxIter; // 1, 500, 50
 
-#pragma size(1024, 1024)
-
 const float PI = 3.141592653589793238462643;
 
-vec4 rainbow(float sigma) {
-  float angle = 2.0 * PI * sigma;
-  return vec4(
-      1.0 - (0.5+0.5*cos(angle*2.0)),
-      1.0 - (0.5+0.5*cos(angle*3.0)),
-      1.0 - (0.5+0.5*cos(angle*5.0)),
-      1.0);
+vec4 rainbow(float v) {
+  float angle = 2.0 * PI * v;
+  vec3 rgb = vec3(0.5) - vec3(0.5) * cos(vec3(2.0, 3.0, 5.0) * vec3(angle));
+  return vec4(rgb, 1.0);
 }
 
-vec4 greenish(float sigma) {
-  return vec4(0.3 * sigma, sigma, 0.0, 1.0);
+vec4 greenish(float v) {
+  return vec4(0.3 * v, v, 0.0, 1.0);
 }
-
 
 void main() {
-  vec2 ComplexConstant = vec2(sin(uT/4.1), cos(uT/6.1));
-  float blend = sin(uT/3.1) * cos(uT/5.2);
-  float R = 4.0 * (vTexCoord.s - 0.5) - 0.5;
-  float I = 4.0 * (vTexCoord.t - 0.5);
-  float Real0 = R;
-  float Imag0 = I;
-  int LastIter;
-  float fRealConstant = blend * ComplexConstant.x + (1.0 - blend) * Real0;
-  float fImagConstant = blend * ComplexConstant.y + (1.0 - blend) * Imag0;
-  float R2 = R*R; 
-  float I2 = I*I;
-  for (int iter = 0; iter < uMaxIter; ++iter) {
-    I = (R+R) * I + fImagConstant;
-    R = R2-I2 + fRealConstant;
-    R2 = R*R;
-    I2 = I*I;
-    LastIter = iter;
-    if (R2+I2 > 4.0)
+  float blend = sin(2.1 * uT) * cos(0.2 * uT);
+  vec2 C = 4.0 * (vTexCoord.st - vec2(0.5, 0.5)) - vec2(0.5, 0.0);
+  vec2 c = blend * vec2(sin(uT/4.1), cos(uT/6.1)) + (1.0 - blend) * C;
+  int i;
+  for (i = 0; i < uMaxIter; ++i) {
+    vec2 C2 = C * C;
+    C = vec2(C2.x - C2.y, (C.x + C.x) * C.y) + c;
+    if (C2.x + C2.y > 4.0)
       break;
   }
-  if (LastIter == uMaxIter-1) 
-    gl_FragColor = vec4(0., 0., 0., 1.);
+  if (i == uMaxIter-1)
+    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
   else {
-    float sigma = float(LastIter) / float(uMaxIter);
-    gl_FragColor = greenish(sigma);
+    gl_FragColor = rainbow(float(i) / float(uMaxIter));
   }
 }
 ]]></fragment>

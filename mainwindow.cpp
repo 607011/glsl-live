@@ -192,7 +192,7 @@ void MainWindow::restoreSettings(void)
     else {
         openProject(projectFilename);
     }
-    d_ptr->project->setDirty(false);
+    d->project->setDirty(false);
     d->renderWidget->setScale(settings.value("Options/zoom", 1.0).toDouble());
     ui->actionEnableAlpha->setChecked((settings.value("Options/alphaEnabled", true).toBool()));
     d->colorDialog->setCurrentColor(settings.value("Options/backgroundColor", QColor(20, 20, 20)).value<QColor>());
@@ -447,7 +447,7 @@ void MainWindow::parseShadersForParameters(void)
                 const int w = rePragma.cap(1).toInt();
                 const int h = rePragma.cap(2).toInt();
                 d->renderWidget->setImage(QImage(w, h, QImage::Format_ARGB32));
-                d->renderWidget->fitImageToWindow();
+                d->renderWidget->updateViewport();
             }
         }
         layout->addStretch(1);

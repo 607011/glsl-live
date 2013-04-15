@@ -254,7 +254,6 @@ void RenderWidget::setImage(const QImage& img)
 {
     Q_D(RenderWidget);
     if (!img.isNull()) {
-        qDebug() << img.size();
         d->img = img.convertToFormat(QImage::Format_ARGB32);
         makeImageFBO();
     }
