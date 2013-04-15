@@ -43,10 +43,10 @@
 #include <QColor>
 #include <QtCore/QDebug>
 
+#include "../sidebarwidget.h"
 #include "glsledit.h"
 #include "glslhighlighter.h"
 #include "glsldoclayout.h"
-#include "sidebarwidget.h"
 
 
 static int findClosingMatch(const QTextDocument* doc, int cursorPosition)
@@ -122,7 +122,7 @@ public:
 };
 
 GLSLEdit::GLSLEdit(QWidget* parent)
-    : QPlainTextEdit(parent)
+    : AbstractEditor(parent)
     , d_ptr(new GLSLEditPrivate)
 {
     d_ptr->editor = this;

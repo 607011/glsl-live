@@ -41,37 +41,15 @@
 #include <QWheelEvent>
 #include <QTimer>
 
+#include "../abstracteditor.h"
+
 class GLSLEditPrivate;
 
-class GLSLEdit: public QPlainTextEdit
+class GLSLEdit: public AbstractEditor
 {
     Q_OBJECT
-    Q_PROPERTY(bool bracketsMatchingEnabled READ isBracketsMatchingEnabled WRITE setBracketsMatchingEnabled)
-    Q_PROPERTY(bool codeFoldingEnabled READ isCodeFoldingEnabled WRITE setCodeFoldingEnabled)
-    Q_PROPERTY(bool lineNumbersVisible READ isLineNumbersVisible WRITE setLineNumbersVisible)
-    Q_PROPERTY(bool textWrapEnabled READ isTextWrapEnabled WRITE setTextWrapEnabled)
 
 public:
-
-    typedef enum {
-        Background,
-        Normal,
-        Comment,
-        Number,
-        String,
-        Operator,
-        Identifier,
-        Keyword,
-        BuiltIn,
-        Sidebar,
-        LineNumber,
-        Cursor,
-        Marker,
-        BracketMatch,
-        BracketError,
-        FoldIndicator
-    } ColorComponent;
-
     GLSLEdit(QWidget* parent = NULL);
     ~GLSLEdit();
 

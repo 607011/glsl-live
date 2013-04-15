@@ -8,8 +8,9 @@
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QWidget>
+#include <QPlainTextEdit>
 
-#include "glsledit.h"
+#include "glsl/glsledit.h"
 
 struct BlockInfo {
     int position;
@@ -23,7 +24,7 @@ Q_DECLARE_TYPEINFO(BlockInfo, Q_PRIMITIVE_TYPE);
 class SidebarWidget : public QWidget
 {
 public:
-    SidebarWidget(GLSLEdit*);
+    SidebarWidget(QPlainTextEdit*);
     QVector<BlockInfo> lineNumbers;
     QColor backgroundColor;
     QColor lineNumberColor;

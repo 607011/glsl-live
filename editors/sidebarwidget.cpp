@@ -1,7 +1,7 @@
 #include "sidebarwidget.h"
 #include <QPainter>
 
-SidebarWidget::SidebarWidget(GLSLEdit* editor)
+SidebarWidget::SidebarWidget(QPlainTextEdit* editor)
     : QWidget(editor)
     , foldIndicatorWidth(0)
 {

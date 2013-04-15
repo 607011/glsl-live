@@ -1,7 +1,7 @@
 # Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 # All rights reserved.
 
-QT       += core gui opengl xml concurrent
+QT       += core gui opengl xml script
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -12,30 +12,36 @@ CODECFORTR = UTF-8
 TARGET = GLSL-Live-Coder
 TEMPLATE = app
 
-
 SOURCES += main.cpp\
     mainwindow.cpp \
     renderwidget.cpp \
-    glsledit/glsledit.cpp \
+    renderer.cpp \
     project.cpp \
-    glsledit/glslhighlighter.cpp \
-    glsledit/sidebarwidget.cpp \
-    glsledit/glsldoclayout.cpp \
-    renderer.cpp
+    editors/glsl/glsledit.cpp \
+    editors/glsl/glslhighlighter.cpp \
+    editors/glsl/glsldoclayout.cpp \
+    editors/js/jsedit.cpp \
+    editors/sidebarwidget.cpp \
+    scriptrunner.cpp \
+    glclass.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += main.h \
+    mainwindow.h \
     renderwidget.h \
-    glsledit/glsledit.h \
-    main.h \
+    renderer.h \
     project.h \
     doubleslider.h \
-    glsledit/glslhighlighter.h \
-    glsledit/sidebarwidget.h \
-    glsledit/glsldoclayout.h \
     util.h \
-    renderer.h
+    editors/glsl/glsledit.h \
+    editors/glsl/glslhighlighter.h \
+    editors/glsl/glsldoclayout.h \
+    editors/js/jsedit.h \
+    editors/sidebarwidget.h \
+    editors/abstracteditor.h \
+    scriptrunner.h \
+    glclass.h
 
-FORMS    += mainwindow.ui
+FORMS += mainwindow.ui
 
 RESOURCES += \
     shaders.qrc \
@@ -44,16 +50,14 @@ RESOURCES += \
     translations.qrc
 
 OTHER_FILES += \
+    glsl-live_de.ts \
+    LICENSE.txt \
+    doc/index.html \
     shaders/fragmentshader.glsl \
     shaders/vertexshader.glsl \
-    LICENSE.txt \
     examples/crosshatch.xml \
-    doc/index.html \
-    examples/chromatic.xml \
-    examples/ontoeidetik.xml \
     examples/gaussian.xml \
     examples/toad-torch.xml \
-    glsl-live_de.ts \
     examples/nyan-ct-banner.xml \
     examples/game-of-life.xml \
     examples/wobble-and-zoom.xml \
@@ -64,6 +68,6 @@ OTHER_FILES += \
     examples/rgb-separation-grey.xml \
     examples/rgb-separation.xml \
     examples/glitch2.xml \
-    examples/glitch.xml \
     examples/fractalmorph.xml \
-    examples/aberration.xml
+    examples/aberration.xml \
+    defaultscript.js

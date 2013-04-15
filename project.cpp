@@ -23,6 +23,7 @@ public:
     QXmlStreamReader xml;
     QString vertexShaderSource;
     QString fragmentShaderSource;
+    QString scriptSource;
     QImage image;
     QColor backgroundColor;
     bool alphaEnabled;
@@ -88,6 +89,7 @@ bool Project::save(const QString& filename)
         << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
         << "    <fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
         << "  </shaders>\n"
+        << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n"
         << "  <input>\n";
     if (!d->image.isNull()) {
         QByteArray ba;
@@ -181,6 +183,11 @@ const QString& Project::fragmentShaderSource(void) const
     return d_ptr->fragmentShaderSource;
 }
 
+const QString &Project::scriptSource(void) const
+{
+    return d_ptr->scriptSource;
+}
+
 const QImage& Project::image(void) const
 {
     return d_ptr->image;
@@ -205,6 +212,12 @@ void Project::setVertexShaderSource(const QString& source)
 void Project::setFragmentShaderSource(const QString& source)
 {
     d_ptr->fragmentShaderSource = source;
+    setDirty();
+}
+
+void Project::setScriptSource(const QString& source)
+{
+    d_ptr->scriptSource = source;
     setDirty();
 }
 
@@ -248,6 +261,9 @@ void Project::read(void)
         else if (d->xml.name() == "input") {
             readInput();
         }
+        else if (d->xml.name() == "script") {
+            readScript();
+        }
         else {
             d->xml.skipCurrentElement();
         }
@@ -269,6 +285,13 @@ void Project::readShaders(void)
             d->xml.skipCurrentElement();
         }
     }
+}
+
+void Project::readScript(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "script");
+    d->scriptSource = d->xml.readElementText();
 }
 
 void Project::readShaderVertex(void)

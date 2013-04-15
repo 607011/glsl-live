@@ -34,11 +34,13 @@
 #include "project.h"
 #include "renderwidget.h"
 #include "renderer.h"
-#include "glsledit/glsledit.h"
+#include "editors/glsl/glsledit.h"
+#include "editors/js/jsedit.h"
 #include "util.h"
+#include "scriptrunner.h"
 
 
-static void prepareEditor(GLSLEdit* editor);
+static void prepareEditor(AbstractEditor* editor);
 static void clearLayout(QLayout* layout);
 
 
@@ -49,8 +51,10 @@ public:
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
+        , scriptRunner(new ScriptRunner(renderWidget))
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
+        , scriptEditor(new JSEdit)
         , docBrowser(new QTextBrowser)
         , programHasJustStarted(3)
     {
@@ -64,11 +68,13 @@ public:
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
+    ScriptRunner* scriptRunner;
     QString vertexShaderFilename;
     QString fragmentShaderFilename;
     QString imageFilename;
     GLSLEdit* vertexShaderEditor;
     GLSLEdit* fragmentShaderEditor;
+    JSEdit* scriptEditor;
     QByteArray currentParameterHash;
     QTextBrowser* docBrowser;
     QVector<double> steps;
@@ -86,6 +92,7 @@ public:
         safeDelete(paramWidget);
         safeDelete(vertexShaderEditor);
         safeDelete(fragmentShaderEditor);
+        safeDelete(scriptEditor);
         safeDelete(docBrowser);
     }
 };
@@ -107,14 +114,17 @@ MainWindow::MainWindow(QWidget* parent)
     }
     ui->scrollArea->setWidget(d->renderWidget);
     ui->hsplitter->addWidget(d->paramWidget);
-    ui->vertexShaderHLayout->addWidget(d->vertexShaderEditor);
-    ui->fragmentShaderHLayout->addWidget(d->fragmentShaderEditor);
+    ui->tabVertexShader->layout()->addWidget(d->vertexShaderEditor);
+    ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
+    ui->tabScript->layout()->addWidget(d->scriptEditor);
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
     prepareEditor(d->fragmentShaderEditor);
+    prepareEditor(d->scriptEditor);
     QObject::connect(d->vertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(d->fragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
+    QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
     QObject::connect(d->renderWidget, SIGNAL(vertexShaderError(QString)), SLOT(badVertexShaderCode(QString)));
     QObject::connect(d->renderWidget, SIGNAL(fragmentShaderError(QString)), SLOT(badFragmentShaderCode(QString)));
     QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
@@ -474,9 +484,14 @@ void MainWindow::processShaderChange(void)
     Q_D(MainWindow);
     parseShadersForParameters();
     updateShaderSources();
-    d->project->setDirty(--d->programHasJustStarted < 0);
+    d->project->setDirty(--d->programHasJustStarted < 0); // XXX: dirty hack to counterfeit delayed textChanged() signal from editors
     ui->actionSave->setEnabled(true);
     updateWindowTitle();
+}
+
+void MainWindow::processScriptChange(void)
+{
+    // TODO???
 }
 
 void MainWindow::badVertexShaderCode(const QString& msg)
@@ -582,6 +597,9 @@ void MainWindow::openProject(const QString& filename)
 {
     Q_ASSERT(!filename.isEmpty());
     Q_D(MainWindow);
+    QFileInfo fInfo(filename);
+    if (!fInfo.isReadable() || !fInfo.isFile())
+        return;
     bool ok = d->project->load(filename);
     if (ok) {
         ui->actionInstantUpdate->setChecked(false);
@@ -688,7 +706,7 @@ void MainWindow::aboutQt(void)
     QMessageBox::aboutQt(this);
 }
 
-static void prepareEditor(GLSLEdit* editor)
+static void prepareEditor(AbstractEditor* editor)
 {
     //editor->blockSignals(true);
     editor->setTabStopWidth(2);

@@ -1,0 +1,6 @@
+function func() {
+    
+}
+
+
+gl.setUniform

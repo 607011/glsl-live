@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9.6">
+<glsl-live-coder-project version="0.9.7">
   <shaders>
     <vertex><![CDATA[// default vertex shader
 
@@ -29,16 +29,13 @@ uniform vec2 uMarks[];
 // number of marks in uMarks[]
 uniform int uMarksCount;
 
-const float PI = 3.14159265359;
-
-uniform float uS; // 0.0, 0.1,  0.06
-uniform float uV; // 0.0, 10.0, 2.10
-uniform float uW; // 0.0, 10.0, 3.00
+uniform float uV; // -5.0, 5.0, 3.0
+uniform float uW; // -5.0, 5.0, -3.0
 uniform float uZoom; // 0.1, 2.0, 1.0
 
 float f(float x)
 {
-  return uZoom * uS * (cos(uV*PI*x*x) + sin(uW*PI*x));
+  return 0.01 * uZoom * (0.2 * uV * cos(0.05 * uT * pow(x, 6.0)) + uW * sin(0.01 * uT * x));
 }
 
 void main(void)

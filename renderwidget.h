@@ -19,6 +19,7 @@
 #include <QResizeEvent>
 #include <QTimerEvent>
 #include <QScopedPointer>
+#include <QGLShaderProgram>
 
 class RenderWidgetPrivate;
 
@@ -49,6 +50,7 @@ public:
     void updateViewport(void);
     QString glVersionString(void) const;
     bool isTimerActive(void) const;
+    QGLShaderProgram* shaderProgram(void);
 
 public slots:
     void setScale(double factor);

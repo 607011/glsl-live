@@ -29,11 +29,13 @@ public:
     const QString& filename(void) const;
     const QString& vertexShaderSource(void) const;
     const QString& fragmentShaderSource(void) const;
+    const QString& scriptSource(void) const;
     const QImage& image(void) const;
     void setDirty(bool dirty = true);
     void setClean(bool clean = true);
     void setVertexShaderSource(const QString&);
     void setFragmentShaderSource(const QString&);
+    void setScriptSource(const QString&);
     void setImage(const QImage&);
     void setFilename(const QString&);
     bool alphaEnabled(void) const;
@@ -52,6 +54,7 @@ private: // methods
     bool read(QIODevice*);
 
     void readShaders(void);
+    void readScript(void);
     void readInput(void);
     void readShaderVertex(void);
     void readShaderFragment(void);

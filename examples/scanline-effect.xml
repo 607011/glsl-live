@@ -1,10 +1,9 @@
-<glsl-live-coder-project version="0.9.5">
+<glsl-live-coder-project version="0.9.7">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
 attribute vec4 aTexCoord;
 varying vec4 vTexCoord;
 uniform float uT;
-
 
 void main(void)
 {
@@ -21,13 +20,13 @@ uniform float uStroke; // 0.0, 5.0, 2.0
 
 void main(void)
 {
-  vec2 uv = 0.5 + (vTexCoord - 0.5) * (0.9 + 0.01 * sin(0.5 * uT));
+  vec2 uv = 0.5 + (vTexCoord.st - 0.5) * (0.9 + 0.01 * sin(0.5 * uT));
   vec2 c = vTexCoord.st;
   vec4 color = texture2D(uTexture, vTexCoord.st);
   // Tonwertstauchung
   color = clamp(2.0 * color * color, 0.0, 1.0);
   // Vignetteneffekt 
-  color *= 1.0 - 0.8 * distance(vec2(0.5, 0.5), vTexCoord);
+  color *= 1.0 - 0.8 * distance(vec2(0.5, 0.5), vTexCoord.st);
   // Grünstich 
   color *= vec4(0.8, 1.0, 0.7, 1.0);
   // Scanline-Effekt

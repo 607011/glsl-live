@@ -414,6 +414,11 @@ bool RenderWidget::isTimerActive(void) const
     return d_ptr->liveTimerId != 0;
 }
 
+QGLShaderProgram* RenderWidget::shaderProgram(void)
+{
+    return d_ptr->shaderProgram;
+}
+
 void RenderWidget::updateViewport(const QSize& size)
 {
     updateViewport(size.width(), size.height());
