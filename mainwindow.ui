@@ -45,16 +45,7 @@
              <string>Vertex Shader</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayoutVSEditor">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
+             <property name="margin">
               <number>0</number>
              </property>
              <item row="0" column="0">
@@ -67,16 +58,7 @@
              <string>Fragment Shader</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayoutFSEditor">
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
+             <property name="margin">
               <number>0</number>
              </property>
              <item row="0" column="0">
@@ -104,16 +86,7 @@
          </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
+           <property name="margin">
             <number>0</number>
            </property>
            <item>
@@ -295,6 +268,7 @@
     <addaction name="actionEnableAlpha"/>
     <addaction name="actionRecycleImage"/>
     <addaction name="actionInstantUpdate"/>
+    <addaction name="actionTimerActive"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuView"/>
@@ -528,6 +502,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Right</string>
+   </property>
+  </action>
+  <action name="actionTimerActive">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Timer active</string>
    </property>
   </action>
  </widget>

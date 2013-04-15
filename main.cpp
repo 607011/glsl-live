@@ -19,7 +19,11 @@
 #include <QApplication>
 #include <QTranslator>
 #include <QLocale>
+
+#ifndef QT_NO_DEBUG
 #include <QtCore/QDebug>
+#endif
+
 #include "main.h"
 #include "mainwindow.h"
 
@@ -44,6 +48,17 @@ int main(int argc, char* argv[])
     a.setOrganizationDomain(Company);
     a.setApplicationName(AppName);
     a.setApplicationVersion(AppVersionNoDebug);
+    QCoreApplication::addLibraryPath("plugins");
+    QCoreApplication::addLibraryPath("./plugins");
+
+#ifdef Q_OS_MAC
+    QCoreApplication::addLibraryPath("../plugins");
+#endif
+
+#ifndef QT_NO_DEBUG
+    qDebug() << QCoreApplication::libraryPaths();
+#endif
+
     QTranslator translator;
     bool ok = translator.load(":/translations/glsl-live_" + QLocale::system().name());
 #ifndef QT_NO_DEBUG

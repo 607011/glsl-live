@@ -222,6 +222,14 @@ void RenderWidget::feedbackOneFrame(void)
     d_ptr->goAheadOneFrame = true;
 }
 
+void RenderWidget::setTimerActive(bool active)
+{
+    if (active)
+        goLive();
+    else
+        stopCode();
+}
+
 void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
 {
     Q_D(RenderWidget);
@@ -367,22 +375,34 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 
 void RenderWidget::goLive(void)
 {
-    if (d_ptr->liveTimerId == 0) {
-        d_ptr->liveTimerId = startTimer(1000/50);
+    Q_D(RenderWidget);
+    if (d->liveTimerId == 0) {
+        d->liveTimerId = startTimer(1000/50);
     }
 }
 
 void RenderWidget::stopCode(void)
 {
-    if (d_ptr->liveTimerId != 0) {
+    Q_D(RenderWidget);
+    if (d->liveTimerId != 0) {
         killTimer(d_ptr->liveTimerId);
-        d_ptr->liveTimerId = 0;
+        d->liveTimerId = 0;
     }
 }
 
 void RenderWidget::updateViewport(void)
 {
     updateViewport(width(), height());
+}
+
+QString RenderWidget::glVersionString() const
+{
+    return QString("%1.%2").arg(d_ptr->glVersionMajor).arg(d_ptr->glVersionMinor);
+}
+
+bool RenderWidget::isTimerActive(void) const
+{
+    return d_ptr->liveTimerId != 0;
 }
 
 void RenderWidget::updateViewport(const QSize& size)
@@ -476,6 +496,10 @@ void RenderWidget::paintGL(void)
         setImage();
         d->firstPaintEventPending = false;
     }
+
+    if (d->liveTimerId == 0)
+        return;
+
     if (d->shaderProgram->isLinked()) {
         d->shaderProgram->bind();
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->totalTime.elapsed());
@@ -644,7 +668,7 @@ void RenderWidget::wheelEvent(QWheelEvent* e)
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)
 {
     const QMimeData* const d = e->mimeData();
-    if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
+    if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
         e->acceptProposedAction();
     else
         e->ignore();
@@ -660,7 +684,7 @@ void RenderWidget::dropEvent(QDropEvent* e)
     const QMimeData* const d = e->mimeData();
     if (d->hasUrls()) {
         QString fileUrl = d->urls().first().toString();
-        if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
+        if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
 #if defined(WIN32)
             loadImage(fileUrl.remove("file:///"));
 #else

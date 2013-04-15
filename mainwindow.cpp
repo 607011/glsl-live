@@ -74,6 +74,7 @@ public:
     static const int MaxRecentFiles = 16;
     QAction* recentProjectsActs[MaxRecentFiles];
     QString lastProjectOpenDir;
+    QString lastProjectSaveDir;
 
     ~MainWindowPrivate()
     {
@@ -135,6 +136,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableInstantUpdate(bool)));
     QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
+    QObject::connect(ui->actionTimerActive, SIGNAL(toggled(bool)), d->renderWidget, SLOT(setTimerActive(bool)));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->project, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->project, SLOT(enableInstantUpdate(bool)));
@@ -187,6 +189,7 @@ void MainWindow::restoreSettings(void)
     ui->tabWidget->setCurrentIndex(settings.value("MainWindow/tabwidget/currentIndex").toInt());
     appendToRecentFileList(QString(), "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
     d->lastProjectOpenDir = settings.value("Project/lastOpenDir").toString();
+    d->lastProjectSaveDir = settings.value("Project/lastSaveDir").toString();
     const QString& projectFilename = settings.value("Project/filename").toString();
     if (projectFilename.isEmpty()) {
         newProject();
@@ -225,10 +228,12 @@ void MainWindow::saveSettings(void)
             vSizes.append(v.next());
         settings.setValue("MainWindow/vsplitter/sizes", vSizes);
     }
-    settings.setValue("Project/lastOpenDir", d_ptr->lastProjectOpenDir);
-    settings.setValue("Project/filename", d_ptr->project->filename());
+    settings.setValue("Project/lastOpenDir", d->lastProjectOpenDir);
+    settings.setValue("Project/lastSaveDir", d->lastProjectSaveDir);
+    settings.setValue("Project/filename", d->project->filename());
     settings.setValue("Options/zoom", d->renderWidget->scale());
     settings.setValue("Options/alphaEnabled", ui->actionEnableAlpha->isChecked());
+    settings.setValue("Options/timerActive", d->renderWidget->isTimerActive());
     settings.setValue("Options/backgroundColor", d->colorDialog->currentColor());
 }
 
@@ -598,24 +603,27 @@ void MainWindow::openProject(const QString& filename)
 
 void MainWindow::saveProject(void)
 {
-    QString filename = d_ptr->project->filename();
+    Q_D(MainWindow);
+    QString filename = d->project->filename();
     if (filename.isEmpty()) {
-        filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
+        filename = QFileDialog::getSaveFileName(this, tr("Save project"), d->lastProjectSaveDir, tr("Project files (*.xml *.xmlz)"));
         if (filename.isNull())
             return;
     }
+    d->lastProjectOpenDir = QFileInfo(filename).path();
     saveProject(filename);
 }
 
 void MainWindow::saveProjectAs(void)
 {
-    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save project"), QString(), tr("Project files (*.xml *.xmlz)"));
+    Q_D(MainWindow);
+    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save project"), d->lastProjectSaveDir, tr("Project files (*.xml *.xmlz)"));
     if (filename.isNull())
         return;
     saveProject(filename);
 }
 
-void MainWindow::saveProject(const QString &filename)
+void MainWindow::saveProject(const QString& filename)
 {
     Q_D(MainWindow);
     d->project->setFilename(filename);
@@ -640,12 +648,13 @@ void MainWindow::updateShaderSources(void)
 
 void MainWindow::updateWindowTitle()
 {
-    setWindowTitle(tr("%1 %2%3")
+    setWindowTitle(tr("%1 %2 (OpenGL %3) %4")
                    .arg(AppName)
                    .arg(AppVersion)
+                   .arg(d_ptr->renderWidget->glVersionString())
                    .arg(d_ptr->project->filename().isEmpty()
                         ? ""
-                        : tr(" - %1%2")
+                        : tr("- %1%2")
                           .arg(d_ptr->project->filename())
                           .arg(d_ptr->project->isDirty()? "*" : "")));
 }

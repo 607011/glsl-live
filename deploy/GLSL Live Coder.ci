@@ -1,0 +1,304 @@
+﻿<project version = 9 civer = 5.18.0 winver = "2.9/6.1.7601" >
+   <autorun >1</>
+   <autoclose >0</>
+   <compname >Heise Zeitschriften Verlag</>
+   <produrl >https://code.google.com/p/glsl-live/</>
+   <ver >0.9.6</>
+   <supurl >https://code.google.com/p/glsl-live/</>
+   <updurl >https://code.google.com/p/glsl-live/</>
+   <dlgfont >verdana</>
+   <headlogo >default - 1</>
+   <dlgfontsize >s8</>
+   <output >D:\Workspace\glsl-live\deploy</>
+   <exename >glsl-live-coder-0.9.6.exe</>
+   <beffile ></>
+   <aftfile ></>
+   <uninclude >1</>
+   <lang >english</>
+   <addlang >german</>
+   <selfextr >1</>
+   <instpath ></>
+   <voltype >nolimit</>
+   <volsize ></>
+   <volpattern >disk%i.pak</>
+   <password ></>
+   <progname >GLSL Live Coder</>
+   <appname >GLSL Live Coder</>
+   <bl ></>
+   <blurl ></>
+   <unpath >inst</>
+   <unexe >uninstall.exe</>
+   <unlog >uninstall.ini</>
+   <installroot sorttype = 0 >
+      <children >
+         <install id = install expanded = 2 >
+            <children >
+               <_ id = background disabled = 1 >
+                  <desc ></>
+                  <head >#lcaption#</>
+                  <foot ></>
+                  <font >Times</>
+                  <height >36</>
+                  <bold >0</>
+                  <italic >0</>
+                  <backcol >0x0000FF</>
+                  <textcol >0xFFFFFF</>
+                  <shadecol >0x888888</>
+                  <uniform >0</>
+                  <backbmp ></>
+                  <stretchback >0</>
+               </>
+               <_ tag = 0 id = getuser disabled = 1 >
+                  <desc ></>
+                  <var >username</>
+                  <vars >appdata,apppath,userpath,desktop,progpath,startup</>
+                  <if ></>
+               </>
+               <_ id = checkreq expanded = 0 disabled = 1 >
+                  <children >
+                     <_ id = empty ></>
+                  </>
+                  <desc ></>
+                  <checktype >admin</>
+                  <resvar >ischeck</>
+                  <not >0</>
+                  <msg ></>
+               </>
+               <_ id = dlglang disabled = 1 >
+                  <desc ></>
+                  <buttons >nc</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows ></>
+                  </>
+                  <head ></>
+                  <headtext ></>
+                  <dlgtext ></>
+                  <if ></>
+               </>
+               <_ id = dlgwel >
+                  <desc ></>
+                  <buttons >auto</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows ></>
+                  </>
+                  <head ></>
+                  <headtext ></>
+                  <dlgtext ></>
+                  <if ></>
+               </>
+               <_ id = dlglic disabled = 1 >
+                  <desc ></>
+                  <file ></>
+                  <print >1</>
+                  <iagree >radio</>
+                  <buttons >pnc</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows >
+                        <_ >
+                           <varname >Liccolor</>
+                           <value >1</>
+                        </>
+                     </>
+                  </>
+                  <head ></>
+                  <headtext ></>
+                  <if ></>
+               </>
+               <_ id = dlgpath >
+                  <desc ></>
+                  <buttons >auto</>
+                  <design >left</>
+                  <headlogo ></>
+                  <chlist >
+                     <rows ></>
+                  </>
+                  <varlist >
+                     <rows ></>
+                  </>
+                  <head ></>
+                  <headtext ></>
+                  <dlgtext ></>
+                  <pathadd ></>
+                  <enforce >0</>
+                  <if ></>
+                  <savepath >0</>
+               </>
+               <_ id = dlgprog expanded = 2 >
+                  <children >
+                     <_ tag = 0 id = unpack >
+                        <desc ></>
+                        <comptype >default</>
+                        <ratio >r5</>
+                        <solid >1</>
+                        <path >inst</>
+                        <custpath ></>
+                        <ifexist >overnewer</>
+                        <if ></>
+                        <srclist >
+                           <rows rel = unpack >
+                              <_ disabled = 0 >
+                                 <filename >D:\Workspace\glsl-live\*.*</>
+                                 <recurse >0</>
+                                 <justfile >0</>
+                                 <emptydir >0</>
+                                 <exclude ></>
+                              </>
+                           </>
+                        </>
+                        <varlist >
+                           <rows ></>
+                        </>
+                     </>
+                     <_ id = shcut >
+                        <desc ></>
+                        <shpath >prog</>
+                        <shfile >#lunname#</>
+                        <path >inst</>
+                        <file >uninstall.exe</>
+                        <icon ></>
+                        <cmdline ></>
+                        <comment ></>
+                        <work >inst</>
+                        <defwork ></>
+                        <runas >norm</>
+                     </>
+                     <_ tag = 0 id = shlist >
+                        <desc ></>
+                        <shlist >
+                           <rows ></>
+                        </>
+                     </>
+                     <_ id = uninstexe >
+                        <desc ></>
+                     </>
+                     <_ id = unar >
+                        <desc ></>
+                        <name ></>
+                        <path >inst</>
+                        <ifile ></>
+                     </>
+                  </>
+                  <desc >Go into the item for viewing unpacking actions.</>
+                  <auto >1</>
+                  <buttons >nc</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows ></>
+                  </>
+                  <head ></>
+                  <headtext ></>
+                  <dlgtext ></>
+                  <if ></>
+               </>
+               <_ id = dlgfin >
+                  <desc ></>
+                  <buttons >c</>
+                  <design >left</>
+                  <headlogo ></>
+                  <chlist >
+                     <rows ></>
+                  </>
+                  <varlist >
+                     <rows ></>
+                  </>
+                  <head ></>
+                  <headtext ></>
+                  <dlgtext ></>
+               </>
+            </>
+            <icofile >default</>
+            <resfile ></>
+            <leftimg >install - 1</>
+            <caption ></>
+            <verinfo >1</>
+            <noadmin >0</>
+            <selfdelete >0</>
+         </>
+      </>
+   </>
+   <uninstallroot sorttype = 0 >
+      <children >
+         <uninstall id = uninstall expanded = 2 >
+            <children >
+               <_ id = dlguconf >
+                  <desc ></>
+                  <buttons >c</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows ></>
+                  </>
+               </>
+               <_ id = dlguprog expanded = 2 >
+                  <children >
+                     <_ id = unprocess >
+                        <desc ></>
+                     </>
+                  </>
+                  <desc ></>
+                  <buttons >nc</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows ></>
+                  </>
+               </>
+               <_ id = dlgundel >
+                  <desc ></>
+                  <buttons >nc</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows ></>
+                  </>
+               </>
+               <_ id = dlgufin >
+                  <desc ></>
+                  <buttons >nc</>
+                  <design >left</>
+                  <headlogo ></>
+                  <varlist >
+                     <rows ></>
+                  </>
+               </>
+            </>
+            <unicon >uninstall</>
+            <unresfile ></>
+            <leftimg >uninstall - 1</>
+            <caption ></>
+            <noadmin >0</>
+         </>
+      </>
+   </>
+   <phone ></>
+   <shfolder ></>
+   <headcol ></>
+   <headtext ></>
+   <headimg ></>
+   <stretchback >0</>
+   <silentpar >-silent</>
+   <custfont ></>
+   <upinclude >0</>
+   <uppath >inst</>
+   <upexe >update.exe</>
+   <upurl ></>
+   <upxml >update.ini</>
+   <upredir ></>
+   <ignnotfound >0</>
+   <csfile ></>
+   <csinst >"<exefilename>"</>
+   <csuninst >"<exefilename>"</>
+   <csupdate >"<exefilename>"</>
+   <crautorun >0</>
+   <autoicon ></>
+   <multilist >
+      <rows ></>
+   </>
+</>

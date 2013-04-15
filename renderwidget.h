@@ -44,8 +44,11 @@ public:
     QImage resultImage(void);
     const QMap<QString, QVariant>& uniforms(void) const;
     double scale(void) const;
+    void goLive(void);
     void stopCode(void);
     void updateViewport(void);
+    QString glVersionString(void) const;
+    bool isTimerActive(void) const;
 
 public slots:
     void setScale(double factor);
@@ -56,6 +59,7 @@ public slots:
     void enableInstantUpdate(bool enabled = true);
     void setBackgroundColor(const QColor&);
     void feedbackOneFrame(void);
+    void setTimerActive(bool);
 
 signals:
     void vertexShaderError(QString);
@@ -82,7 +86,6 @@ protected:
     void timerEvent(QTimerEvent*);
 
 private: // methods
-    void goLive(void);
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
     void updateViewport(const QSize&);
