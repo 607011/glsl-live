@@ -222,6 +222,7 @@ void RenderWidget::setBackgroundColor(const QColor& color)
 void RenderWidget::feedbackOneFrame(void)
 {
     d_ptr->goAheadOneFrame = true;
+    update();
 }
 
 void RenderWidget::setTimerActive(bool active)
@@ -257,6 +258,34 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
         updateUniforms();
         goLive();
     }
+}
+
+void RenderWidget::setVertexShader(const QString& vs)
+{
+    Q_D(RenderWidget);
+    d->vertexShaderSource = vs;
+    buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
+    if (d->shaderProgram->isLinked())
+        emit linkingSuccessful();
+}
+
+const QString& RenderWidget::vertexShader(void) const
+{
+    return d_ptr->vertexShaderSource;
+}
+
+void RenderWidget::setFragmentShader(const QString& fs)
+{
+    Q_D(RenderWidget);
+    d->fragmentShaderSource = fs;
+    buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
+    if (d->shaderProgram->isLinked())
+        emit linkingSuccessful();
+}
+
+const QString& RenderWidget::fragmentShader(void) const
+{
+    return d_ptr->fragmentShaderSource;
 }
 
 void RenderWidget::makeImageFBO(void)

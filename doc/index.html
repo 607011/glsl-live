@@ -55,7 +55,11 @@ Heise Zeitschriften Verlag.</p>
 <a name="bedienung"></a>
 <h2>Bedienung</h2>
 
-<p>&nbsp;</p>
+<h3>Markierungen setzen/löschen</h3>
+
+<p>Markieren von Punkten innerhalb des GL-Viewport (<a href="#uMarks">siehe <code>uMarks[]</code>/<code>uMarksCount</code></a>) per Alt-Linkslick.</p>
+
+<p>Löschen aller markierten Punkten innerhalb des GL-Viewport per Alt-Rechtsklick.</p>
 
 <h3>Vordefinierte Shader-Variablen</h3>
 
@@ -74,7 +78,7 @@ Heise Zeitschriften Verlag.</p>
     <dd>Aktuelle Mauskoordinaten in Pixeln innerhalb des
         OpenGL-Viewport; der Ursprung liegt links oben</dd>
 
-    <dt><code>uniform vec2 uMarks[]</code></dt>
+    <dt><a name="uMarks"></a><code>uniform vec2 uMarks[]</code></dt>
     <dd>Koordinaten markierter Punkte innerhalb der Textur;
         links oben liegt (0;0), rechts unten (1;1)</dd>
 
@@ -104,9 +108,14 @@ Heise Zeitschriften Verlag.</p>
 <h3>Features</h3>
 
 <ul>
-  <li></li>
+  <li>Steuerung per QtScript: Starten/Stoppen, Setzen von Uniforms, Setzen neuen Shader-Codes, Laden von Grafiken&nbsp;&hellip;</li>
 </ul>
 
+<h3>Sonstiges</h3>
+
+<ul>
+  <li>Code in Editoren (JSEdit, GLSLEdit, AbstractEditor) aufräumen, Redundanzen beseitigen.</li>
+</ul>
 
 <hr />
 

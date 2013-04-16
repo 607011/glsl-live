@@ -1,6 +1,3 @@
-function func() {
-    
-}
 
+gl.uniform1f("uTest", 1.0);
 
-gl.setUniform

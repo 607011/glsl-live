@@ -12,38 +12,21 @@
 
 #include "renderwidget.h"
 
-class GLClass : public QObject, public QScriptClass
+class GLClass : public QObject
 {
     Q_OBJECT
-public:
-    explicit GLClass(RenderWidget* renderWidget = NULL, QScriptEngine* engine = NULL);
-    ~GLClass();
 
-    QScriptValue constructor(void);
-    QScriptValue newInstance(void);
-    QString name(void) const;
-    QScriptValue prototype(void) const;
+    Q_PROPERTY(QString vertexshader READ vertexShader WRITE setVertexShader)
+    Q_PROPERTY(QString fragmentshader READ fragmentShader WRITE setFragmentShader)
+
+public:
+    explicit GLClass(RenderWidget* renderWidget = NULL);
+    ~GLClass();
 
     static void Init(RenderWidget* renderWidget, QScriptEngine* engine)
     {
-        engine->globalObject().setProperty("gl", (new GLClass(renderWidget, engine))->constructor());
+        engine->globalObject().setProperty("gl", engine->newQObject(new GLClass(renderWidget)));
     }
-
-private:
-    static QScriptValue construct(QScriptContext* ctx, QScriptEngine* eng);
-
-    QScriptValue mProto;
-    QScriptValue mCtor;
-};
-
-
-class GLPrototype : public QObject, public QScriptable
-{
-    Q_OBJECT
-
-public:
-    GLPrototype(RenderWidget* renderWidget, QObject* parent = NULL);
-    ~GLPrototype();
 
 public slots:
     void uniform1f(const char* location, GLfloat v0);
@@ -59,10 +42,18 @@ public slots:
     void uniform3ui(const char* location, GLuint v0, GLuint v1, GLuint v2);
     void uniform4ui(const char* location, GLuint v0, GLuint v1, GLuint v2, GLuint v3);
 
+    void setVertexShader(const QString&);
+    const QString& vertexShader(void) const;
+    void setFragmentShader(const QString&);
+    const QString& fragmentShader(void) const;
+
+
 private:
     RenderWidget* mRenderWidget;
 };
 
+
 Q_DECLARE_METATYPE(GLClass*)
 
 #endif // __GLCLASS_H_
+
