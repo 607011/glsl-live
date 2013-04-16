@@ -14,7 +14,7 @@ class AbstractEditor : public QPlainTextEdit
     Q_PROPERTY(bool textWrapEnabled READ isTextWrapEnabled WRITE setTextWrapEnabled)
 
 public:
-    AbstractEditor(QWidget* parent = 0)
+    AbstractEditor(QWidget* parent = NULL)
         : QPlainTextEdit(parent)
     {}
 
@@ -55,6 +55,10 @@ public slots:
     virtual void setCodeFoldingEnabled(bool enable) = 0;
     virtual void setLineNumbersVisible(bool visible) = 0;
     virtual void setTextWrapEnabled(bool enable) = 0;
+
+    virtual void fold(int line) = 0;
+    virtual void unfold(int line) = 0;
+    virtual void toggleFold(int line) = 0;
 
 };
 

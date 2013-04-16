@@ -24,7 +24,7 @@ Q_DECLARE_TYPEINFO(BlockInfo, Q_PRIMITIVE_TYPE);
 class SidebarWidget : public QWidget
 {
 public:
-    SidebarWidget(QPlainTextEdit*);
+    SidebarWidget(AbstractEditor*);
     QVector<BlockInfo> lineNumbers;
     QColor backgroundColor;
     QColor lineNumberColor;

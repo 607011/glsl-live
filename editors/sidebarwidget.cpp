@@ -1,7 +1,7 @@
 #include "sidebarwidget.h"
 #include <QPainter>
 
-SidebarWidget::SidebarWidget(QPlainTextEdit* editor)
+SidebarWidget::SidebarWidget(AbstractEditor* editor)
     : QWidget(editor)
     , foldIndicatorWidth(0)
 {
@@ -27,7 +27,7 @@ void SidebarWidget::mousePressEvent(QMouseEvent* event)
                 }
         }
         if (lineNo >= 0) {
-            GLSLEdit* editor = qobject_cast<GLSLEdit*>(parent());
+            AbstractEditor* editor = qobject_cast<AbstractEditor*>(parent());
             if (editor)
                 editor->toggleFold(lineNo);
         }

@@ -26,6 +26,9 @@ public:
     explicit MainWindow(QWidget* parent = NULL);
     ~MainWindow();
 
+public slots:
+    void debug(const QString& message);
+
 protected:
     void closeEvent(QCloseEvent*);
 
@@ -57,6 +60,7 @@ private slots:
     void zoom(void);
     void chooseBackgroundColor(void);
     void setFPS(double);
+    void executeScript(void);
 
 private: //methods
     void saveSettings(void);

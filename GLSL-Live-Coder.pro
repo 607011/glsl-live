@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     editors/js/jsedit.cpp \
     editors/sidebarwidget.cpp \
     scriptrunner.cpp \
-    glclass.cpp
+    glclass.cpp \
+    imageclass.cpp
 
 HEADERS  += main.h \
     mainwindow.h \
@@ -39,7 +40,8 @@ HEADERS  += main.h \
     editors/sidebarwidget.h \
     editors/abstracteditor.h \
     scriptrunner.h \
-    glclass.h
+    glclass.h \
+    imageclass.h
 
 FORMS += mainwindow.ui
 

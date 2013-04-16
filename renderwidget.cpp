@@ -260,30 +260,24 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
     }
 }
 
-void RenderWidget::setVertexShader(const QString& vs)
+void RenderWidget::setVertexShaderSource(const QString& vs)
 {
     Q_D(RenderWidget);
     d->vertexShaderSource = vs;
-    buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
-    if (d->shaderProgram->isLinked())
-        emit linkingSuccessful();
 }
 
-const QString& RenderWidget::vertexShader(void) const
+const QString& RenderWidget::vertexShaderSource(void) const
 {
     return d_ptr->vertexShaderSource;
 }
 
-void RenderWidget::setFragmentShader(const QString& fs)
+void RenderWidget::setFragmentShaderSource(const QString& fs)
 {
     Q_D(RenderWidget);
     d->fragmentShaderSource = fs;
-    buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
-    if (d->shaderProgram->isLinked())
-        emit linkingSuccessful();
 }
 
-const QString& RenderWidget::fragmentShader(void) const
+const QString& RenderWidget::fragmentShaderSource(void) const
 {
     return d_ptr->fragmentShaderSource;
 }
@@ -373,6 +367,15 @@ void RenderWidget::updateUniforms(void)
 void RenderWidget::clearUniforms(void)
 {
     d_ptr->uniforms.clear();
+}
+
+bool RenderWidget::build(void)
+{
+    Q_D(RenderWidget);
+    if (d->vertexShaderSource.isEmpty() || d->fragmentShaderSource.isEmpty())
+        return false;
+    buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
+    return d->shaderProgram->isLinked();
 }
 
 void RenderWidget::buildProgram(const QString& vs, const QString& fs)

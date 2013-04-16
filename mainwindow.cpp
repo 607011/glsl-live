@@ -14,6 +14,7 @@
 #include <QRegExp>
 #include <QStringListIterator>
 #include <QCryptographicHash>
+#include <QDateTime>
 #include <QSlider>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
@@ -98,6 +99,8 @@ public:
 };
 
 
+QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine);
+
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -116,7 +119,7 @@ MainWindow::MainWindow(QWidget* parent)
     ui->hsplitter->addWidget(d->paramWidget);
     ui->tabVertexShader->layout()->addWidget(d->vertexShaderEditor);
     ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
-    ui->tabScript->layout()->addWidget(d->scriptEditor);
+    ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
@@ -164,9 +167,16 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
+    QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
+    QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
+
+    QScriptEngine* engine = d->scriptRunner->engine();
+    QScriptValue fPrint = engine->newFunction(scriptPrintFunction);
+    fPrint.setData(engine->newQObject(ui->logTextEdit));
+    engine->globalObject().setProperty("print", fPrint);
+
 
     restoreSettings();
-
 }
 
 MainWindow::~MainWindow()
@@ -226,7 +236,7 @@ void MainWindow::saveSettings(void)
     settings.setValue("DocBrowser/geometry", d->docBrowser->saveGeometry());
     settings.setValue("DocBrowser/show", d->docBrowser->isVisible());
     settings.setValue("MainWindow/tabwidget/currentIndex", ui->tabWidget->currentIndex());
-    const QList<int>& hsz =  ui->hsplitter->sizes();
+    const QList<int>& hsz = ui->hsplitter->sizes();
     if (!hsz.isEmpty()) {
         QListIterator<int> h(hsz);
         QVariantList hSizes;
@@ -234,7 +244,7 @@ void MainWindow::saveSettings(void)
             hSizes.append(h.next());
         settings.setValue("MainWindow/hsplitter/sizes", hSizes);
     }
-    const QList<int>& vsz =  ui->vsplitter->sizes();
+    const QList<int>& vsz = ui->vsplitter->sizes();
     if (!vsz.isEmpty()) {
         QListIterator<int> v(vsz);
         QVariantList vSizes;
@@ -361,6 +371,37 @@ void MainWindow::chooseBackgroundColor(void)
 void MainWindow::setFPS(double fps)
 {
     ui->labelFPS->setText(QString("%1 fps").arg(fps, 7, 'f', 1));
+}
+
+QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
+{
+    QString result;
+    for (int i = 0; i < context->argumentCount(); ++i) {
+        if (i > 0)
+            result.append(" ");
+        result.append(context->argument(i).toString());
+    }
+    QScriptValue calleeData = context->callee().data();
+    QTextEdit* edit = qobject_cast<QTextEdit*>(calleeData.toQObject());
+    edit->append(result);
+    return engine->undefinedValue();
+}
+
+void MainWindow::debug(const QString& message)
+{
+    ui->logTextEdit->append(QString("[%1] %2").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz")).arg(message));
+}
+
+void MainWindow::executeScript(void)
+{
+    Q_D(MainWindow);
+    ui->logTextEdit->setText(QString());
+    if (d->scriptEditor->toPlainText().isEmpty()) {
+        debug(tr("Empty script. Doing nothing."));
+    }
+    else {
+        d->scriptRunner->execute(d->scriptEditor->toPlainText());
+    }
 }
 
 void MainWindow::parseShadersForParameters(void)
@@ -491,7 +532,8 @@ void MainWindow::processShaderChange(void)
 
 void MainWindow::processScriptChange(void)
 {
-    // TODO???
+    Q_D(MainWindow);
+    d->project->setScriptSource(d->scriptEditor->toPlainText());
 }
 
 void MainWindow::badVertexShaderCode(const QString& msg)
@@ -677,7 +719,7 @@ void MainWindow::updateWindowTitle()
                    .arg(d_ptr->project->filename().isEmpty()
                         ? ""
                         : tr("- %1%2")
-                          .arg(d_ptr->project->filename())
+                          .arg(d_ptr->project->filename().isEmpty()? tr("<untitled>") : d_ptr->project->filename())
                           .arg(d_ptr->project->isDirty()? "*" : "")));
 }
 

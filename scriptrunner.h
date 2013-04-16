@@ -15,24 +15,23 @@
 
 class ScriptRunnerPrivate;
 
-class ScriptRunner : public QThread
+class ScriptRunner : public QObject
 {
     Q_OBJECT
 public:
     explicit ScriptRunner(RenderWidget* glWidget);
     ~ScriptRunner();
 
-    void stop(void);
-    void resume(void);
-    const QScriptEngine& engine(void) const;
-    QScriptEngine& engine(void);
+    const QScriptEngine* engine(void) const;
+    QScriptEngine* engine(void);
 
 public slots:
+    void execute(const QString& source);
 
 signals:
-    void debug(QString message);
+    void debug(const QString& message);
 
-protected:
+private: // methods
     void run(void);
 
 private:

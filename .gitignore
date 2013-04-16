@@ -1,0 +1,12 @@
+*.pro.user*
+bin/*
+opt/*
+tmp/*
+deploy/*
+*.o
+moc_*
+Makefile*
+ui_*.h
+*.dmg
+qrc_*.cpp
+*.qm

@@ -33,10 +33,10 @@ public:
     virtual QSize minimumSizeHint(void) const { return QSize(240, 160); }
     virtual QSize sizeHint(void) const  { return QSize(640, 480); }
     void setShaderSources(const QString& vs, const QString& fs);
-    void setVertexShader(const QString&);
-    const QString& vertexShader(void) const;
-    void setFragmentShader(const QString&);
-    const QString& fragmentShader(void) const;
+    void setVertexShaderSource(const QString&);
+    const QString& vertexShaderSource(void) const;
+    void setFragmentShaderSource(const QString&);
+    const QString& fragmentShaderSource(void) const;
     void setImage(const QImage& = QImage());
     const QString& imageFileName(void) const;
     bool loadImage(const QString& fileName);
@@ -55,6 +55,7 @@ public:
     QString glVersionString(void) const;
     bool isTimerActive(void) const;
     QGLShaderProgram* shaderProgram(void);
+    bool build(void);
 
 public slots:
     void setScale(double factor);
