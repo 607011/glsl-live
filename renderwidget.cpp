@@ -293,7 +293,7 @@ void RenderWidget::makeImageFBO(void)
 void RenderWidget::setImage(const QImage& img)
 {
     Q_D(RenderWidget);
-    if (!img.isNull()) {
+    if (!img.isNull() ) {
         d->img = img.convertToFormat(QImage::Format_ARGB32);
         makeImageFBO();
     }

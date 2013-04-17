@@ -509,7 +509,9 @@ void MainWindow::parseShadersForParameters(void)
             else if (rePragma.indexIn(line) > -1) {
                 const int w = rePragma.cap(1).toInt();
                 const int h = rePragma.cap(2).toInt();
-                d->renderWidget->setImage(QImage(w, h, QImage::Format_ARGB32));
+                QImage transparentImage = QImage(w, h, QImage::Format_ARGB32);
+                transparentImage.fill(Qt::transparent);
+                d->renderWidget->setImage(transparentImage);
                 d->renderWidget->updateViewport();
             }
         }
@@ -654,6 +656,7 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
         d->fragmentShaderEditor->blockSignals(false);
         d->renderWidget->setImage(d->project->image());
+        d->scriptEditor->setPlainText(d->project->scriptSource());
         processShaderChange();
         d->project->setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
