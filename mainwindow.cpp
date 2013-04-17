@@ -407,9 +407,10 @@ void MainWindow::executeScript(void)
     }
 }
 
-void MainWindow::scriptFinished()
+void MainWindow::scriptFinished(void)
 {
-    ui->scriptExecutePushButton->setText(tr("Start"));
+    qDebug() << "MainWindow::scriptFinished()";
+    ui->scriptExecutePushButton->setText(tr("Execute"));
 }
 
 void MainWindow::parseShadersForParameters(void)
@@ -661,6 +662,7 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->blockSignals(true);
         d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
         d->fragmentShaderEditor->blockSignals(false);
+        d->scriptEditor->setPlainText(d->project->scriptSource());
         d->renderWidget->setImage(d->project->image());
         processShaderChange();
         d->project->setClean();

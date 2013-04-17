@@ -115,6 +115,7 @@ bool Project::load(const QString& filename)
     Q_D(Project);
     Q_ASSERT(!filename.isEmpty());
     resetErrors();
+    d->image = QImage();
     d->filename = filename;
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
@@ -292,6 +293,7 @@ void Project::readScript(void)
     Q_D(Project);
     Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "script");
     d->scriptSource = d->xml.readElementText();
+    qDebug() << "Project::readScript() d->scriptSource =" << d->scriptSource;
 }
 
 void Project::readShaderVertex(void)

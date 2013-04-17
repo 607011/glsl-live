@@ -28,6 +28,7 @@ ScriptRunner::ScriptRunner(RenderWidget* renderWidget)
     : d_ptr(new ScriptRunnerPrivate(renderWidget))
 {
     Q_D(ScriptRunner);
+
     // set up scripting engine
     GLClass::Init(d->renderWidget, d->scriptEngine);
     ImageClass::Init(d->scriptEngine);

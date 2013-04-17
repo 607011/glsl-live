@@ -19,7 +19,7 @@ class ScriptRunner : public QThread
 {
     Q_OBJECT
 public:
-    explicit ScriptRunner(RenderWidget* glWidget);
+    explicit ScriptRunner(RenderWidget*);
     ~ScriptRunner();
 
     const QScriptEngine* engine(void) const;
