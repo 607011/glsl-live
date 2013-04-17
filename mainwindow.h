@@ -61,6 +61,7 @@ private slots:
     void chooseBackgroundColor(void);
     void setFPS(double);
     void executeScript(void);
+    void scriptFinished(void);
 
 private: //methods
     void saveSettings(void);

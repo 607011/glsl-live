@@ -168,7 +168,9 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
+    QObject::connect(d->scriptRunner, SIGNAL(finished()), SLOT(scriptFinished()));
     QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
+
 
     QScriptEngine* engine = d->scriptRunner->engine();
     QScriptValue fPrint = engine->newFunction(scriptPrintFunction);
@@ -400,8 +402,14 @@ void MainWindow::executeScript(void)
         debug(tr("Empty script. Doing nothing."));
     }
     else {
+        ui->scriptExecutePushButton->setText(tr("Stop"));
         d->scriptRunner->execute(d->scriptEditor->toPlainText());
     }
+}
+
+void MainWindow::scriptFinished()
+{
+    ui->scriptExecutePushButton->setText(tr("Start"));
 }
 
 void MainWindow::parseShadersForParameters(void)

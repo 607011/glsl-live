@@ -12,6 +12,7 @@ public:
     ScriptRunnerPrivate(RenderWidget* renderWidget)
         : renderWidget(renderWidget)
         , scriptEngine(new QScriptEngine)
+        , prestart(true)
     { /* ... */ }
     ~ScriptRunnerPrivate()
     {
@@ -20,6 +21,7 @@ public:
     QScriptEngine* scriptEngine;
     RenderWidget* renderWidget;
     QString scriptSource;
+    bool prestart;
 };
 
 ScriptRunner::ScriptRunner(RenderWidget* renderWidget)
@@ -29,6 +31,8 @@ ScriptRunner::ScriptRunner(RenderWidget* renderWidget)
     // set up scripting engine
     GLClass::Init(d->renderWidget, d->scriptEngine);
     ImageClass::Init(d->scriptEngine);
+
+    start();
 }
 
 ScriptRunner::~ScriptRunner()
@@ -49,12 +53,17 @@ QScriptEngine* ScriptRunner::engine(void)
 void ScriptRunner::execute(const QString& source)
 {
     d_ptr->scriptSource = source;
-    run();
+    qDebug() << "ScriptRunner::execute(" << source << ")";
+    start();
 }
 
 void ScriptRunner::run(void)
 {
     Q_D(ScriptRunner);
+    if (d->prestart) {
+        d->prestart = false;
+        return;
+    }
     QScriptValue& globals = d->scriptEngine->globalObject();
     globals.setProperty("W", d->renderWidget->width());
     globals.setProperty("H", d->renderWidget->height());

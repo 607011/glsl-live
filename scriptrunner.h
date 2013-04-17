@@ -15,7 +15,7 @@
 
 class ScriptRunnerPrivate;
 
-class ScriptRunner : public QObject
+class ScriptRunner : public QThread
 {
     Q_OBJECT
 public:
@@ -31,8 +31,8 @@ public slots:
 signals:
     void debug(const QString& message);
 
-private: // methods
-    void run(void);
+protected: // methods
+    virtual void run(void);
 
 private:
     QScopedPointer<ScriptRunnerPrivate> d_ptr;
