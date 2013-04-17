@@ -92,12 +92,20 @@ bool Project::save(const QString& filename)
         << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n"
         << "  <input>\n";
     if (!d->image.isNull()) {
-        QByteArray ba;
-        QBuffer buffer(&ba);
-        buffer.open(QIODevice::WriteOnly);
-        d->image.save(&buffer, "PNG");
-        buffer.close();
-        out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
+        // check if image is really empty (transparent)
+        bool totallyTransparent = true;
+        const unsigned long* imgData = reinterpret_cast<unsigned long*>(d->image.bits());
+        const unsigned long* const imgDataEnd = imgData + d->image.byteCount() / sizeof(unsigned long);
+        while (imgData < imgDataEnd && totallyTransparent)
+            totallyTransparent = totallyTransparent && (*imgData++ == 0);
+        if (!totallyTransparent) {
+            QByteArray ba;
+            QBuffer buffer(&ba);
+            buffer.open(QIODevice::WriteOnly);
+            d->image.save(&buffer, "PNG");
+            buffer.close();
+            out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
+        }
     }
     out << "  </input>\n"
         << "</glsl-live-coder-project>\n";
@@ -115,6 +123,7 @@ bool Project::load(const QString& filename)
     Q_D(Project);
     Q_ASSERT(!filename.isEmpty());
     resetErrors();
+    d->image = QImage();
     d->filename = filename;
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
