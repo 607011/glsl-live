@@ -45,7 +45,16 @@
              <string>Vertex Shader</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayoutVSEditor">
-             <property name="margin">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
               <number>0</number>
              </property>
             </layout>
@@ -55,7 +64,16 @@
              <string>Fragment Shader</string>
             </attribute>
             <layout class="QGridLayout" name="gridLayoutFSEditor">
-             <property name="margin">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
               <number>0</number>
              </property>
             </layout>
@@ -65,7 +83,16 @@
              <string>Script</string>
             </attribute>
             <layout class="QVBoxLayout" name="verticalLayout">
-             <property name="margin">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <property name="bottomMargin">
               <number>0</number>
              </property>
              <item>
@@ -117,7 +144,16 @@
          </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout">
-           <property name="margin">
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
             <number>0</number>
            </property>
            <item>
@@ -263,6 +299,7 @@
     <addaction name="actionSave"/>
     <addaction name="actionSaveProjectAs"/>
     <addaction name="separator"/>
+    <addaction name="actionLoadImage"/>
     <addaction name="actionSaveImageSnapshot"/>
     <addaction name="actionBatchProcess"/>
     <addaction name="separator"/>
@@ -556,6 +593,11 @@
    </property>
    <property name="text">
     <string>Clamp image to borders</string>
+   </property>
+  </action>
+  <action name="actionLoadImage">
+   <property name="text">
+    <string>Load image ...</string>
    </property>
   </action>
  </widget>

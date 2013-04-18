@@ -81,6 +81,7 @@ public:
     QVector<double> steps;
     static const int MaxRecentFiles = 16;
     QAction* recentProjectsActs[MaxRecentFiles];
+    QString lastImageOpenDir;
     QString lastProjectOpenDir;
     QString lastProjectSaveDir;
     int programHasJustStarted;
@@ -139,6 +140,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
     QObject::connect(ui->actionOpen, SIGNAL(triggered()), SLOT(openProject()));
+    QObject::connect(ui->actionLoadImage, SIGNAL(triggered()), SLOT(loadImage()));
     QObject::connect(ui->actionSave, SIGNAL(triggered()), SLOT(saveProject()));
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
@@ -688,6 +690,36 @@ void MainWindow::saveProjectAs(void)
     if (filename.isNull())
         return;
     saveProject(filename);
+}
+
+void MainWindow::loadImage(void)
+{
+    Q_D(MainWindow);
+    int rc = (d->project->isDirty())
+            ? QMessageBox::question(this, tr("Save project before loading a new image?"), tr("Your project has changed. Do you want to save the changes before loading a new image?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            : QMessageBox::NoButton;
+    if (rc == QMessageBox::Yes)
+        saveProject();
+    if (rc != QMessageBox::Cancel) {
+        const QString& filename = QFileDialog::getOpenFileName(this, tr("Load image"), d->lastImageOpenDir, tr("Image files (*.png *.jpg *.jpeg *.gif *.ico *.mng *.tga *.tif)"));
+        if (filename.isEmpty())
+            return;
+        d->lastImageOpenDir = QFileInfo(filename).path();
+        loadImage(filename);
+    }
+
+}
+
+void MainWindow::loadImage(const QString& filename)
+{
+    Q_D(MainWindow);
+    QFileInfo fInfo(filename);
+    if (!fInfo.isReadable() || !fInfo.isFile())
+        return;
+    const QImage& img = QImage(filename);
+    d->project->setImage(img);
+    d->renderWidget->setImage(img);
+    processShaderChange();
 }
 
 void MainWindow::saveProject(const QString& filename)
