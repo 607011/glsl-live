@@ -93,6 +93,7 @@ Heise Zeitschriften Verlag.</p>
 <ul>
   <li><a target="_blank" href="http://www.shadertoy.com/">shadertoy.com</a></li>
   <li><a target="_blank" href="http://www.chromeexperiments.com/tag/webgl/">chromeexperiments.com/webgl</a></li>
+  <li><a target="_blank" href="http://webstaff.itn.liu.se/~stegu/webglshadertutorial/shadertutorial.html">WebGL halftone shader</a></li>
 </ul>
 
 
@@ -102,7 +103,7 @@ Heise Zeitschriften Verlag.</p>
 <h3>Fehler</h3>
 
 <ul>
-  <li>Beim Speichern eines Projekts ohne Bild wird fälschlicherweise ein &lt;image&gt;-Tag geschrieben.</li>
+  <li></li>
 </ul>
 
 <h3>Features</h3>
@@ -114,6 +115,7 @@ Heise Zeitschriften Verlag.</p>
         <li><a href="http://doc.qt.digia.com/qq/qq06-glimpsing.html#writingmultithreadedglapplications" target="_blank">http://doc.qt.digia.com/qq/qq06-glimpsing.html#writingmultithreadedglapplications</a></li>
         <li><a href="https://blog.qt.digia.com/blog/2011/06/03/threaded-opengl-in-4-8/" target="_blank">https://blog.qt.digia.com/blog/2011/06/03/threaded-opengl-in-4-8/</a></li>
       </ul>
+    Wahrscheinlich zum Scheitern verurteilt, weil <code>QWidget</code> und <code>QGLContext</code> nur im Hauptthread erzeugt werden dürfen. Der wahrscheinliche Grund: OpenGL-API ist nicht re-entrant.
   </li>
 </ul>
 

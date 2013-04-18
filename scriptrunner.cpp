@@ -1,6 +1,8 @@
 // Copyright (c) 2012 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
+#ifndef NO_SCRIPT
+
 #include <QtCore/QDebug>
 #include "scriptrunner.h"
 #include "glclass.h"
@@ -69,3 +71,5 @@ void ScriptRunner::run(void)
             emit debug(QString("  %1").arg(ex.next()));
     }
 }
+
+#endif

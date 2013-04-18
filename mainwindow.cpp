@@ -52,10 +52,12 @@ public:
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
+#ifndef NO_SCRIPT
         , scriptRunner(new ScriptRunner(renderWidget))
+        , scriptEditor(new JSEdit)
+#endif
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
-        , scriptEditor(new JSEdit)
         , docBrowser(new QTextBrowser)
         , programHasJustStarted(3)
     {
@@ -69,13 +71,15 @@ public:
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
+#ifndef NO_SCRIPT
     ScriptRunner* scriptRunner;
+    JSEdit* scriptEditor;
+#endif
     QString vertexShaderFilename;
     QString fragmentShaderFilename;
     QString imageFilename;
     GLSLEdit* vertexShaderEditor;
     GLSLEdit* fragmentShaderEditor;
-    JSEdit* scriptEditor;
     QByteArray currentParameterHash;
     QTextBrowser* docBrowser;
     QVector<double> steps;
@@ -94,13 +98,18 @@ public:
         safeDelete(paramWidget);
         safeDelete(vertexShaderEditor);
         safeDelete(fragmentShaderEditor);
-        safeDelete(scriptEditor);
         safeDelete(docBrowser);
+#ifndef NO_SCRIPT
+        safeDelete(scriptEditor);
+        safeDelete(scriptRunner);
+#endif
     }
 };
 
 
+#ifndef NO_SCRIPT
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine);
+#endif
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -120,15 +129,21 @@ MainWindow::MainWindow(QWidget* parent)
     ui->hsplitter->addWidget(d->paramWidget);
     ui->tabVertexShader->layout()->addWidget(d->vertexShaderEditor);
     ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
-    ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
     prepareEditor(d->fragmentShaderEditor);
+#ifndef NO_SCRIPT
+    ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     prepareEditor(d->scriptEditor);
+    QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
+#else
+    clearLayout(ui->tabScript->layout());
+    ui->tabWidget->removeTab(2);
+    delete ui->tabScript;
+#endif
     QObject::connect(d->vertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(d->fragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
-    QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
     QObject::connect(d->renderWidget, SIGNAL(vertexShaderError(QString)), SLOT(badVertexShaderCode(QString)));
     QObject::connect(d->renderWidget, SIGNAL(fragmentShaderError(QString)), SLOT(badFragmentShaderCode(QString)));
     QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
@@ -169,14 +184,14 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
+#ifndef NO_SCRIPT
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
     QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
-
     QScriptEngine* engine = d->scriptRunner->engine();
     QScriptValue fPrint = engine->newFunction(scriptPrintFunction);
     fPrint.setData(engine->newQObject(ui->logTextEdit));
     engine->globalObject().setProperty("print", fPrint);
-
+#endif
 
     restoreSettings();
 }
@@ -375,6 +390,7 @@ void MainWindow::setFPS(double fps)
     ui->labelFPS->setText(QString("%1 fps").arg(fps, 7, 'f', 1));
 }
 
+#ifndef NO_SCRIPT
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
 {
     QString result;
@@ -389,11 +405,6 @@ QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
     return engine->undefinedValue();
 }
 
-void MainWindow::debug(const QString& message)
-{
-    ui->logTextEdit->append(QString("[%1] %2").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz")).arg(message));
-}
-
 void MainWindow::executeScript(void)
 {
     Q_D(MainWindow);
@@ -404,6 +415,18 @@ void MainWindow::executeScript(void)
     else {
         d->scriptRunner->execute(d->scriptEditor->toPlainText());
     }
+}
+
+void MainWindow::processScriptChange(void)
+{
+    Q_D(MainWindow);
+    d->project->setScriptSource(d->scriptEditor->toPlainText());
+}
+#endif
+
+void MainWindow::debug(const QString& message)
+{
+    ui->logTextEdit->append(QString("[%1] %2").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz")).arg(message));
 }
 
 void MainWindow::parseShadersForParameters(void)
@@ -534,12 +557,6 @@ void MainWindow::processShaderChange(void)
     updateWindowTitle();
 }
 
-void MainWindow::processScriptChange(void)
-{
-    Q_D(MainWindow);
-    d->project->setScriptSource(d->scriptEditor->toPlainText());
-}
-
 void MainWindow::badVertexShaderCode(const QString& msg)
 {
     ui->logTextEdit->append(msg);
@@ -658,7 +675,9 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
         d->fragmentShaderEditor->blockSignals(false);
         d->renderWidget->setImage(d->project->image());
+#ifndef NO_SCRIPT
         d->scriptEditor->setPlainText(d->project->scriptSource());
+#endif
         processShaderChange();
         d->project->setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);

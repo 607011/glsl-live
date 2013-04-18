@@ -4,6 +4,8 @@
 #ifndef __IMAGECLASS_H_
 #define __IMAGECLASS_H_
 
+#ifndef NO_SCRIPT
+
 #include <QImage>
 #include <QtScript/QScriptClass>
 #include <QtScript/QScriptString>
@@ -64,7 +66,7 @@ private:
 };
 
 
-
+#endif
 
 
 #endif // __IMAGECLASS_H_

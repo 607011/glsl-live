@@ -4,6 +4,8 @@
 #ifndef __SCRIPTRUNNER_H_
 #define __SCRIPTRUNNER_H_
 
+#ifndef NO_SCRIPT
+
 #include <QtScript/QScriptEngine>
 #include <QScopedPointer>
 #include <QVector>
@@ -40,6 +42,8 @@ private:
     Q_DISABLE_COPY(ScriptRunner)
 
 };
+
+#endif
 
 
 #endif // __SCRIPTRUNNER_H_

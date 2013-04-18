@@ -1,6 +1,8 @@
 // Copyright (c) 2012 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
+#ifndef NO_SCRIPT
+
 #include <QtScript/QScriptEngine>
 #include <QVector2D>
 #include <QVector3D>
@@ -202,3 +204,5 @@ QImage GLClass::frame(void) const
 {
     return d_ptr->renderWidget->resultImage();
 }
+
+#endif

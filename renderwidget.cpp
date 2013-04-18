@@ -56,7 +56,7 @@ public:
         , firstPaintEventPending(true)
         , vertexShader(NULL)
         , fragmentShader(NULL)
-        , shaderProgram(new QGLShaderProgram)
+        , shaderProgram(NULL)
         , fbo(NULL)
         , inputTextureHandle(0)
         , liveTimerId(0)
@@ -126,17 +126,25 @@ public:
     static const int TimeInterval;
     static const int NumKineticDataSamples;
 
+    bool shaderProgramIsLinked(void) const
+    {
+        return (shaderProgram != NULL) && shaderProgram->isLinked();
+    }
+
     void makeShaderProgram(void)
     {
         deleteShaderProgram();
         deleteShaders();
-        shaderProgram = new QGLShaderProgram();
-        vertexShader = new QGLShader(QGLShader::Vertex);
-        fragmentShader = new QGLShader(QGLShader::Fragment);
-        if (shaderProgram) {
-            shaderProgram->addShader(vertexShader);
-            shaderProgram->addShader(fragmentShader);
+        try {
+            shaderProgram = new QGLShaderProgram;
+            vertexShader = new QGLShader(QGLShader::Vertex);
+            fragmentShader = new QGLShader(QGLShader::Fragment);
         }
+        catch (...) {
+            qFatal("memory allocation error");
+        }
+        shaderProgram->addShader(vertexShader);
+        shaderProgram->addShader(fragmentShader);
     }
     virtual ~RenderWidgetPrivate()
     {
@@ -146,7 +154,7 @@ public:
     }
 
 private:
-    void deleteShaders()
+    void deleteShaders(void)
     {
         safeDelete(vertexShader);
         safeDelete(fragmentShader);
@@ -246,7 +254,7 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
     d->preliminaryVertexShaderSource = vs;
     d->preliminaryFragmentShaderSource = fs;
     buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
-    if (d->shaderProgram->isLinked()) {
+    if (d->shaderProgramIsLinked()) {
         d->vertexShaderSource = d->preliminaryVertexShaderSource;
         d->fragmentShaderSource = d->preliminaryFragmentShaderSource;
         emit linkingSuccessful();
@@ -254,7 +262,7 @@ void RenderWidget::setShaderSources(const QString& vs, const QString& fs)
     else {
         buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
     }
-    if (d->shaderProgram->isLinked()) {
+    if (d->shaderProgramIsLinked()) {
         updateUniforms();
         goLive();
     }
@@ -335,7 +343,7 @@ double RenderWidget::scale(void) const
 void RenderWidget::updateUniforms(void)
 {
     Q_D(RenderWidget);
-    if (!d->shaderProgram->isLinked())
+    if (!d->shaderProgramIsLinked())
         return;
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
@@ -375,7 +383,7 @@ bool RenderWidget::build(void)
     if (d->vertexShaderSource.isEmpty() || d->fragmentShaderSource.isEmpty())
         return false;
     buildProgram(d->vertexShaderSource, d->fragmentShaderSource);
-    return d->shaderProgram->isLinked();
+    return d->shaderProgramIsLinked();
 }
 
 void RenderWidget::buildProgram(const QString& vs, const QString& fs)
@@ -464,7 +472,7 @@ void RenderWidget::updateViewport(int w, int h)
     d->viewport = QRect(topLeft + d->offset, glSize.toSize());
     glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
     d->resolution = QSizeF(d->viewport.size());
-    if (d->shaderProgram->isLinked())
+    if (d->shaderProgramIsLinked())
         d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     updateGL();
 }
@@ -549,9 +557,11 @@ void RenderWidget::paintGL(void)
         d->nFrame = 0;
     }
     if (d->firstPaintEventPending) {
+        glGetIntegerv(GL_MAJOR_VERSION, &d->glVersionMajor);
+        glGetIntegerv(GL_MINOR_VERSION, &d->glVersionMinor);
         enableAlpha(d->alphaEnabled);
         buildProgram(d->preliminaryVertexShaderSource, d->preliminaryFragmentShaderSource);
-        if (d->shaderProgram->isLinked())
+        if (d->shaderProgramIsLinked())
             goLive();
         setImage();
         d->firstPaintEventPending = false;
@@ -560,7 +570,7 @@ void RenderWidget::paintGL(void)
     if (d->liveTimerId == 0)
         return;
 
-    if (d->shaderProgram->isLinked()) {
+    if (d->shaderProgramIsLinked()) {
         d->shaderProgram->bind();
         d->shaderProgram->setUniformValue(d->uLocT, 1e-3f * (GLfloat)d->totalTime.elapsed());
     }
@@ -644,7 +654,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
         setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::ClosedHandCursor);
     }
     else {
-        if (d->shaderProgram->isLinked()) {
+        if (d->shaderProgramIsLinked()) {
             d->mousePos = QPointF(e->pos() - QPoint(d->viewport.left(), height() - d->viewport.bottom()));
             d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
             update();

@@ -1,6 +1,8 @@
 // Copyright (c) 2012-2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
+#ifndef NO_SCRIPT
+
 #include <QtScript/QScriptEngine>
 #include "imageclass.h"
 
@@ -133,3 +135,5 @@ QImage* ImagePrototype::thisImage() const
 {
     return qscriptvalue_cast<QImage*>(thisObject().data());
 }
+
+#endif

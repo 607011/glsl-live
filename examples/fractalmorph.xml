@@ -13,7 +13,7 @@ void main(void)
 }
 ]]></vertex>
     <fragment><![CDATA[// Fractal morphing shader.
-// Original implementation by by David Alloza
+// Original implementation by David Alloza
 // http://david.alloza.eu/WebGL/morphing.html
 
 #pragma size(1024, 1024)
