@@ -59,12 +59,13 @@ public:
         , shaderProgram(NULL)
         , fbo(NULL)
         , inputTextureHandle(0)
+        , extraTextureHandle(0)
         , liveTimerId(0)
         , scale(1.0)
         , leftMouseButtonPressed(false)
         , mouseMovedWhileLeftButtonPressed(false)
         , mouseMoveTimerId(0)
-        , nFrame(0)
+        , framesElapsedCount(0)
         , glVersionMajor(0)
         , glVersionMinor(0)
     { /* ... */ }
@@ -80,6 +81,7 @@ public:
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
     GLuint inputTextureHandle;
+    GLuint extraTextureHandle;
     QTime totalTime;
     QTime frameTime;
     QString imgFilename;
@@ -95,6 +97,7 @@ public:
     int uLocMouse;
     int uLocResolution;
     int uLocTexture;
+    int uLocExtraTexture;
     int uLocMarks;
     int uLocMarksCount;
     bool updateImageGL;
@@ -118,7 +121,7 @@ public:
     QTime mouseMoveTimer;
     int mouseMoveTimerId;
     QPointF velocity;
-    qint64 nFrame;
+    qint64 framesElapsedCount;
     GLint glVersionMajor;
     GLint glVersionMinor;
 
@@ -348,6 +351,7 @@ void RenderWidget::updateUniforms(void)
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     d->shaderProgram->setUniformValue(d->uLocTexture, 0);
+    d->shaderProgram->setUniformValue(d->uLocExtraTexture, 1);
     d->shaderProgram->setUniformValueArray(d->uLocMarks, d->marks.data(), d->marks.size());
     d->shaderProgram->setUniformValue(d->uLocMarksCount, d->marks.size());
     QStringListIterator k(d->uniforms.keys());
@@ -416,6 +420,7 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
     d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
     d->uLocT = d->shaderProgram->uniformLocation("uT");
     d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
+    d->uLocExtraTexture = d->shaderProgram->uniformLocation("uExtraTexture");
     d->uLocMouse = d->shaderProgram->uniformLocation("uMouse");
     d->uLocResolution = d->shaderProgram->uniformLocation("uResolution");
     d->uLocMarks = d->shaderProgram->uniformLocation("uMarks");
@@ -545,16 +550,21 @@ void RenderWidget::initializeGL(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     configureTexture();
+    glGenTextures(1, &d->extraTextureHandle);
+    glBindTexture(GL_TEXTURE_2D, d->extraTextureHandle);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    configureTexture();
 }
 
 void RenderWidget::paintGL(void)
 {
     Q_D(RenderWidget);
-    ++d->nFrame;
+    ++d->framesElapsedCount;
     if (d->frameTime.elapsed() > 500) {
-        emit fpsChanged(d->nFrame * 1e3 / d->frameTime.elapsed());
+        emit fpsChanged(d->framesElapsedCount * 1e3 / d->frameTime.elapsed());
         d->frameTime.start();
-        d->nFrame = 0;
+        d->framesElapsedCount = 0;
     }
     if (d->firstPaintEventPending) {
         glGetIntegerv(GL_MAJOR_VERSION, &d->glVersionMajor);
