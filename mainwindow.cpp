@@ -502,7 +502,7 @@ void MainWindow::parseShadersForParameters(void)
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
                         spinbox->setValue(defaultV.toDouble());
-                        double x = spinbox->maximum() - spinbox->minimum();
+                        double x = qCeil(spinbox->maximum()) - qFloor(spinbox->minimum());
                         int decimals = (x < 1)? int(qAbs(log(x))) : 2;
                         spinbox->setDecimals(decimals);
                         for (QVector<double>::const_iterator i = d->steps.constBegin(); i != d->steps.constEnd(); ++i)
@@ -588,13 +588,8 @@ void MainWindow::newProject(void)
     if (rc == QMessageBox::Yes)
         saveProject();
     if (rc != QMessageBox::Cancel) {
-        d->project->reset();
-        d->vertexShaderEditor->setPlainText(d->project->vertexShaderSource());
-        d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
-        d->renderWidget->setImage(d->project->image());
-        processShaderChange();
-        d->project->setClean();
-        updateWindowTitle();
+        openProject(":/examples/default.xml");
+        d->project->setFilename(QString());
     }
 }
 

@@ -1,10 +1,10 @@
-<glsl-live-coder-project version="0.9.6">
+<glsl-live-coder-project version="0.9.7">
   <shaders>
     <vertex><![CDATA[// default vertex shader
 
 attribute vec4 aVertex;
-attribute vec4 aTexCoord;
-varying vec4 vTexCoord;
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
 
 void main(void)
 {
@@ -18,7 +18,7 @@ void main(void)
 #pragma size(256, 256)
 
 // texture coordinate (0;0)..(1;1)
-varying vec4 vTexCoord;
+varying vec2 vTexCoord;
 // texture
 uniform sampler2D uTexture;
 // elapsed time since program start in seconds (with fractions)
@@ -76,7 +76,7 @@ vec4 raymarche(vec3 org, vec3 dir)
 
 void main()
 {
-  vec2 v = -1.0 + 2.0 * vTexCoord.st;
+  vec2 v = -1.0 + 2.0 * vTexCoord;
   vec3 org = vec3(0., -2.0, 4.0);
   vec3 dir   = normalize(vec3(v.x*1.6, -v.y, -1.5));
   vec4 p = raymarche(org, dir);
@@ -86,4 +86,7 @@ void main()
 
 ]]></fragment>
   </shaders>
+  <script><![CDATA[]]></script>
+  <input>
+  </input>
 </glsl-live-coder-project>

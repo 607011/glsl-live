@@ -1,0 +1,40 @@
+<glsl-live-coder-project version="0.9.7">
+  <shaders>
+    <vertex><![CDATA[// default vertex shader
+
+attribute vec4 aVertex;
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
+
+void main(void)
+{
+  vTexCoord = aTexCoord;
+  gl_Position = aVertex;
+}
+]]></vertex>
+    <fragment><![CDATA[// default fragment shader
+
+#pragma size(256, 256)
+
+// texture coordinate (0;0)..(1;1)
+varying vec2 vTexCoord;
+// texture
+uniform sampler2D uTexture;
+// elapsed time since program start in seconds (with fractions)
+uniform float uT;
+// width by height of texture
+uniform vec2 uResolution;
+// mouse position within range of uResolution
+uniform vec2 uMouse;
+
+void main(void)
+{
+  vec2 mouse = uMouse / uResolution;
+  gl_FragColor = vec4(vTexCoord.s, 0.5 + 0.5 * sin(uT) * vTexCoord.t, mouse.x, 1.0);
+}
+]]></fragment>
+  </shaders>
+  <script><![CDATA[]]></script>
+  <input>
+  </input>
+</glsl-live-coder-project>

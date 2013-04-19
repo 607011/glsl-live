@@ -1,8 +1,8 @@
 <glsl-live-coder-project version="0.9.7">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
-attribute vec4 aTexCoord;
-varying vec4 vTexCoord;
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
 uniform float uT;
 
 void main(void)
@@ -11,7 +11,7 @@ void main(void)
     gl_Position = aVertex;
 }
 ]]></vertex>
-    <fragment><![CDATA[varying vec4 vTexCoord;
+    <fragment><![CDATA[varying vec2 vTexCoord;
 uniform sampler2D uTexture;
 uniform float uT;
 uniform vec2 uResolution;
@@ -20,13 +20,12 @@ uniform float uStroke; // 0.0, 5.0, 2.0
 
 void main(void)
 {
-  vec2 uv = 0.5 + (vTexCoord.st - 0.5) * (0.9 + 0.01 * sin(0.5 * uT));
-  vec2 c = vTexCoord.st;
-  vec4 color = texture2D(uTexture, vTexCoord.st);
+  vec2 uv = 0.5 + (vTexCoord - 0.5) * (0.9 + 0.01 * sin(0.5 * uT));
+  vec4 color = texture2D(uTexture, vTexCoord);
   // Tonwertstauchung
   color = clamp(2.0 * color * color, 0.0, 1.0);
   // Vignetteneffekt 
-  color *= 1.0 - 0.8 * distance(vec2(0.5, 0.5), vTexCoord.st);
+  color *= 1.0 - 0.8 * distance(vec2(0.5, 0.5), vTexCoord);
   // Grünstich 
   color *= vec4(0.8, 1.0, 0.7, 1.0);
   // Scanline-Effekt
@@ -35,6 +34,7 @@ void main(void)
 }
 ]]></fragment>
   </shaders>
+  <script><![CDATA[]]></script>
   <input>
     <image><![CDATA[iVBORw0KGgoAAAANSUhEUgAAAMQAAACpCAYAAAB0zJLvAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAk9JREFUeJzt3TFuwlAURUE7Ykdh/ytw1kTaU9DkizyMNdMjGydHv7nC+8ZTj217vPse/tO+bfu77+GMvt59A3AmgoAQBIQgIAQBIQgIQUAIAkIQEIKAEASEICAuMfC6+hDvCj5lTOiEgBAEhCAgBAEhCAhBQAgCQhAQgoAQBIQgIAQBMT64MsTjL6ZHgU4ICEFACAJCEBCCgBAEhCAgBAEhCAhBQAgCQhAQy8Op1ZHez3GsXnLJ9/0+er1pnudzq6NAJwSEICAEASEICEFACAJCEBCCgBAEhCAgBAEhCIjlcd9xHJf+Bb7pEdv0SG/a9PM07oMXEASEICAEASEICEFACAJCEBCCgBAEhCAgBAFxW/3gfXisdVx8/OZ5noMTAkIQEIKAEASEICAEASEICEFACAJCEBCCgBAExG319brLP/kHA1b/r50QEIKAEASEICAEASEICEFACAJCEBCCgBAEhCAg9tUR1Krp189Ovw52muf5Wk4ICEFACAJCEBCCgBAEhCAgBAEhCAhBQAgCQhAQ4+M+ODMnBIQgIAQBIQgIQUAIAkIQEIKAEASEICAEASEICEFACAJCEBCCgBAEhCAgBAEhCAhBQAgCQhAQgoAQBIQgIAQBIQgIQUAIAkIQEIKAEASEICAEASEICEFACALiNn3Bfdv2lc99yuuDV7/fqqs/l+nv54SAEASEICAEASEICEFACAJCEBCCgBAEhCAgBAGxPO6bHrF9yjjs6q7+d3dCQAgCQhAQgoAQBIQgIAQBIQgIQUAIAkIQEIKA+AUb+zRRqVANZAAAAABJRU5ErkJggg==]]></image>
   </input>

@@ -48,10 +48,7 @@ HEADERS += main.h \
 FORMS += mainwindow.ui
 
 RESOURCES += \
-    shaders.qrc \
-    images.qrc \
-    help.qrc \
-    translations.qrc
+    glsl-live.qrc
 
 OTHER_FILES += \
     glsl-live_de.ts \

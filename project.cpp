@@ -47,14 +47,8 @@ void Project::reset(void)
     setClean();
     d->image = QImage();
     d->filename = QString();
-    QFile vf(":/shaders/vertexshader.glsl");
-    vf.open(QIODevice::ReadOnly | QIODevice::Text);
-    d->vertexShaderSource = vf.readAll();
-    vf.close();
-    QFile ff(":/shaders/fragmentshader.glsl");
-    ff.open(QIODevice::ReadOnly | QIODevice::Text);
-    d->fragmentShaderSource = ff.readAll();
-    ff.close();
+    d->vertexShaderSource = QString();
+    d->fragmentShaderSource = QString();
 }
 
 bool Project::save(void)

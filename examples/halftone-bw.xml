@@ -1,8 +1,8 @@
 <glsl-live-coder-project version="0.9.7">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
-attribute vec4 aTexCoord;
-varying vec4 vTexCoord;
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
 
 void main(void)
 {
@@ -12,10 +12,10 @@ void main(void)
 ]]></vertex>
     <fragment><![CDATA[const float SQRT2 = 1.41421356237;
 const float PI = 3.14159265359;
-const vec4 dotColor = vec4(1.0, 1.0, 1.0, 1.0);
-const vec4 backgroundColor = vec4(0.0, 0.0, 0.0, 0.0);
+const vec4 dotColor = vec4(1.0, 0.0, 1.0, 1.0);
+const vec4 backgroundColor = vec4(0.0, 1.0, 0.0, 1.0);
 
-varying vec4 vTexCoord;
+varying vec2 vTexCoord;
 uniform sampler2D uTexture;
 uniform float uT;
 uniform vec2 uResolution;
@@ -37,12 +37,12 @@ uniform float smooth = 0.2; // 0, 2, 0.1
 
 void main(void)
 {
-  ivec2 halftoneResolution = ivec2(uResolution / vec2(1.0, uR));
+  ivec2 halftoneResolution = ivec2(uResolution / vec2(uR, uR));
   float angle = deg * PI / 180.0;
   mat2 rotate = mat2(cos(angle), -sin(angle), sin(angle), cos(angle));
   mat2 inverse_rotate = mat2(cos(angle), sin(angle), -sin(angle), cos(angle));
   vec2 halfLineDist = vec2(0.5) / vec2(halftoneResolution);
-  vec2 center =  rotate * vTexCoord.st;
+  vec2 center =  rotate * vTexCoord;
   center = floor(center * vec2(halftoneResolution)) / vec2(halftoneResolution); 
   center += halfLineDist;
   center = inverse_rotate * center;
@@ -50,7 +50,7 @@ void main(void)
   float radius = SQRT2 * halfLineDist.x * (1.0 - luminance) * blackness;
   float contrast = 1.0 + contrastDelta / 2.0;
   float radiusSqrd = contrast * pow(radius, 2.0) - (contrastDelta * halfLineDist.x*halfLineDist.x) / 2.0 - brightness * halfLineDist.x*halfLineDist.x;
-  vec2 power = pow(abs(center-vTexCoord.st), vec2(2.0));
+  vec2 power = pow(abs(center-vTexCoord), vec2(2.0));
   float pixelDist2 = power.x + power.y;
   float delta = smooth * pow(halfLineDist.x, 2);
   float gradient = smoothstep(radiusSqrd - delta, radiusSqrd + delta, pixelDist2);

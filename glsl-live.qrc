@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/examples">
+        <file alias="default.xml">examples/default.xml</file>
+    </qresource>
+    <qresource prefix="/doc">
+        <file alias="index.html">doc/index.html</file>
+    </qresource>
+    <qresource prefix="/translations">
+        <file>glsl-live_de.qm</file>
+    </qresource>
+</RCC>

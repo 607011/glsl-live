@@ -1,8 +1,8 @@
 <glsl-live-coder-project version="0.9.7">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
-attribute vec4 aTexCoord;
-varying vec4 vTexCoord;
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
 
 void main(void)
 {
@@ -15,33 +15,23 @@ void main(void)
 
 const float PI = 3.14159265359;
 
-varying vec4 vTexCoord;
+varying vec2 vTexCoord;
 uniform sampler2D uTexture;
 uniform float uT;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
 
-uniform float ucAngle; // -180, 180, 108
-uniform float umAngle; // -180, 180, 162
-uniform float uyAngle; // -180, 180, 90
-uniform float ukAngle; // -180, 180, 45
+uniform float uCAngle; // -180, 180, 108
+uniform float uMAngle; // -180, 180, 162
+uniform float uYAngle; // -180, 180, 90
+uniform float uKAngle; // -180, 180, 45
 
 uniform float uSharpness; // 1.0, 10.0, 4.0
 uniform float uFringiness; // 0.0, 1.0, 0.8
 uniform float uRadius; // 4.0, 100.0, 12.0
  
-// For imperfect, isotropic anti-aliasing in
-uniform float uScale; // 0.0, 1.0, 0.5
-// absence of dFdx() and dFdy() functions
-uniform float uYrot; // 0.0, 1.0, 0.5
- 
-
 float aastep(float threshold, float value) {
-#ifdef GL_OES_standard_derivatives
   float afwidth = 0.7 * length(vec2(dFdx(value), dFdy(value)));
-#else
-  float afwidth = frequency * (1.0/200.0) / uScale / cos(uYrot);
-#endif
   return smoothstep(threshold-afwidth, threshold+afwidth, value);
 }
  
@@ -78,7 +68,7 @@ vec3 permute(vec3 x) { return mod289((( x * 34.0) + 1.0) * x); }
 float snoise(vec2 v) {
   vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
                 0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
-                -0.577350269189626,  // -1.0 + 2.0 * C.x
+                -0.577350269189626, // -1.0 + 2.0 * C.x
                 0.024390243902439); // 1.0 / 41.0
   // First corner
   vec2 i = floor(v + dot(v, C.yy) );
@@ -89,16 +79,14 @@ float snoise(vec2 v) {
   x12.xy -= i1;
   // Permutations
   i = mod289(i); // Avoid truncation effects in permutation
-  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
-                           + i.x + vec3(0.0, i1.x, 1.0 ));
-  vec3 m = pow(max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
-                          dot(x12.zw,x12.zw)), 0.0), uSharpness);
+  vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+  vec3 m = pow(max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0), uSharpness);
   // Gradients
   vec3 x = 2.0 * fract(p * C.www) - 1.0;
   vec3 h = abs(x) - 0.5;
   vec3 a0 = x - floor(x + 0.5);
   // Normalise gradients implicitly by scaling m
-  m *= 1.792843 - 0.853735 * ( a0*a0 + h*h );
+  m *= 1.792843 - 0.853735 * (a0*a0 + h*h);
   // Compute final noise value at P
   vec3 g;
   g.x = a0.x * x0.x + h.x * x0.y;
@@ -107,18 +95,18 @@ float snoise(vec2 v) {
 }
 
 void main() {
-  float cAngle = ucAngle / 180.0 * PI;
-  float mAngle = umAngle / 180.0 * PI;
-  float yAngle = uyAngle / 180.0 * PI;
-  float kAngle = ukAngle / 180.0 * PI;
+  float cAngle = uCAngle / 180.0 * PI;
+  float mAngle = uMAngle / 180.0 * PI;
+  float yAngle = uYAngle / 180.0 * PI;
+  float kAngle = uKAngle / 180.0 * PI;
 
   // Use a texture to modulate the size of the dots
   // vec3 texcolor = texture2D_bilinear(uTexture, vTexCoord.st, uResolution).rgb;
-  vec3 texcolor = texture2D(uTexture, vTexCoord.st).rgb;
+  vec3 texcolor = texture2D(uTexture, vTexCoord).rgb;
 
-  float n = 0.1   * snoise(vTexCoord.st * 200.0)
-          + 0.05  * snoise(vTexCoord.st * 400.0)
-          + 0.025 * snoise(vTexCoord.st * 800.0);
+  float n = 0.1   * snoise(vTexCoord * 200.0)
+          + 0.05  * snoise(vTexCoord * 400.0)
+          + 0.025 * snoise(vTexCoord * 800.0);
   n *= uFringiness;
   vec3 white = vec3(n*0.2 + 0.97);
   vec3 black = vec3(n + 0.1);
@@ -132,19 +120,19 @@ void main() {
   vec2 frequency = uResolution / vec2(uRadius);
   // Distance to nearest point in a grid of
   // (frequency x frequency) points over the unit square
-  vec2 Kst = frequency * vTexCoord.st * mat2(cos(kAngle), -sin(kAngle), sin(kAngle), cos(kAngle));
+  vec2 Kst = frequency * vTexCoord * mat2(cos(kAngle), -sin(kAngle), sin(kAngle), cos(kAngle));
   vec2 Kuv = 2.0*fract(Kst)-1.0;
   float k = aastep(0.0, sqrt(cmyk.w)-length(Kuv)+n);
 
-  vec2 Cst = frequency * vTexCoord.st * mat2(cos(cAngle), -sin(cAngle), sin(cAngle), cos(cAngle));
+  vec2 Cst = frequency * vTexCoord * mat2(cos(cAngle), -sin(cAngle), sin(cAngle), cos(cAngle));
   vec2 Cuv = 2.0*fract(Cst)-1.0;
   float c = aastep(0.0, sqrt(cmyk.x)-length(Cuv)+n);
 
-  vec2 Mst = frequency * vTexCoord.st * mat2(cos(mAngle), -sin(mAngle), sin(mAngle), cos(mAngle));
+  vec2 Mst = frequency * vTexCoord * mat2(cos(mAngle), -sin(mAngle), sin(mAngle), cos(mAngle));
   vec2 Muv = 2.0*fract(Mst)-1.0; 
   float m = aastep(0.0, sqrt(cmyk.y)-length(Muv)+n);
 
-  vec2 Yst = frequency * vTexCoord.st * mat2(cos(yAngle), -sin(yAngle), sin(yAngle), cos(yAngle));
+  vec2 Yst = frequency * vTexCoord * mat2(cos(yAngle), -sin(yAngle), sin(yAngle), cos(yAngle));
   vec2 Yuv = 2.0*fract(Yst)-1.0;
   float y = aastep(0.0, sqrt(cmyk.z)-length(Yuv)+n);
 

@@ -1,9 +1,0 @@
-<RCC>
-    <qresource prefix="/shaders">
-        <file alias="fragmentshader.glsl">shaders/fragmentshader.glsl</file>
-        <file alias="vertexshader.glsl">shaders/vertexshader.glsl</file>
-    </qresource>
-    <qresource prefix="/projects">
-        <file alias="crosshatch.xml">examples/crosshatch.xml</file>
-    </qresource>
-</RCC>
