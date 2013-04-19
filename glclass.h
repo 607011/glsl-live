@@ -1,7 +1,7 @@
 #ifndef __GLCLASS_H_
 #define __GLCLASS_H_
 
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
 
 #include <QObject>
 #include <QString>

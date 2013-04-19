@@ -52,17 +52,17 @@ public:
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
         , scriptRunner(new ScriptRunner(renderWidget))
         , scriptEditor(new JSEdit)
 #endif
         , vertexShaderEditor(new GLSLEdit)
-        , fragmentShaderEditor(new GLSLEdit)
         , docBrowser(new QTextBrowser)
         , programHasJustStarted(3)
     {
         for (int i = -9; i < 10; ++i)
             steps << qPow(10, i);
+        fragmentShaderEditor.append(new GLSLEdit);
         docBrowser->setOpenExternalLinks(true);
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
@@ -71,7 +71,7 @@ public:
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
     ScriptRunner* scriptRunner;
     JSEdit* scriptEditor;
 #endif
@@ -79,7 +79,7 @@ public:
     QString fragmentShaderFilename;
     QString imageFilename;
     GLSLEdit* vertexShaderEditor;
-    GLSLEdit* fragmentShaderEditor;
+    QList<GLSLEdit*> fragmentShaderEditor;
     QByteArray currentParameterHash;
     QTextBrowser* docBrowser;
     QVector<double> steps;
@@ -94,12 +94,12 @@ public:
     {
         safeDelete(project);
         safeDelete(colorDialog);
+        renderWidget->blockSignals(true);
         safeDelete(renderWidget);
         safeDelete(paramWidget);
         safeDelete(vertexShaderEditor);
-        safeDelete(fragmentShaderEditor);
         safeDelete(docBrowser);
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
         safeDelete(scriptEditor);
         safeDelete(scriptRunner);
 #endif
@@ -107,7 +107,7 @@ public:
 };
 
 
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine);
 #endif
 
@@ -128,12 +128,12 @@ MainWindow::MainWindow(QWidget* parent)
     ui->scrollArea->setWidget(d->renderWidget);
     ui->hsplitter->addWidget(d->paramWidget);
     ui->tabVertexShader->layout()->addWidget(d->vertexShaderEditor);
-    ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
+    ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor.first());
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
-    prepareEditor(d->fragmentShaderEditor);
-#ifndef NO_SCRIPT
+    prepareEditor(d->fragmentShaderEditor.first());
+#ifdef ENABLE_SCRIPTING
     ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     prepareEditor(d->scriptEditor);
     QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
@@ -143,7 +143,6 @@ MainWindow::MainWindow(QWidget* parent)
     delete ui->tabScript;
 #endif
     QObject::connect(d->vertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
-    QObject::connect(d->fragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(d->renderWidget, SIGNAL(vertexShaderError(QString)), SLOT(badVertexShaderCode(QString)));
     QObject::connect(d->renderWidget, SIGNAL(fragmentShaderError(QString)), SLOT(badFragmentShaderCode(QString)));
     QObject::connect(d->renderWidget, SIGNAL(linkerError(QString)), SLOT(linkerError(QString)));
@@ -151,6 +150,9 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->renderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(d->renderWidget, SIGNAL(imageDropped(QImage)), SLOT(imageDropped(QImage)));
     QObject::connect(d->renderWidget, SIGNAL(fpsChanged(double)), SLOT(setFPS(double)));
+    QObject::connect(d->renderWidget, SIGNAL(started()), SLOT(renderStarted()));
+    QObject::connect(d->renderWidget, SIGNAL(stopped()), SLOT(renderStopped()));
+    QObject::connect(ui->actionAddFragmentShader, SIGNAL(triggered()), SLOT(addFragmentShaderEditor()));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
@@ -184,7 +186,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
     QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
     QScriptEngine* engine = d->scriptRunner->engine();
@@ -356,7 +358,7 @@ void MainWindow::batchProcess(void)
 
     // weil Renderer von QWidget ableitet, kann er nur im Hauptthread laufen, aber nicht im Hintergrund, etwa per QtConcurrent::run()
     Renderer renderer;
-    renderer.buildProgram(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor->toPlainText());
+    renderer.buildProgram(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor.first()->toPlainText());
     renderer.setUniforms(d->renderWidget->uniforms());
     QStringListIterator fn(filenames);
     i = 0;
@@ -390,7 +392,17 @@ void MainWindow::setFPS(double fps)
     ui->labelFPS->setText(QString("%1 fps").arg(fps, 7, 'f', 1));
 }
 
-#ifndef NO_SCRIPT
+void MainWindow::renderStarted(void)
+{
+    // ...
+}
+
+void MainWindow::renderStopped(void)
+{
+    ui->labelFPS->setText(tr("Not running."));
+}
+
+#ifdef ENABLE_SCRIPTING
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
 {
     QString result;
@@ -434,7 +446,7 @@ void MainWindow::parseShadersForParameters(void)
     Q_D(MainWindow);
     QByteArray ba = d->vertexShaderEditor->toPlainText().toUtf8()
             .append("\n")
-            .append(d->fragmentShaderEditor->toPlainText().toUtf8());
+            .append(d->fragmentShaderEditor.first()->toPlainText().toUtf8());
     QTextStream in(&ba);
     QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)\\s*$");
     QRegExp rePragma("#pragma\\s+size\\s*\\((\\d+)\\s*,\\s*(\\d+)\\)");
@@ -550,6 +562,7 @@ void MainWindow::parseShadersForParameters(void)
 void MainWindow::processShaderChange(void)
 {
     Q_D(MainWindow);
+    statusBar()->showMessage(tr("Compiling ..."), 2000);
     parseShadersForParameters();
     updateShaderSources();
     d->project->setDirty(--d->programHasJustStarted < 0); // XXX: dirty hack to counterfeit delayed textChanged() signal from editors
@@ -577,6 +590,44 @@ void MainWindow::linkerError(const QString& msg)
 void MainWindow::successfullyLinkedShader(void)
 {
     ui->logTextEdit->clear();
+    statusBar()->showMessage(tr("Shader program ready."), 2000);
+}
+
+void MainWindow::removeAllFragmentShaderEditors(void)
+{
+    Q_D(MainWindow);
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        if (ui->tabWidget->tabText(i).contains("Fragment"))
+            ui->tabWidget->removeTab(i);
+    }
+    QList<GLSLEdit*>::iterator i;
+    for (i = d->fragmentShaderEditor.begin(); i != d->fragmentShaderEditor.end(); ++i) {
+        GLSLEdit* editor = *i;
+        editor->disconnect();
+        delete editor;
+    }
+    d->fragmentShaderEditor.clear();
+}
+
+void MainWindow::fetchFragmentCodeFromProjectAndCreateEditors(void)
+{
+    Q_D(MainWindow);
+    QStringListIterator i(d->project->fragmentShaderSource());
+    while (i.hasNext())
+        addFragmentShaderEditor(i.next());
+}
+
+void MainWindow::addFragmentShaderEditor()
+{
+    addFragmentShaderEditor(QString());
+}
+
+void MainWindow::addFragmentShaderEditor(const QString& source)
+{
+    GLSLEdit* editor = new GLSLEdit;
+    QObject::connect(editor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
+    editor->setPlainText(source);
+    ui->tabWidget->addTab(editor, tr("Fragment Shader %1").arg(ui->tabWidget->count() - 2));
 }
 
 void MainWindow::newProject(void)
@@ -590,7 +641,8 @@ void MainWindow::newProject(void)
     if (rc != QMessageBox::Cancel) {
         d->project->reset();
         d->vertexShaderEditor->setPlainText(d->project->vertexShaderSource());
-        d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
+        removeAllFragmentShaderEditors();
+        fetchFragmentCodeFromProjectAndCreateEditors();
         d->renderWidget->setImage(d->project->image());
         processShaderChange();
         d->project->setClean();
@@ -671,11 +723,10 @@ void MainWindow::openProject(const QString& filename)
         d->vertexShaderEditor->blockSignals(true);
         d->vertexShaderEditor->setPlainText(d->project->vertexShaderSource());
         d->vertexShaderEditor->blockSignals(false);
-        d->fragmentShaderEditor->blockSignals(true);
-        d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
-        d->fragmentShaderEditor->blockSignals(false);
+        removeAllFragmentShaderEditors();
+        fetchFragmentCodeFromProjectAndCreateEditors();
         d->renderWidget->setImage(d->project->image());
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
         d->scriptEditor->setPlainText(d->project->scriptSource());
 #endif
         processShaderChange();
@@ -745,9 +796,14 @@ void MainWindow::saveProject(const QString& filename)
 {
     Q_D(MainWindow);
     d->project->setFilename(filename);
-    d->project->setVertexShaderSource(d->vertexShaderEditor->toPlainText());
-    d->project->setFragmentShaderSource(d->fragmentShaderEditor->toPlainText());
     d->project->setImage(d->renderWidget->image());
+    d->project->setVertexShaderSource(d->vertexShaderEditor->toPlainText());
+    d->project->clearFragmentShaderSources();
+    QList<GLSLEdit*>::const_iterator i;
+    for (i = d->fragmentShaderEditor.constBegin(); i != d->fragmentShaderEditor.constEnd(); ++i) {
+        const GLSLEdit* const editor = *i;
+        d->project->addFragmentShaderSource(editor->toPlainText());
+    }
     bool ok = d->project->save();
     ui->statusBar->showMessage(ok
                                ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
@@ -761,7 +817,7 @@ void MainWindow::updateShaderSources(void)
 {
     Q_D(MainWindow);
     d->renderWidget->setShaderSources(d->vertexShaderEditor->toPlainText(),
-                                      d->fragmentShaderEditor->toPlainText());
+                                      d->fragmentShaderEditor.first()->toPlainText());
 }
 
 void MainWindow::updateWindowTitle()

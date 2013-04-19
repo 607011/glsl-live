@@ -61,7 +61,11 @@ private slots:
     void zoom(void);
     void chooseBackgroundColor(void);
     void setFPS(double);
-#ifndef NO_SCRIPT
+    void renderStarted(void);
+    void renderStopped(void);
+    void addFragmentShaderEditor(void);
+
+#ifdef ENABLE_SCRIPTING
     void processScriptChange(void);
     void executeScript(void);
 #endif
@@ -71,6 +75,9 @@ private: //methods
     void restoreSettings(void);
     void updateWindowTitle(void);
     void processBatch(const QList<QString>& filenames, const QString& outDir);
+    void fetchFragmentCodeFromProjectAndCreateEditors(void);
+    void addFragmentShaderEditor(const QString& source);
+    void removeAllFragmentShaderEditors(void);
 
 private:
     Ui::MainWindow *ui;

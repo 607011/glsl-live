@@ -4,7 +4,7 @@
 #ifndef __IMAGECLASS_H_
 #define __IMAGECLASS_H_
 
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
 
 #include <QImage>
 #include <QtScript/QScriptClass>

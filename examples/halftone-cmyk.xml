@@ -21,51 +21,21 @@ uniform float uT;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
 
-uniform float ucAngle; // -180, 180, 108
-uniform float umAngle; // -180, 180, 162
-uniform float uyAngle; // -180, 180, 90
-uniform float ukAngle; // -180, 180, 45
+uniform float uCAngle; // -180, 180, 108
+uniform float uMAngle; // -180, 180, 162
+uniform float uYAngle; // -180, 180, 90
+uniform float uKAngle; // -180, 180, 45
 
 uniform float uSharpness; // 1.0, 10.0, 4.0
 uniform float uFringiness; // 0.0, 1.0, 0.8
 uniform float uRadius; // 4.0, 100.0, 12.0
  
-// For imperfect, isotropic anti-aliasing in
-uniform float uScale; // 0.0, 1.0, 0.5
-// absence of dFdx() and dFdy() functions
-uniform float uYrot; // 0.0, 1.0, 0.5
- 
-
 float aastep(float threshold, float value) {
-#ifdef GL_OES_standard_derivatives
   float afwidth = 0.7 * length(vec2(dFdx(value), dFdy(value)));
-#else
-  float afwidth = frequency * (1.0/200.0) / uScale / cos(uYrot);
-#endif
-  return smoothstep(threshold-afwidth, threshold+afwidth, value);
+  return smoothstep(threshold - afwidth, threshold + afwidth, value);
 }
  
-// Explicit bilinear texture lookup to circumvent bad hardware precision.
-// The extra arguments specify the dimension of the texture. (GLSL 1.30
-// introduced textureSize() to get that information from the sampler.)
-// 'dims' is the width and height of the texture, 'one' is 1.0/dims.
-// (Precomputing 'one' saves two divisions for each lookup.)
-vec4 texture2D_bilinear(sampler2D tex, vec2 st, vec2 dims) {
-  vec2 one = vec2(1.0, 1.0) / dims;
-  vec2 uv = st * dims;
-  vec2 uv00 = floor(uv - vec2(0.5)); // Lower left corner of lower left texel
-  vec2 uvlerp = uv - uv00 - vec2(0.5); // Texel-local lerp blends [0,1]
-  vec2 st00 = (uv00 + vec2(0.5)) * one;
-  vec4 texel00 = texture2D(tex, st00);
-  vec4 texel10 = texture2D(tex, st00 + vec2(one.x, 0.0));
-  vec4 texel01 = texture2D(tex, st00 + vec2(0.0, one.y));
-  vec4 texel11 = texture2D(tex, st00 + one);
-  vec4 texel0 = mix(texel00, texel01, uvlerp.y); 
-  vec4 texel1 = mix(texel10, texel11, uvlerp.y); 
-  return mix(texel0, texel1, uvlerp.x);
-}
- 
-// Description : Array- and textureless GLSL 2D simplex noise.
+// Array- and textureless GLSL 2D simplex noise.
 // Author : Ian McEwan, Ashima Arts. Version: 20110822
 // Copyright (C) 2011 Ashima Arts. All rights reserved.
 // Distributed under the MIT License. See LICENSE file.
@@ -73,8 +43,7 @@ vec4 texture2D_bilinear(sampler2D tex, vec2 st, vec2 dims) {
  
 vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
-vec3 permute(vec3 x) { return mod289((( x * 34.0) + 1.0) * x); }
- 
+vec3 permute(vec3 x) { return mod289(((x * 34.0) + 1.0) * x); }
 float snoise(vec2 v) {
   vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0
                 0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)
@@ -89,28 +58,22 @@ float snoise(vec2 v) {
   x12.xy -= i1;
   // Permutations
   i = mod289(i); // Avoid truncation effects in permutation
-  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))
-                           + i.x + vec3(0.0, i1.x, 1.0 ));
-  vec3 m = pow(max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy),
-                          dot(x12.zw,x12.zw)), 0.0), uSharpness);
+  vec3 p = permute(permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
+  vec3 m = pow(max(vec3(0.5) - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), vec3(0.0)), vec3(uSharpness));
   // Gradients
   vec3 x = 2.0 * fract(p * C.www) - 1.0;
   vec3 h = abs(x) - 0.5;
   vec3 a0 = x - floor(x + 0.5);
-  // Normalise gradients implicitly by scaling m
-  m *= 1.792843 - 0.853735 * ( a0*a0 + h*h );
-  // Compute final noise value at P
-  vec3 g;
-  g.x = a0.x * x0.x + h.x * x0.y;
-  g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+  m *= 1.792843 - 0.853735 * (a0 * a0 + h * h);
+  vec3 g = vec3(a0.x * x0.x + h.x * x0.y, a0.yz * x12.xz + h.yz * x12.yw);
   return 130.0 * dot(m, g);
 }
 
-void main() {
-  float cAngle = ucAngle / 180.0 * PI;
-  float mAngle = umAngle / 180.0 * PI;
-  float yAngle = uyAngle / 180.0 * PI;
-  float kAngle = ukAngle / 180.0 * PI;
+void main(void) {
+  float cAngle = uCAngle / 180.0 * PI;
+  float mAngle = uMAngle / 180.0 * PI;
+  float yAngle = uYAngle / 180.0 * PI;
+  float kAngle = uKAngle / 180.0 * PI;
 
   // Use a texture to modulate the size of the dots
   // vec3 texcolor = texture2D_bilinear(uTexture, vTexCoord.st, uResolution).rgb;
@@ -130,11 +93,6 @@ void main() {
   cmyk.xyz -= cmyk.w; // Subtract K equivalent from CMY
 
   vec2 frequency = uResolution / vec2(uRadius);
-  // Distance to nearest point in a grid of
-  // (frequency x frequency) points over the unit square
-  vec2 Kst = frequency * vTexCoord.st * mat2(cos(kAngle), -sin(kAngle), sin(kAngle), cos(kAngle));
-  vec2 Kuv = 2.0*fract(Kst)-1.0;
-  float k = aastep(0.0, sqrt(cmyk.w)-length(Kuv)+n);
 
   vec2 Cst = frequency * vTexCoord.st * mat2(cos(cAngle), -sin(cAngle), sin(cAngle), cos(cAngle));
   vec2 Cuv = 2.0*fract(Cst)-1.0;
@@ -147,6 +105,10 @@ void main() {
   vec2 Yst = frequency * vTexCoord.st * mat2(cos(yAngle), -sin(yAngle), sin(yAngle), cos(yAngle));
   vec2 Yuv = 2.0*fract(Yst)-1.0;
   float y = aastep(0.0, sqrt(cmyk.z)-length(Yuv)+n);
+
+  vec2 Kst = frequency * vTexCoord.st * mat2(cos(kAngle), -sin(kAngle), sin(kAngle), cos(kAngle));
+  vec2 Kuv = 2.0*fract(Kst)-1.0;
+  float k = aastep(0.0, sqrt(cmyk.w)-length(Kuv)+n);
 
   vec3 rgbscreen = 1.0 - 0.9 * vec3(c,m,y) + n;
   rgbscreen = mix(rgbscreen, black, 0.85*k + 0.3*n);

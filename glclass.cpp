@@ -1,7 +1,7 @@
 // Copyright (c) 2012 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
 
 #include <QtScript/QScriptEngine>
 #include <QVector2D>

@@ -76,6 +76,8 @@ signals:
     void linkingSuccessful(void);
     void imageDropped(const QImage&);
     void fpsChanged(double);
+    void started(void);
+    void stopped(void);
 
 protected:
     void resizeEvent(QResizeEvent*);

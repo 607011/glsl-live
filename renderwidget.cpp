@@ -432,6 +432,7 @@ void RenderWidget::goLive(void)
     Q_D(RenderWidget);
     if (d->liveTimerId == 0) {
         d->liveTimerId = startTimer(1000/50);
+        emit started();
     }
 }
 
@@ -441,6 +442,7 @@ void RenderWidget::stopCode(void)
     if (d->liveTimerId != 0) {
         killTimer(d_ptr->liveTimerId);
         d->liveTimerId = 0;
+        emit stopped();
     }
 }
 

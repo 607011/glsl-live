@@ -4,7 +4,7 @@
 #ifndef __SCRIPTRUNNER_H_
 #define __SCRIPTRUNNER_H_
 
-#ifndef NO_SCRIPT
+#ifdef ENABLE_SCRIPTING
 
 #include <QtScript/QScriptEngine>
 #include <QScopedPointer>

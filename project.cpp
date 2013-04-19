@@ -22,7 +22,7 @@ public:
     bool dirty;
     QXmlStreamReader xml;
     QString vertexShaderSource;
-    QString fragmentShaderSource;
+    QList<QString> fragmentShaderSource;
     QString scriptSource;
     QImage image;
     QColor backgroundColor;
@@ -47,13 +47,14 @@ void Project::reset(void)
     setClean();
     d->image = QImage();
     d->filename = QString();
+    clearFragmentShaderSources();
     QFile vf(":/shaders/vertexshader.glsl");
     vf.open(QIODevice::ReadOnly | QIODevice::Text);
     d->vertexShaderSource = vf.readAll();
     vf.close();
     QFile ff(":/shaders/fragmentshader.glsl");
     ff.open(QIODevice::ReadOnly | QIODevice::Text);
-    d->fragmentShaderSource = ff.readAll();
+    d->fragmentShaderSource.append(ff.readAll());
     ff.close();
 }
 
@@ -86,9 +87,12 @@ bool Project::save(const QString& filename)
     out.setCodec(QTextCodec::codecForMib(106/* UTF-8 */));
     out << "<glsl-live-coder-project version=\"" << AppVersionNoDebug << "\">\n"
         << "  <shaders>\n"
-        << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
-        << "    <fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
-        << "  </shaders>\n"
+        << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n";
+    QStringListIterator i(d->fragmentShaderSource);
+    while (i.hasNext()) {
+        out << "    <fragment><![CDATA[" << i.next() << "]]></fragment>\n";
+    }
+    out << "  </shaders>\n"
         << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n"
         << "  <input>\n";
     if (!d->image.isNull()) {
@@ -125,6 +129,8 @@ bool Project::load(const QString& filename)
     resetErrors();
     d->image = QImage();
     d->filename = filename;
+    d->vertexShaderSource = QString();
+    clearFragmentShaderSources();
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
     if (!compressed)
@@ -187,7 +193,7 @@ const QString& Project::vertexShaderSource(void) const
     return d_ptr->vertexShaderSource;
 }
 
-const QString& Project::fragmentShaderSource(void) const
+const QList<QString>& Project::fragmentShaderSource(void) const
 {
     return d_ptr->fragmentShaderSource;
 }
@@ -218,10 +224,15 @@ void Project::setVertexShaderSource(const QString& source)
     setDirty();
 }
 
-void Project::setFragmentShaderSource(const QString& source)
+void Project::addFragmentShaderSource(const QString& source)
 {
-    d_ptr->fragmentShaderSource = source;
+    d_ptr->fragmentShaderSource.append(source);
     setDirty();
+}
+
+void Project::clearFragmentShaderSources(void)
+{
+    d_ptr->fragmentShaderSource.clear();
 }
 
 void Project::setScriptSource(const QString& source)
@@ -322,7 +333,7 @@ void Project::readShaderFragment(void)
     Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "fragment");
     const QString& str = d->xml.readElementText();
     if (!str.isEmpty()) {
-        d->fragmentShaderSource = str;
+        d->fragmentShaderSource.append(str);
     }
     else {
         d->xml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));

@@ -28,13 +28,14 @@ public:
     bool isDirty(void) const;
     const QString& filename(void) const;
     const QString& vertexShaderSource(void) const;
-    const QString& fragmentShaderSource(void) const;
+    const QList<QString>& fragmentShaderSource(void) const;
     const QString& scriptSource(void) const;
     const QImage& image(void) const;
     void setDirty(bool dirty = true);
     void setClean(bool clean = true);
     void setVertexShaderSource(const QString&);
-    void setFragmentShaderSource(const QString&);
+    void addFragmentShaderSource(const QString&);
+    void clearFragmentShaderSources(void);
     void setScriptSource(const QString&);
     void setImage(const QImage&);
     void setFilename(const QString&);
