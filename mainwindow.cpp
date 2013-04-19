@@ -161,7 +161,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionNew, SIGNAL(triggered()), SLOT(newProject()));
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
     QObject::connect(ui->actionBatchProcess, SIGNAL(triggered()), SLOT(batchProcess()));
-    QObject::connect(ui->actionHelp, SIGNAL(triggered()), d->docBrowser, SLOT(show()));
+    QObject::connect(ui->actionHelp, SIGNAL(triggered()), SLOT(showHelp()));
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableAlpha(bool)));
@@ -209,7 +209,7 @@ void MainWindow::restoreSettings(void)
     d->docBrowser->restoreGeometry(settings.value("DocBrowser/geometry").toByteArray());
     bool showdoc = settings.value("DocBrowser/show", false).toBool();
     if (showdoc)
-        d->docBrowser->show();
+        showHelp();
     const QVariantList& hsz = settings.value("MainWindow/hsplitter/sizes").toList();
     if (!hsz.isEmpty()) {
         QListIterator<QVariant> h(hsz);
@@ -798,6 +798,14 @@ void MainWindow::about(void)
 void MainWindow::aboutQt(void)
 {
     QMessageBox::aboutQt(this);
+}
+
+void MainWindow::showHelp(void)
+{
+    Q_D(MainWindow);
+    d->docBrowser->show();
+    d->docBrowser->activateWindow();
+    d->docBrowser->raise();
 }
 
 static void prepareEditor(AbstractEditor* editor)

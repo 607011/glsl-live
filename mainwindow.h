@@ -35,6 +35,7 @@ protected:
 private slots:
     void about(void);
     void aboutQt(void);
+    void showHelp(void);
     void badVertexShaderCode(const QString&);
     void badFragmentShaderCode(const QString&);
     void linkerError(const QString&);
