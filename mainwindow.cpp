@@ -437,12 +437,13 @@ void MainWindow::parseShadersForParameters(void)
             .append(d->fragmentShaderEditor->toPlainText().toUtf8());
     QTextStream in(&ba);
     QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)\\s*$");
+    QRegExp reColor("uniform vec3\\s+(\\w+).*//\\s*(color|rgb)$");
     QRegExp rePragma("#pragma\\s+size\\s*\\((\\d+)\\s*,\\s*(\\d+)\\)");
     // check if variables' definitions have changed in shader
     QCryptographicHash hash(QCryptographicHash::Sha1);
     while (!in.atEnd()) {
         const QString& line = in.readLine();
-        if (re0.indexIn(line) > -1 || rePragma.indexIn(line) > -1)
+        if (re0.indexIn(line) > -1 || rePragma.indexIn(line) > -1 || reColor.indexIn(line) > -1)
             hash.addData(line.toUtf8());
     }
     // if changes occured regenerate widgets
@@ -534,10 +535,14 @@ void MainWindow::parseShadersForParameters(void)
             else if (rePragma.indexIn(line) > -1) {
                 const int w = rePragma.cap(1).toInt();
                 const int h = rePragma.cap(2).toInt();
-                QImage transparentImage = QImage(w, h, QImage::Format_ARGB32);
+                QImage transparentImage(w, h, QImage::Format_ARGB32);
                 transparentImage.fill(Qt::transparent);
                 d->renderWidget->setImage(transparentImage);
                 d->renderWidget->updateViewport();
+            }
+            else if (reColor.indexIn(line) > -1) {
+                const QString& name = reColor.cap(1).toUtf8();
+                // TODO: create colorpicker for value `name` ...
             }
         }
         layout->addStretch(1);
@@ -560,13 +565,11 @@ void MainWindow::processShaderChange(void)
 void MainWindow::badVertexShaderCode(const QString& msg)
 {
     ui->logTextEdit->append(msg);
-    ui->tabWidget->setCurrentIndex(0);
 }
 
 void MainWindow::badFragmentShaderCode(const QString& msg)
 {
     ui->logTextEdit->append(msg);
-    ui->tabWidget->setCurrentIndex(1);
 }
 
 void MainWindow::linkerError(const QString& msg)

@@ -53,22 +53,7 @@ RESOURCES += \
 OTHER_FILES += \
     glsl-live_de.ts \
     LICENSE.txt \
+    README.txt \
     doc/index.html \
-    shaders/fragmentshader.glsl \
-    shaders/vertexshader.glsl \
-    examples/crosshatch.xml \
-    examples/gaussian.xml \
-    examples/toad-torch.xml \
-    examples/nyan-ct-banner.xml \
-    examples/game-of-life.xml \
-    examples/wobble-and-zoom.xml \
-    examples/warholizer.xml \
-    examples/spotlight-by-rasmuskaae.xml \
-    examples/skip.xml \
-    examples/scanline-effect.xml \
-    examples/rgb-separation-grey.xml \
-    examples/rgb-separation.xml \
-    examples/glitch2.xml \
-    examples/fractalmorph.xml \
-    examples/aberration.xml \
+    examples/default.xml \
     defaultscript.js

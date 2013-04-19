@@ -404,7 +404,7 @@
   </action>
   <action name="actionOpen">
    <property name="text">
-    <string>Open project</string>
+    <string>Open project ...</string>
    </property>
    <property name="shortcut">
     <string notr="true">Ctrl+O</string>
