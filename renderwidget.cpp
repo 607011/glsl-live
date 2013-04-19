@@ -531,7 +531,6 @@ void RenderWidget::configureTexture(void)
 void RenderWidget::resizeGL(int w, int h)
 {
     updateViewport(w, h);
-    updateGL();
 }
 
 void RenderWidget::initializeGL(void)
@@ -540,7 +539,6 @@ void RenderWidget::initializeGL(void)
     glGetIntegerv(GL_MAJOR_VERSION, &d->glVersionMajor);
     glGetIntegerv(GL_MINOR_VERSION, &d->glVersionMinor);
     qglClearColor(d->backgroundColor);
-    glClear(GL_COLOR_BUFFER_BIT);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
