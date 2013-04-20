@@ -44,6 +44,7 @@ public:
     void setUniformValue(const QString& name, int value);
     void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);
+    void setUniformValue(const QString& name, const QColor& value);
     void updateUniforms(void);
     void clearUniforms(void);
     QImage resultImage(void);

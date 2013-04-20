@@ -368,6 +368,9 @@ void RenderWidget::updateUniforms(void)
         case QVariant::Bool:
             d->shaderProgram->setUniformValue(key.toUtf8().data(), value.toBool());
             break;
+        case QVariant::Color:
+            d->shaderProgram->setUniformValue(key.toUtf8().data(), value.value<QColor>());
+            break;
         default:
             qWarning() << "RenderWidget::updateUniforms(): invalid value type in mUniforms";
             break;
@@ -804,6 +807,12 @@ void RenderWidget::setUniformValue(const QString& name, double value)
 }
 
 void RenderWidget::setUniformValue(const QString& name, bool value)
+{
+    d_ptr->uniforms[name] = value;
+    updateUniforms();
+}
+
+void RenderWidget::setUniformValue(const QString& name, const QColor& value)
 {
     d_ptr->uniforms[name] = value;
     updateUniforms();

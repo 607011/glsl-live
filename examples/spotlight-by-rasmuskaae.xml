@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9.7">
+<glsl-live-coder-project version="0.9.8">
   <shaders>
     <vertex><![CDATA[attribute vec4 aVertex;
 attribute vec2 aTexCoord;
@@ -15,11 +15,18 @@ void main(void)
 
 #pragma size(512, 512)
 
+const float PI = 3.14159265359;
+const float PI2 = 2.0 * PI;
+
 varying vec2 vTexCoord;
 uniform sampler2D uTexture;
 uniform float uT;
 uniform vec2 uResolution;
 uniform vec2 uMouse;
+
+uniform vec4 uCol1; // #ff0000
+uniform vec4 uCol2; // #ffffff
+uniform float uIntensity; // 0, 12, 5
 
 float rand(vec2 uv)
 {
@@ -28,18 +35,18 @@ float rand(vec2 uv)
 
 vec4 t(vec2 uv)
 {
-  	float j = sin(uv.y*2.0*3.14+uv.x*2.0+uT*2.0);
-  	float i = sin(uv.x*10.0-uv.y*2.0*3.14+uT*3.0);
-	  	float p = clamp(i,0.0,0.2)-clamp(j,0.0,0.2);
-  	float n = -clamp(i,-0.2,0.0)+0.2*clamp(j,-0.2,0.0);
-	  	return 5.0*(vec4(1.0,0.25,0.125,1.0)*n + vec4(1.0,1.0,1.0,1.0)*p);
+  	float j = sin(uv.y * PI2 + uv.x * 2.0 + uT * 2.0);
+  	float i = sin(uv.x *10.0 - uv.y * PI2 + uT * 3.0);
+	  	float p = clamp(i, 0.0, 0.2) - clamp(j, 0.0, 0.2);
+  	float n = -clamp(i, -0.2, 0.0) + 0.2 * clamp(j, -0.2, 0.0);
+	  	return uIntensity * (uCol1 * n + uCol2 * p);
 }
 
 
 void main(void)
 {
   	vec2 uv = vTexCoord - vec2(0.5, 0.5);
-  	vec3 p = vec3(sin(uT*1.2), cos(uT), sin(uT));
+  	vec3 p = vec3(sin(uT * 1.2), cos(uT), sin(uT));
 	  	float l = 2.0 - pow(distance(p, vec3(uv, 0.0)), 2.0);
 	  	gl_FragColor = t(uv + l) + l;
 }

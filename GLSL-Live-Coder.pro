@@ -1,7 +1,17 @@
 # Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 # All rights reserved.
 
-QT       += core gui opengl xml script
+QT += core gui opengl xml
+
+TARGET = GLSL-Live-Coder
+TEMPLATE = app
+
+# CONFIG += scripting
+
+scripting {
+QT += script
+DEFINES += ENABLE_SCRIPTING
+}
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -9,10 +19,6 @@ TRANSLATIONS = glsl-live_de.ts
 
 CODECFORTR = UTF-8
 
-# DEFINES += NO_SCRIPT
-
-TARGET = GLSL-Live-Coder
-TEMPLATE = app
 
 SOURCES += main.cpp\
     mainwindow.cpp \
@@ -26,7 +32,8 @@ SOURCES += main.cpp\
     editors/sidebarwidget.cpp \
     scriptrunner.cpp \
     glclass.cpp \
-    imageclass.cpp
+    imageclass.cpp \
+    colorpicker.cpp
 
 HEADERS += main.h \
     mainwindow.h \
@@ -43,7 +50,8 @@ HEADERS += main.h \
     editors/abstracteditor.h \
     scriptrunner.h \
     glclass.h \
-    imageclass.h
+    imageclass.h \
+    colorpicker.h
 
 FORMS += mainwindow.ui
 

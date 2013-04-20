@@ -7,6 +7,8 @@
 #include <QMainWindow>
 #include <QCloseEvent>
 #include <QScopedPointer>
+#include <QColor>
+#include <QImage>
 #include <QList>
 #include <QString>
 #include <QAction>
@@ -56,13 +58,14 @@ private slots:
     void valueChanged(int);
     void valueChanged(double);
     void valueChanged(bool);
+    void valueChanged(const QColor&);
     void imageDropped(const QImage&);
     void saveImageSnapshot(void);
     void batchProcess(void);
     void zoom(void);
     void chooseBackgroundColor(void);
     void setFPS(double);
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
     void processScriptChange(void);
     void executeScript(void);
 #endif

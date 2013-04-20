@@ -1,7 +1,7 @@
 // Copyright (c) 2012 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
 
 #include <QtCore/QDebug>
 #include "scriptrunner.h"

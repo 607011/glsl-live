@@ -32,6 +32,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "doubleslider.h"
+#include "colorpicker.h"
 #include "project.h"
 #include "renderwidget.h"
 #include "renderer.h"
@@ -52,7 +53,7 @@ public:
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
         , scriptRunner(new ScriptRunner(renderWidget))
         , scriptEditor(new JSEdit)
 #endif
@@ -71,7 +72,7 @@ public:
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
     ScriptRunner* scriptRunner;
     JSEdit* scriptEditor;
 #endif
@@ -99,7 +100,7 @@ public:
         safeDelete(vertexShaderEditor);
         safeDelete(fragmentShaderEditor);
         safeDelete(docBrowser);
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
         safeDelete(scriptEditor);
         safeDelete(scriptRunner);
 #endif
@@ -107,7 +108,7 @@ public:
 };
 
 
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine);
 #endif
 
@@ -133,7 +134,7 @@ MainWindow::MainWindow(QWidget* parent)
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
     prepareEditor(d->fragmentShaderEditor);
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
     ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     prepareEditor(d->scriptEditor);
     QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
@@ -184,7 +185,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
     QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
     QScriptEngine* engine = d->scriptRunner->engine();
@@ -322,6 +323,14 @@ void MainWindow::valueChanged(bool v)
     }
 }
 
+void MainWindow::valueChanged(const QColor& color)
+{
+    if (sender()) {
+        const QString& name = sender()->objectName();
+        d_ptr->renderWidget->setUniformValue(name, color);
+    }
+}
+
 void MainWindow::imageDropped(const QImage&)
 {
     processShaderChange();
@@ -390,7 +399,7 @@ void MainWindow::setFPS(double fps)
     ui->labelFPS->setText(QString("%1 fps").arg(fps, 7, 'f', 1));
 }
 
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
 {
     QString result;
@@ -436,8 +445,8 @@ void MainWindow::parseShadersForParameters(void)
             .append("\n")
             .append(d->fragmentShaderEditor->toPlainText().toUtf8());
     QTextStream in(&ba);
-    QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)\\s*$");
-    QRegExp reColor("uniform vec3\\s+(\\w+).*//\\s*(color|rgb)$");
+    QRegExp re0("uniform (float|int|bool)\\s+(\\w+).*//\\s*(.*)");
+    QRegExp reColor("uniform vec4\\s+(\\w+).*//\\s*((\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)|(#([0-9a-f]{2,2})([0-9a-f]{2,2})([0-9a-f]{2,2})))");
     QRegExp rePragma("#pragma\\s+size\\s*\\((\\d+)\\s*,\\s*(\\d+)\\)");
     // check if variables' definitions have changed in shader
     QCryptographicHash hash(QCryptographicHash::Sha1);
@@ -542,7 +551,21 @@ void MainWindow::parseShadersForParameters(void)
             }
             else if (reColor.indexIn(line) > -1) {
                 const QString& name = reColor.cap(1).toUtf8();
-                // TODO: create colorpicker for value `name` ...
+                QVBoxLayout* innerLayout = new QVBoxLayout;
+                QGroupBox* groupbox = new QGroupBox(name);
+                groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
+                groupbox->setLayout(innerLayout);
+                ColorPicker* colorPicker = new ColorPicker(name);
+                connect(colorPicker, SIGNAL(colorSelected(QColor)), SLOT(valueChanged(QColor)));
+                connect(colorPicker, SIGNAL(currentColorChanged(QColor)), SLOT(valueChanged(QColor)));
+                bool ok1, ok2, ok3;
+                const QColor& defaultColor = (reColor.cap(2).startsWith("#"))
+                        ? QColor(reColor.cap(7).toInt(&ok1, 16), reColor.cap(8).toInt(&ok2, 16), reColor.cap(9).toInt(&ok3, 16))
+                        : QColor(reColor.cap(3).toInt(&ok1), reColor.cap(4).toInt(&ok2), reColor.cap(5).toInt(&ok3));
+                if (ok1 && ok2 && ok3)
+                    colorPicker->setColor(defaultColor);
+                innerLayout->addWidget(colorPicker);
+                layout->addWidget(groupbox);
             }
         }
         layout->addStretch(1);
@@ -673,7 +696,7 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
         d->fragmentShaderEditor->blockSignals(false);
         d->renderWidget->setImage(d->project->image());
-#ifndef NO_SCRIPT
+#ifdef ENABLED_SCRIPTING
         d->scriptEditor->setPlainText(d->project->scriptSource());
 #endif
         processShaderChange();
