@@ -18,6 +18,7 @@ public:
         , alphaEnabled(true)
         , imageRecyclingEnabled(false)
         , instantUpdate(false)
+        , borderClamping(true)
     { /* ... */ }
     bool dirty;
     QXmlStreamReader xml;
@@ -29,6 +30,7 @@ public:
     bool alphaEnabled;
     bool imageRecyclingEnabled;
     bool instantUpdate;
+    bool borderClamping;
     QString filename;
     QString errorString;
 };
@@ -59,6 +61,12 @@ bool Project::save(void)
     return ok;
 }
 
+QTextStream& operator<<(QTextStream& out, const QColor& color)
+{
+    out << "rgba(" << color.red() << "," << color.green() << "," << color.blue() << "," << color.alpha() << ")";
+    return out;
+}
+
 bool Project::save(const QString& filename)
 {
     Q_D(Project);
@@ -82,14 +90,16 @@ bool Project::save(const QString& filename)
         << "  <shaders>\n"
         << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
         << "    <fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
-        << "  </shaders>\n"
-        << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n"
-        << "  <input>\n";
+        << "  </shaders>\n";
+#ifdef SCRIPTING_ENABLED
+        << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n";
+#endif
+    out << "  <input>\n";
     if (!d->image.isNull()) {
         // check if image is really empty (transparent)
         bool totallyTransparent = true;
-        const unsigned long* imgData = reinterpret_cast<unsigned long*>(d->image.bits());
-        const unsigned long* const imgDataEnd = imgData + d->image.byteCount() / sizeof(unsigned long);
+        const QRgb* imgData = reinterpret_cast<QRgb*>(d->image.bits());
+        const QRgb* const imgDataEnd = imgData + d->image.byteCount() / sizeof(QRgb);
         while (imgData < imgDataEnd && totallyTransparent)
             totallyTransparent = totallyTransparent && (*imgData++ == 0);
         if (!totallyTransparent) {
@@ -102,6 +112,12 @@ bool Project::save(const QString& filename)
         }
     }
     out << "  </input>\n"
+        << "  <options>\n"
+        << "    <clamp>" << d->borderClamping << "</clamp>\n"
+        << "    <backgroundcolor>" << d->backgroundColor << "</backgroundcolor>\n"
+        << "    <instantupdate>" << d->instantUpdate << "</instantupdate>\n"
+        << "    <alpha>" << d->alphaEnabled << "</alpha>\n"
+        << "  </options>\n"
         << "</glsl-live-coder-project>\n";
     qint64 bytesWritten = file.write(compress? qCompress(dstr.toUtf8(), 9) : dstr.toUtf8());
     ok = ok && (bytesWritten > 0);
@@ -264,8 +280,13 @@ void Project::read(void)
         else if (d->xml.name() == "input") {
             readInput();
         }
+#ifdef SCRIPTING_ENABLED
         else if (d->xml.name() == "script") {
             readScript();
+        }
+#endif
+        else if (d->xml.name() == "options") {
+            readOptions();
         }
         else {
             d->xml.skipCurrentElement();
@@ -306,7 +327,7 @@ void Project::readShaderVertex(void)
         d->vertexShaderSource = str;
     }
     else {
-        d->xml.raiseError(QObject::tr("empty vertex shader: %1").arg(str));
+        d->xml.raiseError(QObject::tr("empty <vertex>: %1").arg(str));
     }
 }
 
@@ -319,7 +340,7 @@ void Project::readShaderFragment(void)
         d->fragmentShaderSource = str;
     }
     else {
-        d->xml.raiseError(QObject::tr("empty fragment shader: %1").arg(str));
+        d->xml.raiseError(QObject::tr("empty <fragment>: %1").arg(str));
     }
 }
 
@@ -349,7 +370,102 @@ void Project::readInputImage(void)
             raiseError(tr("Invalid data in <image> tag"));
     }
     else {
-        d->xml.raiseError(QObject::tr("empty image: %1").arg(str));
+        d->xml.raiseError(QObject::tr("empty <image>: %1").arg(str));
+    }
+}
+
+void Project::readOptions(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "options");
+    while (d->xml.readNextStartElement()) {
+        if (d->xml.name() == "alpha") {
+            readAlpha();
+        }
+        else if (d->xml.name() == "clamp") {
+            readClamp();
+        }
+        else if (d->xml.name() == "backgroundcolor") {
+            readBackgroundColor();
+        }
+        else if (d->xml.name() == "instantupdate") {
+            readInstantUpdate();
+        }
+        else {
+            d->xml.skipCurrentElement();
+        }
+    }
+}
+
+void Project::readAlpha(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "alpha");
+    const QString& str = d->xml.readElementText();
+    if (!str.isEmpty()) {
+        bool ok;
+        int v = str.toInt(&ok);
+        if (ok)
+            d->alphaEnabled = (1 == v);
+    }
+    else {
+        d->xml.raiseError(QObject::tr("empty <alpha>: %1").arg(str));
+    }
+}
+
+void Project::readClamp(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "clamp");
+    const QString& str = d->xml.readElementText();
+    if (!str.isEmpty()) {
+        bool ok;
+        int v = str.toInt(&ok);
+        if (ok)
+            d->borderClamping = (1 == v);
+    }
+    else {
+        d->xml.raiseError(QObject::tr("empty <clamp>: %1").arg(str));
+    }
+}
+
+void Project::readBackgroundColor(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "backgroundcolor");
+    const QString& str = d->xml.readElementText();
+    if (!str.isEmpty()) {
+        QRegExp reC("rgba\\s*\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)");
+        bool ok1, ok2, ok3, ok4;
+        if (reC.indexIn(str) > -1) {
+            QColor newColor(reC.cap(1).toInt(&ok1),
+                            reC.cap(2).toInt(&ok2),
+                            reC.cap(3).toInt(&ok3),
+                            reC.cap(4).toInt(&ok4));
+            if (ok1 && ok2 && ok3 && ok4)
+                d->backgroundColor = newColor;
+            else
+                d->xml.raiseError(QObject::tr("bad data in <backgroundcolor>: %1").arg(str));
+        }
+    }
+    else {
+        d->xml.raiseError(QObject::tr("empty <backgroundcolor>: %1").arg(str));
+    }
+}
+
+void Project::readInstantUpdate(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "instantupdate");
+    const QString& str = d->xml.readElementText();
+    if (!str.isEmpty()) {
+        bool ok;
+        int v = str.toInt(&ok);
+        if (ok)
+            d->instantUpdate = (1 == v);
+    }
+    else {
+        d->xml.raiseError(QObject::tr("empty <instantupdate>: %1").arg(str));
     }
 }
 
@@ -366,6 +482,11 @@ void Project::enableImageRecycling(bool enabled)
 void Project::enableInstantUpdate(bool enabled)
 {
     d_ptr->instantUpdate = enabled;
+}
+
+void Project::enableBorderClamping(bool enabled)
+{
+    d_ptr->borderClamping = enabled;
 }
 
 void Project::setBackgroundColor(const QColor& color)
@@ -388,8 +509,12 @@ bool Project::instantUpdateEnabled(void) const
     return d_ptr->instantUpdate;
 }
 
+bool Project::borderClampingEnabled(void) const
+{
+    return d_ptr->borderClamping;
+}
+
 const QColor& Project::backgroundColor(void) const
 {
     return d_ptr->backgroundColor;
 }
-

@@ -6,8 +6,8 @@ varying vec2 vTexCoord;
 
 void main(void)
 {
-    vTexCoord = aTexCoord;
-    gl_Position = aVertex;
+  vTexCoord = aTexCoord;
+  gl_Position = aVertex;
 }
 ]]></vertex>
     <fragment><![CDATA[// Spotlight fragment shader
@@ -35,24 +35,27 @@ float rand(vec2 uv)
 
 vec4 t(vec2 uv)
 {
-  	float j = sin(uv.y * PI2 + uv.x * 2.0 + uT * 2.0);
-  	float i = sin(uv.x *10.0 - uv.y * PI2 + uT * 3.0);
-	  	float p = clamp(i, 0.0, 0.2) - clamp(j, 0.0, 0.2);
-  	float n = -clamp(i, -0.2, 0.0) + 0.2 * clamp(j, -0.2, 0.0);
-	  	return uIntensity * (uCol1 * n + uCol2 * p);
+  float j = sin(uv.y * PI2 + uv.x * 2.0 + uT * 2.0);
+  float i = sin(uv.x *10.0 - uv.y * PI2 + uT * 3.0);
+  float p = clamp(i, 0.0, 0.2) - clamp(j, 0.0, 0.2);
+  float n = -clamp(i, -0.2, 0.0) + 0.2 * clamp(j, -0.2, 0.0);
+  return uIntensity * (uCol1 * n + uCol2 * p);
 }
 
 
 void main(void)
 {
-  	vec2 uv = vTexCoord - vec2(0.5, 0.5);
-  	vec3 p = vec3(sin(uT * 1.2), cos(uT), sin(uT));
-	  	float l = 2.0 - pow(distance(p, vec3(uv, 0.0)), 2.0);
-	  	gl_FragColor = t(uv + l) + l;
+  vec2 uv = vTexCoord - vec2(0.5, 0.5);
+  vec3 p = vec3(sin(uT * 1.2), cos(uT), sin(uT));
+  float l = 2.0 - pow(distance(p, vec3(uv, 0.0)), 2.0);
+  gl_FragColor = t(uv + l) + l;
 }
 ]]></fragment>
   </shaders>
-  <script><![CDATA[]]></script>
-  <input>
-  </input>
+  <options>
+    <clamp>1</clamp>
+    <backgroundcolor>rgba(40,34,25,255)</backgroundcolor>
+    <instantupdate>0</instantupdate>
+    <alpha>1</alpha>
+  </options>
 </glsl-live-coder-project>

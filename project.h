@@ -41,12 +41,14 @@ public:
     bool alphaEnabled(void) const;
     bool imageRecyclingEnabled(void) const;
     bool instantUpdateEnabled(void) const;
+    bool borderClampingEnabled(void) const;
     const QColor& backgroundColor(void) const;
 
 public slots:
     void enableAlpha(bool enabled = true);
     void enableImageRecycling(bool enabled = true);
     void enableInstantUpdate(bool enabled = true);
+    void enableBorderClamping(bool enabled = true);
     void setBackgroundColor(const QColor&);
 
 private: // methods
@@ -59,6 +61,11 @@ private: // methods
     void readShaderVertex(void);
     void readShaderFragment(void);
     void readInputImage(void);
+    void readOptions(void);
+    void readAlpha(void);
+    void readClamp(void);
+    void readBackgroundColor(void);
+    void readInstantUpdate(void);
 
     void resetErrors(void);
     void raiseError(const QString&);

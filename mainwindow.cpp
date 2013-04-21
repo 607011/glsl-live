@@ -171,6 +171,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
     QObject::connect(ui->actionTimerActive, SIGNAL(toggled(bool)), d->renderWidget, SLOT(setTimerActive(bool)));
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->renderWidget, SLOT(clampToBorder(bool)));
+    QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->project, SLOT(enableBorderClamping(bool)));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->project, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->project, SLOT(enableInstantUpdate(bool)));
@@ -184,6 +185,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionZoom500, SIGNAL(triggered()), SLOT(zoom()));
     QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
+    QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->project, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
 #ifdef ENABLED_SCRIPTING
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
@@ -208,6 +210,10 @@ void MainWindow::restoreSettings(void)
     QSettings settings(Company, AppName);
     restoreGeometry(settings.value("MainWindow/geometry").toByteArray());
     d->docBrowser->restoreGeometry(settings.value("DocBrowser/geometry").toByteArray());
+    ui->actionEnableAlpha->setChecked((settings.value("Options/alphaEnabled", true).toBool()));
+    ui->actionClampToBorder->setChecked((settings.value("Options/clampToBorder", true).toBool()));
+    d->renderWidget->setScale(settings.value("Options/zoom", 1.0).toDouble());
+    d->colorDialog->setCurrentColor(settings.value("Options/backgroundColor", QColor(20, 20, 20)).value<QColor>());
     bool showdoc = settings.value("DocBrowser/show", false).toBool();
     if (showdoc)
         showHelp();
@@ -239,10 +245,6 @@ void MainWindow::restoreSettings(void)
         openProject(projectFilename);
     }
     d->project->setClean();
-    d->renderWidget->setScale(settings.value("Options/zoom", 1.0).toDouble());
-    ui->actionEnableAlpha->setChecked((settings.value("Options/alphaEnabled", true).toBool()));
-    ui->actionClampToBorder->setChecked((settings.value("Options/clampToBorder", true).toBool()));
-    d->colorDialog->setCurrentColor(settings.value("Options/backgroundColor", QColor(20, 20, 20)).value<QColor>());
     updateWindowTitle();
 }
 
@@ -696,6 +698,10 @@ void MainWindow::openProject(const QString& filename)
         d->fragmentShaderEditor->setPlainText(d->project->fragmentShaderSource());
         d->fragmentShaderEditor->blockSignals(false);
         d->renderWidget->setImage(d->project->image());
+        d->renderWidget->setBackgroundColor(d->project->backgroundColor());
+        d->renderWidget->enableAlpha(d->project->alphaEnabled());
+        d->renderWidget->enableInstantUpdate(d->project->instantUpdateEnabled());
+        d->renderWidget->clampToBorder(d->project->borderClampingEnabled());
 #ifdef ENABLED_SCRIPTING
         d->scriptEditor->setPlainText(d->project->scriptSource());
 #endif
