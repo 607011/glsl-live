@@ -38,7 +38,6 @@ public slots:
     void setColor(const QColor&);
     
 private:
-    QColor mColor;
     QCursor mOldCursor;
     QColorDialog* mColorDialog;
 };

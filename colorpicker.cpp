@@ -27,14 +27,15 @@ ColorPicker::~ColorPicker()
 void ColorPicker::paintEvent(QPaintEvent*)
 {
     QPainter p(this);
-    p.fillRect(QRect(0, 0, 16, 16), mColor);
+    const QColor& color = mColorDialog->currentColor();
+    p.fillRect(QRect(0, 0, 16, 16), color);
     p.setPen(Qt::black);
     p.setBrush(Qt::transparent);
     p.drawRect(QRect(0, 0, 16, 16));
     p.drawText(QRectF(20, 1, 80, 18), QString("#%1%2%3")
-               .arg(mColor.red(), 2, 16, QChar('0'))
-               .arg(mColor.green(), 2, 16, QChar('0'))
-               .arg(mColor.blue(), 2, 16, QChar('0')));
+               .arg(color.red(), 2, 16, QChar('0'))
+               .arg(color.green(), 2, 16, QChar('0'))
+               .arg(color.blue(), 2, 16, QChar('0')));
 }
 
 void ColorPicker::enterEvent(QEvent*)
@@ -59,7 +60,8 @@ void ColorPicker::mousePressEvent(QMouseEvent* e)
 
 void ColorPicker::setColor(const QColor& color)
 {
-    mColor = color;
+    mColorDialog->setCurrentColor(color);
+    qDebug() << "ColorPicker::setColor(" << color << ")";
     emit colorSelected(color);
     update();
 }
