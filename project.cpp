@@ -94,20 +94,21 @@ bool Project::save(const QString& filename)
 #ifdef SCRIPTING_ENABLED
         << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n";
 #endif
-    out << "  <input>\n";
     if (hasImage()) {
         QByteArray ba;
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
         d->image.save(&buffer, "PNG");
         buffer.close();
+        out << "  <input>\n";
         out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
+        out << "  </input>\n";
     }
-    out << "  </input>\n";
     out << "  <options>\n"
         << "    <clamp>" << d->borderClamping << "</clamp>\n"
         << "    <backgroundcolor>" << d->backgroundColor << "</backgroundcolor>\n"
         << "    <instantupdate>" << d->instantUpdate << "</instantupdate>\n"
+        << "    <imagerecycling>" << d->imageRecyclingEnabled << "</imagerecycling>\n"
         << "    <alpha>" << d->alphaEnabled << "</alpha>\n"
         << "  </options>\n"
         << "</glsl-live-coder-project>\n";
@@ -255,7 +256,7 @@ bool Project::read(QIODevice* device)
             read();
         }
         else {
-            d->xml.raiseError(QObject::tr("The file is not an GLSL Live Coder v0.x project file."));
+            d->xml.raiseError(QObject::tr("The file is not an GLSL Live Coder v0.x project file ."));
         }
     }
     return !d->xml.error();
@@ -383,6 +384,9 @@ void Project::readOptions(void)
         else if (d->xml.name() == "instantupdate") {
             readInstantUpdate();
         }
+        else if (d->xml.name() == "imagerecycling") {
+            readImageRecycling();
+        }
         else {
             d->xml.skipCurrentElement();
         }
@@ -458,6 +462,22 @@ void Project::readInstantUpdate(void)
     }
     else {
         d->xml.raiseError(QObject::tr("empty <instantupdate>: %1").arg(str));
+    }
+}
+
+void Project::readImageRecycling(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "imagerecycling");
+    const QString& str = d->xml.readElementText();
+    if (!str.isEmpty()) {
+        bool ok;
+        int v = str.toInt(&ok);
+        if (ok)
+            d->imageRecyclingEnabled = (1 == v);
+    }
+    else {
+        d->xml.raiseError(QObject::tr("empty <imagerecycling>: %1").arg(str));
     }
 }
 

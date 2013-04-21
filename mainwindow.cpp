@@ -710,6 +710,7 @@ void MainWindow::openProject(const QString& filename)
         d->renderWidget->enableAlpha(d->project->alphaEnabled());
         d->renderWidget->enableInstantUpdate(d->project->instantUpdateEnabled());
         d->renderWidget->clampToBorder(d->project->borderClampingEnabled());
+        d->renderWidget->enableImageRecycling(d->project->imageRecyclingEnabled());
 #ifdef ENABLED_SCRIPTING
         d->scriptEditor->setPlainText(d->project->scriptSource());
 #endif

@@ -67,6 +67,7 @@ private: // methods
     void readClamp(void);
     void readBackgroundColor(void);
     void readInstantUpdate(void);
+    void readImageRecycling(void);
 
     void resetErrors(void);
     void raiseError(const QString&);
