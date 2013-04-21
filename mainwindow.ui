@@ -300,6 +300,8 @@
     <addaction name="actionSaveProjectAs"/>
     <addaction name="separator"/>
     <addaction name="actionLoadImage"/>
+    <addaction name="actionReloadImage"/>
+    <addaction name="separator"/>
     <addaction name="actionSaveImageSnapshot"/>
     <addaction name="actionBatchProcess"/>
     <addaction name="separator"/>
@@ -598,6 +600,14 @@
   <action name="actionLoadImage">
    <property name="text">
     <string>Load image ...</string>
+   </property>
+  </action>
+  <action name="actionReloadImage">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Reload image</string>
    </property>
   </action>
  </widget>

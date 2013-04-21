@@ -95,24 +95,16 @@ bool Project::save(const QString& filename)
         << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n";
 #endif
     out << "  <input>\n";
-    if (!d->image.isNull()) {
-        // check if image is really empty (transparent)
-        bool totallyTransparent = true;
-        const QRgb* imgData = reinterpret_cast<QRgb*>(d->image.bits());
-        const QRgb* const imgDataEnd = imgData + d->image.byteCount() / sizeof(QRgb);
-        while (imgData < imgDataEnd && totallyTransparent)
-            totallyTransparent = totallyTransparent && (*imgData++ == 0);
-        if (!totallyTransparent) {
-            QByteArray ba;
-            QBuffer buffer(&ba);
-            buffer.open(QIODevice::WriteOnly);
-            d->image.save(&buffer, "PNG");
-            buffer.close();
-            out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
-        }
+    if (hasImage()) {
+        QByteArray ba;
+        QBuffer buffer(&ba);
+        buffer.open(QIODevice::WriteOnly);
+        d->image.save(&buffer, "PNG");
+        buffer.close();
+        out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
     }
-    out << "  </input>\n"
-        << "  <options>\n"
+    out << "  </input>\n";
+    out << "  <options>\n"
         << "    <clamp>" << d->borderClamping << "</clamp>\n"
         << "    <backgroundcolor>" << d->backgroundColor << "</backgroundcolor>\n"
         << "    <instantupdate>" << d->instantUpdate << "</instantupdate>\n"
@@ -517,4 +509,17 @@ bool Project::borderClampingEnabled(void) const
 const QColor& Project::backgroundColor(void) const
 {
     return d_ptr->backgroundColor;
+}
+
+bool Project::hasImage(void) const
+{
+    if (d_ptr->image.isNull())
+        return false;
+    // check if image is really empty (transparent)
+    bool totallyTransparent = true;
+    const QRgb* imgData = reinterpret_cast<QRgb*>(d_ptr->image.bits());
+    const QRgb* const imgDataEnd = imgData + d_ptr->image.byteCount() / sizeof(QRgb);
+    while (imgData < imgDataEnd && totallyTransparent)
+        totallyTransparent = totallyTransparent && (*imgData++ == 0);
+    return !totallyTransparent;
 }

@@ -43,6 +43,7 @@ public:
     bool instantUpdateEnabled(void) const;
     bool borderClampingEnabled(void) const;
     const QColor& backgroundColor(void) const;
+    bool hasImage(void) const;
 
 public slots:
     void enableAlpha(bool enabled = true);

@@ -163,6 +163,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionSaveImageSnapshot, SIGNAL(triggered()), SLOT(saveImageSnapshot()));
     QObject::connect(ui->actionBatchProcess, SIGNAL(triggered()), SLOT(batchProcess()));
     QObject::connect(ui->actionHelp, SIGNAL(triggered()), SLOT(showHelp()));
+    QObject::connect(ui->actionReloadImage, SIGNAL(triggered()), SLOT(reloadImage()));
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableAlpha(bool)));
@@ -336,6 +337,12 @@ void MainWindow::valueChanged(const QColor& color)
 void MainWindow::imageDropped(const QImage&)
 {
     processShaderChange();
+}
+
+void MainWindow::reloadImage(void)
+{
+    Q_D(MainWindow);
+    d->renderWidget->setImage(d->project->image());
 }
 
 void MainWindow::saveImageSnapshot(void)
@@ -584,6 +591,7 @@ void MainWindow::processShaderChange(void)
     updateShaderSources();
     d->project->setDirty(--d->programHasJustStarted < 0); // XXX: dirty hack to counterfeit delayed textChanged() signal from editors
     ui->actionSave->setEnabled(true);
+    ui->actionReloadImage->setEnabled(d->project->hasImage());
     updateWindowTitle();
 }
 
@@ -725,7 +733,7 @@ void MainWindow::saveProject(void)
         if (filename.isNull())
             return;
     }
-    d->lastProjectOpenDir = QFileInfo(filename).path();
+    d->lastProjectSaveDir = QFileInfo(filename).path();
     saveProject(filename);
 }
 

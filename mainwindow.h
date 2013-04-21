@@ -60,6 +60,7 @@ private slots:
     void valueChanged(bool);
     void valueChanged(const QColor&);
     void imageDropped(const QImage&);
+    void reloadImage(void);
     void saveImageSnapshot(void);
     void batchProcess(void);
     void zoom(void);
