@@ -37,7 +37,6 @@ public:
     const QString& vertexShaderSource(void) const;
     void setFragmentShaderSource(const QString&);
     const QString& fragmentShaderSource(void) const;
-    void setImage(const QImage& = QImage());
     const QString& imageFileName(void) const;
     bool loadImage(const QString& fileName);
     const QImage& image(void) const;
@@ -59,6 +58,7 @@ public:
     bool build(void);
 
 public slots:
+    void setImage(const QImage& = QImage());
     void setScale(double factor);
     void fitImageToWindow(void);
     void resizeToOriginalImageSize(void);
@@ -103,6 +103,9 @@ private: // methods
     void scrollBy(const QPoint&);
     void startMotion(const QPointF& velocity);
     void stopMotion(void);
+
+    typedef void(*glActiveTexture_func)(GLenum);
+    glActiveTexture_func glActiveTexture;
 
 private:
     QScopedPointer<RenderWidgetPrivate> d_ptr;

@@ -20,8 +20,8 @@
 #include "renderwidget.h"
 #include "util.h"
 
-static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
-static const int PROGRAM_TEXCOORD_ATTRIBUTE = 1;
+enum { AVERTEX, ATEXCOORD };
+
 static const QVector2D TexCoords[4] =
 {
     QVector2D(1, 0),
@@ -415,12 +415,13 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
         emit linkerError(d->shaderProgram->log());
         return;
     }
-    d->shaderProgram->bindAttributeLocation("aVertex", PROGRAM_VERTEX_ATTRIBUTE);
-    d->shaderProgram->bindAttributeLocation("aTexCoord", PROGRAM_TEXCOORD_ATTRIBUTE);
+    d->shaderProgram->bindAttributeLocation("aVertex", AVERTEX);
+    d->shaderProgram->bindAttributeLocation("aTexCoord", ATEXCOORD);
     d->shaderProgram->bind();
-    d->shaderProgram->enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
-    d->shaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
-    d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
+    d->shaderProgram->enableAttributeArray(AVERTEX);
+    d->shaderProgram->enableAttributeArray(ATEXCOORD);
+    d->shaderProgram->setAttributeArray(AVERTEX, Vertices);
+
     d->uLocT = d->shaderProgram->uniformLocation("uT");
     d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
     d->uLocExtraTexture = d->shaderProgram->uniformLocation("uExtraTexture");
@@ -556,6 +557,9 @@ void RenderWidget::initializeGL(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     configureTexture();
+    glActiveTexture = (glActiveTexture_func)context()->getProcAddress("glActiveTexture");
+    if (glActiveTexture == NULL)
+        qFatal("glActiveTexture() not found.");
 }
 
 void RenderWidget::paintGL(void)
@@ -590,8 +594,9 @@ void RenderWidget::paintGL(void)
 
     // draw onto screen
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
-    d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
+    d->shaderProgram->setAttributeArray(ATEXCOORD, TexCoords);
     glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -599,7 +604,7 @@ void RenderWidget::paintGL(void)
         // draw into FBO
         glViewport(0, 0, d->fbo->width(), d->fbo->height());
         d->shaderProgram->setUniformValue(d->uLocResolution, QSizeF(d->fbo->size()));
-        d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords4FBO);
+        d->shaderProgram->setAttributeArray(ATEXCOORD, TexCoords4FBO);
         d->fbo->bind();
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 0, 0, d->fbo->width(), d->fbo->height(), 0);

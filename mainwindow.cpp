@@ -41,9 +41,11 @@
 #include "renderwidget.h"
 #include "renderer.h"
 #include "editors/glsl/glsledit.h"
-#include "editors/js/jsedit.h"
 #include "util.h"
+#ifdef ENABLE_SCRIPTING
+#include "editors/js/jsedit.h"
 #include "scriptrunner.h"
+#endif
 
 
 static void prepareEditor(AbstractEditor* editor);
@@ -134,12 +136,19 @@ MainWindow::MainWindow(QWidget* parent)
     ui->hsplitter->addWidget(d->paramWidget);
     ui->tabVertexShader->layout()->addWidget(d->vertexShaderEditor);
     ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
-    ui->channelScrollArea->installEventFilter(this);
-    ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
     prepareEditor(d->fragmentShaderEditor);
+
+    for (int i = 0; i < 8; ++i) {
+        ChannelWidget* cw = new ChannelWidget(QString("uChannel%1").arg(i));
+        QObject::connect(cw, SIGNAL(imageDropped(QImage)), d->renderWidget, SLOT(setImage(QImage)));
+        ui->channelLayout->addWidget(cw);
+    }
+    ui->channelLayout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::MinimumExpanding, QSizePolicy::Preferred));
+    ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
+
 #ifdef ENABLE_SCRIPTING
     ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     prepareEditor(d->scriptEditor);
@@ -170,13 +179,13 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionBatchProcess, SIGNAL(triggered()), SLOT(batchProcess()));
     QObject::connect(ui->actionHelp, SIGNAL(triggered()), SLOT(showHelp()));
     QObject::connect(ui->actionReloadImage, SIGNAL(triggered()), SLOT(reloadImage()));
+    QObject::connect(ui->actionTimerActive, SIGNAL(toggled(bool)), SLOT(setTimerActive(bool)));
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableAlpha(bool)));
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableInstantUpdate(bool)));
     QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
-    QObject::connect(ui->actionTimerActive, SIGNAL(toggled(bool)), d->renderWidget, SLOT(setTimerActive(bool)));
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->renderWidget, SLOT(clampToBorder(bool)));
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->project, SLOT(enableBorderClamping(bool)));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
@@ -240,6 +249,14 @@ void MainWindow::restoreSettings(void)
             vSizes.append(v.next().toInt());
         ui->vsplitter->setSizes(vSizes);
     }
+    const QVariantList& vsz2 = settings.value("MainWindow/vsplitter2/sizes").toList();
+    if (!vsz2.isEmpty()) {
+        QListIterator<QVariant> v(vsz2);
+        QList<int> vSizes;
+        while (v.hasNext())
+            vSizes.append(v.next().toInt());
+        ui->vsplitter2->setSizes(vSizes);
+    }
     ui->tabWidget->setCurrentIndex(settings.value("MainWindow/tabwidget/currentIndex").toInt());
     appendToRecentFileList(QString(), "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
     d->lastProjectOpenDir = settings.value("Project/lastOpenDir").toString();
@@ -279,6 +296,14 @@ void MainWindow::saveSettings(void)
             vSizes.append(v.next());
         settings.setValue("MainWindow/vsplitter/sizes", vSizes);
     }
+    const QList<int>& vsz2 = ui->vsplitter2->sizes();
+    if (!vsz2.isEmpty()) {
+        QListIterator<int> v(vsz2);
+        QVariantList vSizes;
+        while (v.hasNext())
+            vSizes.append(v.next());
+        settings.setValue("MainWindow/vsplitter2/sizes", vSizes);
+    }
     settings.setValue("Project/lastOpenDir", d->lastProjectOpenDir);
     settings.setValue("Project/lastSaveDir", d->lastProjectSaveDir);
     settings.setValue("Project/filename", d->project->filename());
@@ -307,54 +332,6 @@ void MainWindow::closeEvent(QCloseEvent* e)
         e->ignore();
     }
 }
-
-bool MainWindow::eventFilter(QObject* obj, QEvent* e)
-{
-    if (obj == ui->channelScrollArea) {
-        switch (e->type()) {
-        case QEvent::DragEnter:
-        {
-            QDragEnterEvent* dragEnterEvent = static_cast<QDragEnterEvent *>(e);
-            const QMimeData* const d = dragEnterEvent->mimeData();
-            if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
-                dragEnterEvent->acceptProposedAction();
-            else
-                dragEnterEvent->ignore();
-            return true;
-        }
-        case QEvent::Drop:
-        {
-            QDropEvent* dropEvent = static_cast<QDropEvent*>(e);
-            const QMimeData* const d = dropEvent->mimeData();
-            if (d->hasUrls()) {
-                QString fileUrl = d->urls().first().toString();
-                if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive))) {
-#if defined(WIN32)
-                    QString filename = fileUrl.remove("file:///");
-#else
-                    QString filename = fileUrl.remove("file://");
-#endif
-                    ChannelWidget* channel = new ChannelWidget(filename);
-                    ui->channelLayout->insertWidget(0, channel);
-                }
-            }
-            return true;
-        }
-        case QEvent::DragLeave:
-        {
-            e->accept();
-            return true;
-        }
-        default:
-            break;
-        }
-    }
-    else {
-        // ...
-    }
-    return QObject::eventFilter(obj, e);
-}
-
 
 void MainWindow::valueChanged(int v)
 {
@@ -455,6 +432,12 @@ void MainWindow::zoom(void)
 void MainWindow::chooseBackgroundColor(void)
 {
     d_ptr->colorDialog->show();
+}
+
+void MainWindow::setTimerActive(bool active)
+{
+    ui->labelFPS->setText(tr("Stopped."));
+    d_ptr->renderWidget->setTimerActive(active);
 }
 
 void MainWindow::setFPS(double fps)

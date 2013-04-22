@@ -18,23 +18,22 @@ uniform vec2 uMouse;
 
 uniform float u1; // 0.0, 1.0, 0.11
 uniform float u2; // 0.0, 1.0, 0.34
-uniform float u3; // 0.0, 1.0, 0.84
 
+uniform vec4 uColor2; // 220, 10, 11
+uniform vec4 uColor1; // #8fe700
 uniform vec4 uColor0; // #08100a
-uniform vec4 uColor3; // #d80000
-uniform vec4 uColor2; // #8fe700
-uniform vec4 uColor1; // #86ceee
 
 uniform float uSize; // 2.0, 100.0, 4.0
 uniform float uThreshold; // 0.0, 1.0, 0.95
 uniform float uAngle; // -180.0, 180.0, 60
+
+uniform bool uIgnoreMouse; // false
 
 const float PI = 3.141592653589793238462;
 const float PI180 = PI / 180.0;
 const vec2 rotationCenter = vec2(0.5, 0.5);
 
 float ratio = uResolution.x / uResolution.y;
-
 
 float sind(float a)
 {
@@ -53,12 +52,14 @@ float added(vec2 sh, float sa, float ca, vec2 c, float d)
      cos((sh.x * ca - sh.y * sa + c.y) * d));
 }
 
-uniform vec4 uGrey; // 76, 150, 29
+
 
 vec4 blur(in sampler2D tex, in vec2 coord)
 {
   return texture2D(tex, coord);
 }
+
+const vec4 uGrey = vec4(0.299, 0.587, 0.114, 0.0);
 
 vec4 halftone(vec4 color)
 {
@@ -72,17 +73,15 @@ vec4 halftone(vec4 color)
 void main(void)
 {
     vec2 mouse = uMouse / uResolution;
-    if (mouse.y < vTexCoord.y) {
+    if (uIgnoreMouse || mouse.y < vTexCoord.y) {
       vec4 color = uColor0;
       vec4 c0 = blur(uTexture, vTexCoord);
       vec4 raster = halftone(c0);
-      float grey = dot(c0, vec4(uGrey.rgb, 0.0));
-      if (grey > u3)
+      float grey = dot(c0, uGrey);
+      if (grey > u2)
         color = uColor1;
-      else if (grey > u2)
-        color = uColor2;
       else if (grey > u1)
-        color = uColor3;
+        color = uColor2;
       gl_FragColor = clamp(raster, color, vec4(1.0));
     }
     else {

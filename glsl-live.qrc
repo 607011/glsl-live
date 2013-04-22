@@ -8,4 +8,7 @@
     <qresource prefix="/translations">
         <file>glsl-live_de.qm</file>
     </qresource>
+    <qresource prefix="/images">
+        <file alias="checkered.png">images/checkered-background.png</file>
+    </qresource>
 </RCC>

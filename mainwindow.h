@@ -33,7 +33,6 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent*);
-    bool eventFilter(QObject*, QEvent*);
 
 private slots:
     void about(void);
@@ -66,6 +65,7 @@ private slots:
     void batchProcess(void);
     void zoom(void);
     void chooseBackgroundColor(void);
+    void setTimerActive(bool);
     void setFPS(double);
 #ifdef ENABLE_SCRIPTING
     void processScriptChange(void);
