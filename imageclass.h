@@ -4,8 +4,6 @@
 #ifndef __IMAGECLASS_H_
 #define __IMAGECLASS_H_
 
-#ifdef ENABLED_SCRIPTING
-
 #include <QImage>
 #include <QtScript/QScriptClass>
 #include <QtScript/QScriptString>
@@ -64,9 +62,5 @@ public slots:
 private:
     QImage* thisImage(void) const;
 };
-
-
-#endif
-
 
 #endif // __IMAGECLASS_H_

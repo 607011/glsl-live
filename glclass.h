@@ -1,8 +1,6 @@
 #ifndef __GLCLASS_H_
 #define __GLCLASS_H_
 
-#ifdef ENABLED_SCRIPTING
-
 #include <QObject>
 #include <QString>
 #include <QtScript/QScriptClass>
@@ -87,7 +85,4 @@ private:
 
 Q_DECLARE_METATYPE(GLClass*)
 
-#endif
-
 #endif // __GLCLASS_H_
-

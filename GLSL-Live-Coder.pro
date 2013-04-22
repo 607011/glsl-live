@@ -11,6 +11,15 @@ TEMPLATE = app
 scripting {
 QT += script
 DEFINES += ENABLE_SCRIPTING
+SOURCES += editors/js/jsedit.cpp \
+    scriptrunner.cpp \
+    glclass.cpp \
+    imageclass.cpp
+HEADERS += editors/js/jsedit.h \
+    scriptrunner.h \
+    glclass.h \
+    imageclass.h
+OTHER_FILES += defaultscript.js
 }
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -28,11 +37,7 @@ SOURCES += main.cpp\
     editors/glsl/glsledit.cpp \
     editors/glsl/glslhighlighter.cpp \
     editors/glsl/glsldoclayout.cpp \
-    editors/js/jsedit.cpp \
     editors/sidebarwidget.cpp \
-    scriptrunner.cpp \
-    glclass.cpp \
-    imageclass.cpp \
     colorpicker.cpp \
     channelwidget.cpp
 
@@ -46,12 +51,8 @@ HEADERS += main.h \
     editors/glsl/glsledit.h \
     editors/glsl/glslhighlighter.h \
     editors/glsl/glsldoclayout.h \
-    editors/js/jsedit.h \
     editors/sidebarwidget.h \
     editors/abstracteditor.h \
-    scriptrunner.h \
-    glclass.h \
-    imageclass.h \
     colorpicker.h \
     channelwidget.h
 
@@ -65,5 +66,4 @@ OTHER_FILES += \
     LICENSE.txt \
     README.txt \
     doc/index.html \
-    examples/default.xml \
-    defaultscript.js
+    examples/default.xml

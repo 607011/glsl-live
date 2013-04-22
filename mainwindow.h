@@ -67,7 +67,7 @@ private slots:
     void zoom(void);
     void chooseBackgroundColor(void);
     void setFPS(double);
-#ifdef ENABLED_SCRIPTING
+#ifdef ENABLE_SCRIPTING
     void processScriptChange(void);
     void executeScript(void);
 #endif

@@ -1,4 +1,4 @@
-<glsl-live-coder-project version="0.9.8">
+<glsl-live-coder-project version="0.9.9">
   <shaders>
     <vertex><![CDATA[// default vertex shader
 
@@ -16,7 +16,7 @@ void main(void)
 // fragment shader by rez
 // https://www.shadertoy.com/view/Mds3Rn
 
-#pragma size(1024, 768)
+#pragma size(512, 512)
 
 // texture coordinate (0;0)..(1;1)
 varying vec2 vTexCoord;
@@ -28,6 +28,8 @@ uniform float uT;
 uniform vec2 uResolution;
 // mouse position within range of uResolution
 uniform vec2 uMouse;
+
+uniform int uDetail; // 20, 200, 96
 
 const float PI=3.14159265358979323846;
 
@@ -42,7 +44,7 @@ vec2 rotate(vec2 k,float t)
 }
 
 float draw_scene(vec3 p)
- {
+{
   float tunnel_m=0.125*cos(PI*p.z*1.0+speed*4.0-PI);
   float tunnel1_p=2.0;
   float tunnel1_w=tunnel1_p*0.225;
@@ -67,20 +69,19 @@ float draw_scene(vec3 p)
   float bubble_w=bubble_p*0.5+0.025*cos(PI*p.z*2.0);
   float bubble=length(mod(p.yz,bubble_p)-bubble_p*0.5)-bubble_w;  // bubble
   return max(min(min(-tunnel1,mix(tunnel2,-bubble,0.375)),max(min(-hole1,hole2),-hole3)),-tube);
- }
+}
 
 void main(void)
 {
   vec2 position=vTexCoord;
   vec2 p=-1.0+2.0*position;
-  vec3 dir=normalize(vec3(p*vec2(1.77,1.0),1.0));   // screen ratio (x,y) fov (z)
-  //dir.yz=rotate(dir.yz,PI*0.5*sin(PI*speed*0.125)); // rotation x
-  dir.zx=rotate(dir.zx,-PI*speed*0.25);       // rotation y
-  dir.xy=rotate(dir.xy,-speed*0.5);         // rotation z
+  vec3 dir=normalize(vec3(p*vec2(1.77,1.0),1.0));
+  dir.yz=rotate(dir.yz,PI*0.5*sin(PI*speed*0.125));
+  dir.zx=rotate(dir.zx,-PI*speed*0.25);
+  dir.xy=rotate(dir.xy,-speed*0.5);
   vec3 ray=vec3(ground_x,ground_y,ground_z-speed*2.5);
   float t=0.0;
-  const int ray_n=96;
-  for(int i=0;i<ray_n;i++) {
+  for (int i=0; i<uDetail; ++i) {
     float k=draw_scene(ray+dir*t);
     t+=k*0.75;
   }
@@ -93,12 +94,11 @@ void main(void)
 }
 ]]></fragment>
   </shaders>
-  <input>
-  </input>
   <options>
     <clamp>1</clamp>
     <backgroundcolor>rgba(13,11,8,255)</backgroundcolor>
     <instantupdate>0</instantupdate>
+    <imagerecycling>0</imagerecycling>
     <alpha>1</alpha>
   </options>
 </glsl-live-coder-project>
