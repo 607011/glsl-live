@@ -59,7 +59,7 @@ vec4 halftone(vec4 color)
 {
   vec2 shift = vec2(vTexCoord.x, vTexCoord.y / ratio) - rotationCenter;
   float raster = added(shift, sind(uAngle), cosd(uAngle), rotationCenter, 680.0 * PI / uSize);
-  float avg = dot(vec4(0.299, 0.587, 0.114, 0.0), color);
+  float avg = dot(vec4(uGrey.rgb, 0.0), color);
   float g = (raster * uThreshold + avg - uThreshold) / (1.0 - uThreshold);
   return vec4(g, g, g, 1.0);
 }
@@ -67,8 +67,9 @@ vec4 halftone(vec4 color)
 void main(void)
 {
     vec4 color = uColor0;
-    vec4 raster = halftone(texture2D(uTexture, vTexCoord));
-    float grey = dot(texture2D(uTexture, vTexCoord), vec4(uGrey.rgb, 0.0));
+    vec4 c0 = texture2D(uTexture, vTexCoord);
+    vec4 raster = halftone(c0);
+    float grey = dot(c0, vec4(uGrey.rgb, 0.0));
     if (grey > u3)
        color = uColor1;
     else if (grey > u2)

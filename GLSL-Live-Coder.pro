@@ -33,7 +33,8 @@ SOURCES += main.cpp\
     scriptrunner.cpp \
     glclass.cpp \
     imageclass.cpp \
-    colorpicker.cpp
+    colorpicker.cpp \
+    channelwidget.cpp
 
 HEADERS += main.h \
     mainwindow.h \
@@ -51,7 +52,8 @@ HEADERS += main.h \
     scriptrunner.h \
     glclass.h \
     imageclass.h \
-    colorpicker.h
+    colorpicker.h \
+    channelwidget.h
 
 FORMS += mainwindow.ui
 

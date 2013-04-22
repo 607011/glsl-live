@@ -1,0 +1,58 @@
+<glsl-live-coder-project version="0.9.9">
+  <shaders>
+    <vertex><![CDATA[// default vertex shader
+
+attribute vec4 aVertex;
+attribute vec2 aTexCoord;
+varying vec2 vTexCoord;
+
+void main(void)
+{
+  vTexCoord = aTexCoord;
+  gl_Position = aVertex;
+}
+]]></vertex>
+    <fragment><![CDATA[// Optical illusion by P_Malin
+// https://www.shadertoy.com/view/lsX3zM
+// License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
+
+#pragma size(512, 512)
+
+// texture coordinate (0;0)..(1;1)
+varying vec2 vTexCoord;
+// texture
+uniform sampler2D uTexture;
+// elapsed time since program start in seconds (with fractions)
+uniform float uT;
+// width by height of texture
+uniform vec2 uResolution;
+// mouse position within range of uResolution
+uniform vec2 uMouse;
+
+uniform float uStep; // 10.0, 30.0, 10.0
+
+void main(void)
+{
+  vec2 coord = vTexCoord;
+  coord.x *= uResolution.x / uResolution.y;
+  vec2 vTilePos = coord * uStep;
+  float fIsOddRow = (mod(vTilePos.y, 2.0) > 1.0) ? 0.0 : 1.0;
+  vTilePos.x += uT * (fIsOddRow * 2.0 - 1.0);
+  float fShade = (mod(vTilePos.x, 2.0) > 1.0) ? 0.0 : 1.0;  
+  vec2 vTileFract = fract(vTilePos);  
+  float fBorderShade = 0.5;
+  float fBorderWidth = 0.05;
+  fShade = mix(fShade, fBorderShade, step(vTileFract.x, fBorderWidth));
+  fShade = mix(fShade, fBorderShade, step(vTileFract.y, fBorderWidth));
+  gl_FragColor = vec4(fShade);
+}
+]]></fragment>
+  </shaders>
+  <options>
+    <clamp>1</clamp>
+    <backgroundcolor>rgba(0,0,0,255)</backgroundcolor>
+    <instantupdate>0</instantupdate>
+    <imagerecycling>0</imagerecycling>
+    <alpha>1</alpha>
+  </options>
+</glsl-live-coder-project>

@@ -27,6 +27,9 @@
 #include <QByteArray>
 #include <QString>
 #include <QVector>
+#include <QEvent>
+#include <QMimeData>
+#include <QListView>
 #include <qmath.h>
 #include "main.h"
 #include "mainwindow.h"
@@ -34,6 +37,7 @@
 #include "doubleslider.h"
 #include "colorpicker.h"
 #include "project.h"
+#include "channelwidget.h"
 #include "renderwidget.h"
 #include "renderer.h"
 #include "editors/glsl/glsledit.h"
@@ -126,10 +130,12 @@ MainWindow::MainWindow(QWidget* parent)
         QObject::connect(act, SIGNAL(triggered()), SLOT(openRecentProject()));
         ui->menuRecentProjects->addAction(act);
     }
-    ui->scrollArea->setWidget(d->renderWidget);
+    ui->vsplitter2->insertWidget(0, d->renderWidget);
     ui->hsplitter->addWidget(d->paramWidget);
     ui->tabVertexShader->layout()->addWidget(d->vertexShaderEditor);
     ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
+    ui->channelScrollArea->installEventFilter(this);
+    ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
     prepareEditor(d->vertexShaderEditor);
@@ -301,6 +307,54 @@ void MainWindow::closeEvent(QCloseEvent* e)
         e->ignore();
     }
 }
+
+bool MainWindow::eventFilter(QObject* obj, QEvent* e)
+{
+    if (obj == ui->channelScrollArea) {
+        switch (e->type()) {
+        case QEvent::DragEnter:
+        {
+            QDragEnterEvent* dragEnterEvent = static_cast<QDragEnterEvent *>(e);
+            const QMimeData* const d = dragEnterEvent->mimeData();
+            if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
+                dragEnterEvent->acceptProposedAction();
+            else
+                dragEnterEvent->ignore();
+            return true;
+        }
+        case QEvent::Drop:
+        {
+            QDropEvent* dropEvent = static_cast<QDropEvent*>(e);
+            const QMimeData* const d = dropEvent->mimeData();
+            if (d->hasUrls()) {
+                QString fileUrl = d->urls().first().toString();
+                if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive))) {
+#if defined(WIN32)
+                    QString filename = fileUrl.remove("file:///");
+#else
+                    QString filename = fileUrl.remove("file://");
+#endif
+                    ChannelWidget* channel = new ChannelWidget(filename);
+                    ui->channelLayout->insertWidget(0, channel);
+                }
+            }
+            return true;
+        }
+        case QEvent::DragLeave:
+        {
+            e->accept();
+            return true;
+        }
+        default:
+            break;
+        }
+    }
+    else {
+        // ...
+    }
+    return QObject::eventFilter(obj, e);
+}
+
 
 void MainWindow::valueChanged(int v)
 {

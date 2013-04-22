@@ -21,8 +21,8 @@ class ColorPicker : public QWidget
 public:
     explicit ColorPicker(const QString& name, QWidget* parent = NULL);
     ~ColorPicker();
-    QSize minimumSizeHint(void) { return QSize(16, 16); }
-    QSize sizeHint(void) { return QSize(16, 16); }
+    QSize minimumSizeHint(void) const { return QSize(16, 16); }
+    QSize sizeHint(void) const { return QSize(16, 16); }
 
 protected:
     void paintEvent(QPaintEvent*);

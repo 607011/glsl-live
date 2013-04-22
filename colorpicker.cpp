@@ -61,7 +61,6 @@ void ColorPicker::mousePressEvent(QMouseEvent* e)
 void ColorPicker::setColor(const QColor& color)
 {
     mColorDialog->setCurrentColor(color);
-    qDebug() << "ColorPicker::setColor(" << color << ")";
     emit colorSelected(color);
     update();
 }
