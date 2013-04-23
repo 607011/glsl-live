@@ -242,7 +242,7 @@ void Project::setImage(const QImage& image)
 
 void Project::setChannel(int index, const QImage& img)
 {
-    Q_ASSERT_X(index >= 0 && index < RenderWidget::MAX_TEXTURES, "Project::setChannel()", "image index out of bounds");
+    Q_ASSERT_X(index >= 0 && index < MAX_TEXTURES, "Project::setChannel()", "image index out of bounds");
     Q_UNUSED(img);
     qFatal("NOT IMPLEMENTED YET");
 }

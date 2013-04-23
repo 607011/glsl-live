@@ -18,6 +18,8 @@ class Project : public QObject
     Q_OBJECT
 
 public:
+    static const int MAX_TEXTURES = 8;
+
     explicit Project(QObject* parent = NULL);
     ~Project();
     void reset(void);

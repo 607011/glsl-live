@@ -30,8 +30,6 @@ public:
     explicit RenderWidget(QWidget* parent = NULL);
     ~RenderWidget();
 
-    static const int MAX_TEXTURES = 8;
-
     virtual QSize minimumSizeHint(void) const { return QSize(240, 160); }
     virtual QSize sizeHint(void) const  { return QSize(640, 480); }
     void setShaderSources(const QString& vs, const QString& fs);
@@ -107,10 +105,11 @@ private: // methods
     void startMotion(const QPointF& velocity);
     void stopMotion(void);
 
+
+private:
     typedef void(*glActiveTexture_func)(GLenum);
     glActiveTexture_func glActiveTexture;
 
-private:
     QScopedPointer<RenderWidgetPrivate> d_ptr;
     Q_DECLARE_PRIVATE(RenderWidget)
     Q_DISABLE_COPY(RenderWidget)

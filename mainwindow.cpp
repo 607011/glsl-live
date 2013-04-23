@@ -48,8 +48,8 @@
 #endif
 
 
-static void prepareEditor(AbstractEditor* editor);
-static void clearLayout(QLayout* layout);
+static void prepareEditor(AbstractEditor*);
+static void clearLayout(QLayout*);
 
 
 class MainWindowPrivate {
@@ -66,7 +66,7 @@ public:
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
         , docBrowser(new QTextBrowser)
-        , programHasJustStarted(3)
+        , programHasJustStarted(3) // dirty hack
     {
         for (int i = -9; i < 10; ++i)
             steps << qPow(10, i);

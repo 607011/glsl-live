@@ -19,6 +19,7 @@
 #include <qmath.h>
 #include "renderwidget.h"
 #include "channelwidget.h"
+#include "project.h"
 #include "util.h"
 
 enum { AVERTEX, ATEXCOORD };
@@ -79,13 +80,13 @@ public:
     QGLShader* fragmentShader;
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
-    GLuint inputTextureHandle;
-    GLuint channelHandle[RenderWidget::MAX_TEXTURES];
+    GLuint textureHandle;
+    GLuint channelHandle[Project::MAX_TEXTURES];
     QTime totalTime;
     QTime frameTime;
     QString imgFilename;
     QImage img;
-    QImage channel[RenderWidget::MAX_TEXTURES];
+    QImage channel[Project::MAX_TEXTURES];
     int liveTimerId;
     QPointF mousePos;
     QSizeF resolution;
@@ -97,7 +98,7 @@ public:
     int uLocMouse;
     int uLocResolution;
     int uLocTexture;
-    int uLocChannel[RenderWidget::MAX_TEXTURES];
+    int uLocChannel[Project::MAX_TEXTURES];
     int uLocMarks;
     int uLocMarksCount;
     bool updateImageGL;
@@ -179,15 +180,17 @@ const int RenderWidgetPrivate::NumKineticDataSamples = 4;
 
 RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SingleBuffer | QGL::NoDepthBuffer | QGL::AlphaChannel | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers | QGL::HasOverlay | QGL::NoSampleBuffers), parent)
+    , glActiveTexture(NULL)
     , d_ptr(new RenderWidgetPrivate)
 {
+    Q_D(RenderWidget);
     setFocusPolicy(Qt::StrongFocus);
     setMouseTracking(true);
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
     setAcceptDrops(true);
     setCursor(Qt::OpenHandCursor);
-    d_ptr->totalTime.start();
-    d_ptr->frameTime.start();
+    d->totalTime.start();
+    d->frameTime.start();
 }
 
 RenderWidget::~RenderWidget()
@@ -198,9 +201,10 @@ RenderWidget::~RenderWidget()
 
 void RenderWidget::enableAlpha(bool enabled)
 {
+    Q_D(RenderWidget);
     makeCurrent();
-    d_ptr->alphaEnabled = enabled;
-    if (d_ptr->alphaEnabled) {
+    d->alphaEnabled = enabled;
+    if (d->alphaEnabled) {
         glEnable(GL_ALPHA_TEST);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -213,26 +217,30 @@ void RenderWidget::enableAlpha(bool enabled)
 
 void RenderWidget::enableImageRecycling(bool enabled)
 {
-    d_ptr->imageRecyclingEnabled = enabled;
+    Q_D(RenderWidget);
+    d->imageRecyclingEnabled = enabled;
     update();
 }
 
 void RenderWidget::enableInstantUpdate(bool enabled)
 {
-    d_ptr->instantUpdate = enabled;
+    Q_D(RenderWidget);
+    d->instantUpdate = enabled;
     update();
 }
 
 void RenderWidget::setBackgroundColor(const QColor& color)
 {
+    Q_D(RenderWidget);
     makeCurrent();
-    d_ptr->backgroundColor = color;
+    d->backgroundColor = color;
     qglClearColor(color);
 }
 
 void RenderWidget::feedbackOneFrame(void)
 {
-    d_ptr->goAheadOneFrame = true;
+    Q_D(RenderWidget);
+    d->goAheadOneFrame = true;
     update();
 }
 
@@ -309,13 +317,15 @@ void RenderWidget::setImage(const QImage& img)
         makeImageFBO();
     }
     makeCurrent();
-    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
+    if (glActiveTexture)
+        glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, d->textureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
 }
 
 void RenderWidget::setChannel(int index, const QImage& img)
 {
-    Q_ASSERT_X(index >= 0 && index < MAX_TEXTURES, "RenderWidget::setChannel()", "image index out of bounds");
+    Q_ASSERT_X(index >= 0 && index < Project::MAX_TEXTURES, "RenderWidget::setChannel()", "image index out of bounds");
     Q_D(RenderWidget);
     d->channel[index] = img.convertToFormat(QImage::Format_ARGB32);
     makeCurrent();
@@ -362,7 +372,7 @@ void RenderWidget::updateUniforms(void)
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     d->shaderProgram->setUniformValue(d->uLocTexture, 0);
-    for (int i = 0; i < MAX_TEXTURES; ++i)
+    for (int i = 0; i < Project::MAX_TEXTURES; ++i)
         d->shaderProgram->setUniformValue(d->uLocChannel[i], 1 + i);
     d->shaderProgram->setUniformValueArray(d->uLocMarks, d->marks.data(), d->marks.size());
     d->shaderProgram->setUniformValue(d->uLocMarksCount, d->marks.size());
@@ -436,7 +446,7 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 
     d->uLocT = d->shaderProgram->uniformLocation("uT");
     d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
-    for (int i = 0; i < MAX_TEXTURES; ++i)
+    for (int i = 0; i < Project::MAX_TEXTURES; ++i)
         d->uLocChannel[i] = d->shaderProgram->uniformLocation(ChannelWidget::channelName(i));
     d->uLocMouse = d->shaderProgram->uniformLocation("uMouse");
     d->uLocResolution = d->shaderProgram->uniformLocation("uResolution");
@@ -535,6 +545,8 @@ void RenderWidget::configureTexture(void)
 {
     Q_D(RenderWidget);
     makeCurrent();
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     if (d->clampToBorder) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
@@ -563,18 +575,14 @@ void RenderWidget::initializeGL(void)
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
-    glGenTextures(1, &d->inputTextureHandle);
+    glGenTextures(1, &d->textureHandle);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glBindTexture(GL_TEXTURE_2D, d->textureHandle);
     configureTexture();
-    glGenTextures(MAX_TEXTURES, d->channelHandle);
-    for (int i = 0; i < MAX_TEXTURES; ++i) {
+    glGenTextures(Project::MAX_TEXTURES, d->channelHandle);
+    for (int i = 0; i < Project::MAX_TEXTURES; ++i) {
         glActiveTexture(GL_TEXTURE1 + i);
         glBindTexture(GL_TEXTURE_2D, d->channelHandle[i]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         configureTexture();
     }
 }
@@ -614,7 +622,7 @@ void RenderWidget::paintGL(void)
     d->shaderProgram->setAttributeArray(ATEXCOORD, TexCoords);
     glViewport(d->viewport.x(), d->viewport.y(), d->viewport.width(), d->viewport.height());
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, d->inputTextureHandle);
+    glBindTexture(GL_TEXTURE_2D, d->textureHandle);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     if (d->imageRecyclingEnabled || d->goAheadOneFrame) {
@@ -770,8 +778,7 @@ void RenderWidget::wheelEvent(QWheelEvent* e)
 
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)
 {
-    const QMimeData* const d = e->mimeData();
-    if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
+    if (e->mimeData()->hasUrls() && e->mimeData()->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
         e->acceptProposedAction();
     else
         e->ignore();
@@ -784,9 +791,8 @@ void RenderWidget::dragLeaveEvent(QDragLeaveEvent* e)
 
 void RenderWidget::dropEvent(QDropEvent* e)
 {
-    const QMimeData* const d = e->mimeData();
-    if (d->hasUrls()) {
-        QString fileUrl = d->urls().first().toString();
+    if (e->mimeData()->hasUrls()) {
+        QString fileUrl = e->mimeData()->urls().first().toString();
         if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
 #if defined(WIN32)
             loadImage(fileUrl.remove("file:///"));
