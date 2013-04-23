@@ -10,5 +10,7 @@
     </qresource>
     <qresource prefix="/images">
         <file alias="checkered.png">images/checkered-background.png</file>
+        <file>images/glsl-live.ico</file>
+        <file>images/twirl.png</file>
     </qresource>
 </RCC>

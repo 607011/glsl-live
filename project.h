@@ -48,6 +48,8 @@ public:
     const QColor& backgroundColor(void) const;
     bool hasImage(void) const;
 
+    static bool isEmpty(const QImage&);
+
 public slots:
     void enableAlpha(bool enabled = true);
     void enableImageRecycling(bool enabled = true);

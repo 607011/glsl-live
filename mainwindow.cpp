@@ -93,6 +93,7 @@ public:
     static const int MaxRecentFiles = 16;
     QAction* recentProjectsActs[MaxRecentFiles];
     QString lastImageOpenDir;
+    QString lastImageSaveDir;
     QString lastProjectOpenDir;
     QString lastProjectSaveDir;
     int programHasJustStarted;
@@ -378,10 +379,12 @@ void MainWindow::reloadImage(void)
 
 void MainWindow::saveImageSnapshot(void)
 {
-    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save image snapshot"), QString(), tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
+    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save image snapshot"), d_ptr->lastImageSaveDir, tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
     if (filename.isNull())
         return;
-    d_ptr->renderWidget->resultImage().save(filename);
+    bool ok = d_ptr->renderWidget->resultImage().save(filename);
+    if (ok)
+        d_ptr->lastImageSaveDir = QFileInfo(filename).path();
 }
 
 void MainWindow::batchProcess(void)

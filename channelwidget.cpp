@@ -23,7 +23,8 @@ public:
     {
         reset();
     }
-    void reset(void) {
+    void reset(void)
+    {
         type = ChannelWidget::None;
         image = QImage(":/images/checkered.png");
         filename = QString();
@@ -142,8 +143,12 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     Q_D(ChannelWidget);
     const QPoint& globalPos = mapToGlobal(p);
     QMenu menu;
-    menu.addAction(tr("Remove"));
+    if (!d->image.isNull())
+        menu.addAction(tr("Remove"));
+    menu.addAction(tr("Use webcam"));
     QAction* selectedItem = menu.exec(globalPos);
+    if (selectedItem == NULL)
+        return;
     if (selectedItem->text() == tr("Remove")) {
         emit imageDropped(d->index, QImage());
         d->reset();

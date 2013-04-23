@@ -3,10 +3,20 @@
 
 QT += core gui opengl xml
 
+CONFIG += scripting
+# CONFIG += multimedia
+
+multimedia {
+QT += multimedia
+DEFINES += ENABLE_CAMERA ENABLE_SOUND
+}
+
 TARGET = GLSL-Live-Coder
 TEMPLATE = app
 
-# CONFIG += scripting
+win32 {
+RC_FILE = glsl-live.rc
+}
 
 scripting {
 QT += script
@@ -66,4 +76,5 @@ OTHER_FILES += \
     LICENSE.txt \
     README.txt \
     doc/index.html \
-    examples/default.xml
+    examples/default.xml \
+    glsl-live.rc

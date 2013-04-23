@@ -28,44 +28,39 @@ h1, h2, h3, h4, h5 {
 <a name="start"></a>
 <h1>GLSL Live Coder</h1>
 
-<p class="intro">Mit dieser Software können Sie in GLSL geschriebene
-OpenGL-1.x-Vertex- und -Fragment-Shader in Echtzeit ausprobieren.
-Jede Änderung im Code wird sofort sichtbar.</p>
-
+<p class="intro">Mit dieser Software können Sie in GLSL geschriebene OpenGL-Vertex- und -Fragment-Shader in Echtzeit ausprobieren. Jede Änderung im Code wird sofort sichtbar.</p>
 
 <a name="disclaimer"></a>
 <h2>Nutzungshinweise</h2>
 
-<p style="font-weight: bold">Die Software <em>GLSL Live Coder</em>
-wurde zu Lehr-, Lern- und Demonstrationszwecken geschaffen und ist
-nicht für den produktiven Einsatz vorgesehen. Der Autor und der Heise
-Zeitschriften Verlag haften nicht für Schäden, die aus der Nutzung
-der Software entstehen, und übernehmen keine Gewähr für ihre
-Vollständigkeit, Fehlerfreiheit und Eignung für einen bestimmten
-Zweck.</p>
+<p style="font-weight: bold">Die Software <em>GLSL Live Coder</em> wurde zu Lehr-, Lern- und Demonstrationszwecken geschaffen und ist nicht für den produktiven Einsatz vorgesehen. Der Autor und der Heise Zeitschriften Verlag haften nicht für Schäden, die aus der Nutzung der Software entstehen, und übernehmen keine Gewähr für ihre Vollständigkeit, Fehlerfreiheit und Eignung für einen bestimmten Zweck.</p>
 
-<p>Falls Sie beabsichtigen, den Code in eigenen Produkten zu
-verwenden, so ist das im Rahmen der GPL&nbsp;v3
-(<a href="#license">s.u.</a>) kostenfrei gestattet.</p>
+<p>Falls Sie beabsichtigen, den Code in eigenen Produkten zu verwenden, so ist das im Rahmen der GPL&nbsp;v3 (<a href="#license">s.u.</a>) kostenfrei gestattet.</p>
 
-<p>Copyright &copy; 2013 Oliver Lau
-&lt;<a href="mailto:ola@ct.de">ola@ct.de</a>&gt;,
-Heise Zeitschriften Verlag.</p>
+<p>Copyright &copy; 2013 Oliver Lau &lt;<a href="mailto:ola@ct.de">ola@ct.de</a>&gt;, Heise Zeitschriften Verlag.</p>
 
 <a name="bedienung"></a>
 <h2>Bedienung</h2>
 
-<h3>Markierungen setzen/löschen</h3>
+<p><strong>Projekte laden und speichern</strong> Sie über den betreffenden "Datei"-Menüpunkt. Projektdateien liegen im XML-Format vor. Sie enthalten die Shader-Codes, die (base64-kodierten) Daten des gegebenenfalls verwendeten Bildes und die Einstellungen aus dem Optionen-Menü.</p>
 
-<p>Markieren von Punkten innerhalb des GL-Viewport (<a href="#uMarks">siehe <code>uMarks[]</code>/<code>uMarksCount</code></a>) per Alt-Linkslick.</p>
+<p><strong>Bilder als Textur verwenden:</strong> Ein Bild gelangt am einfachsten per Drag&nbsp;&amp;&nbsp;Drop in das OpenGL-Fenster. Sie können das aber auch per Menü via "Datei/Bild laden" tun. Mit gedrückter Maustaste können Sie das Bild innerhalb des Fensters verschieben, per Scrollrad zoomen. Falls Sie das Bild aus dem Sichtbereich geschubst haben sollten, stellt ein Druck auf die Esc-Taste die Zoomstufe auf 100&nbsp;Prozent und schiebt das Bild zurück in die Fenstermitte. Weitere Bilder können Sie laden, indem Sie sie in einen der acht Kästen unterhalb des OpenGL-Fensters</p>
 
-<p>Löschen aller markierten Punkten innerhalb des GL-Viewport per Alt-Rechtsklick.</p>
+<p><strong>Hintergrundfarbe:</strong> Mit "Optionen/Hintergrundfarbe wählen&nbsp;&hellip;" stellen Sie die Hintergrundfarbe des OpenGL-Fensters ein. Das ist etwa nützlich, wenn Sie mit Transparenz arbeiten und ohne Änderung am Shader-Code feststellen wollen, wie das Shader-Ergebnis auf einem anders als schwarz eingefärbten Hintergrund aussieht. Möchten Sie Transparenz ignorieren, schalten Sie einfach die Option "Alpha-Kanal verwenden" ab.</p>
+
+<p><strong>Zeichenintervall:</strong> In der Voreinstellung wird das OpenGL-Fenster zeitgesteuert etwa 30 Mal pro Sekunde neugezeichnet. Zum Anhalten deaktivieren Sie "Optionen/Timer aktiv". Wenn Sie "Schnellstmögliche Updates" aktivieren, wird ohne Unterlass gezeichnet. Achtung, das kann den Rechner lahmlegen, obwohl es nur wenig CPU-Zeit beansprucht.</p>
+
+<p><strong>Textur festklemmen/wiederholen:</strong> Standardmäßig klemmt das Bild (die Textur) an den Rändern fest (<code>glTexParameteri(GL_TEXTURE_2D, &hellip;, GL_CLAMP)</code>). Zugriffe auf Texel außerhalb des Texturkoordinatenbereichs liefern die Farbe des jeweils randständigsten Texels. Schalten Sie dieses Verhalten über Deaktivieren der Option "Bild an Rändern fixieren" aus, verhält sich die Bildebene wie ein Torus: Der Ganzzahlanteil der Koordinate wird ignoriert, die Textur wiederholt sich in alle Richtung unendlich oft (<code>glTexParameteri(GL_TEXTURE_2D, &hellip;, GL_REPEAT)</code>).</p>
+
+<p><strong>Shader-Ergebnis in Textur kopieren:</strong> Normalerweise verarbeitet das Shader-Programm das immer gleiche, ursprünglich geladene Ausgangsbild. Die Option "Bild zurückspeisen" sorgt dafür, dass das gezeichnete Bild in die Textur für den nächsten Zeichenvorgang kopiert wird. Das geschieht per <code>glCopyTexImage2D()</code> direkt und schnell auf der Grafikkarte. Diese Option eignet sich demnach zur Umsetzung zellulärer Automaten, bei denen die nächste Generation von der aktuellen abhängt (siehe die Beispieldatei "game-of-life.xml").</p>
+
+<p><strong>Markierungen setzen/löschen:</strong> Sie können innerhalb des GL-Viewport per Mausklick Punkte markieren, wenn Sie beim Klicken die Alt-Taste gedrückt halten. Die Koordinaten landen in <code>uMarks[]</code>, die Anzahl der gesetzten Markieung in <code>uMarksCount</code> (<a href="#uMarks">s.u.</a>). Zum Löschen aller markierten Punkten klicken Sie mit der Maus bei gehaltener Alt-Taste in den GL-Viewport.</p>
 
 <h3>Vordefinierte Shader-Variablen</h3>
 
 <dl>
     <dt><code>uniform float uT</code></dt>
-    <dd>verstrichene Sekunden seit Start der Anwendung</dd>
+    <dd>enthält die seit dem Programmstart verstrichenen Sekunden (mit Sekundenbruchteilen). <code>uT</code> eignet sich damit trefflich für Animationen, in denen Koordinaten oder Farbanteile mit der Zeit variieren, hübsch anzuschauen etwa im Beispielprojekt "spotlight-by-rasmuskaae.xml".</dd>
 
     <dt><code>uniform vec2 uResolution</code></dt>
     <dd>Größe des OpenGL-Viewport in Pixeln (Breite &times; Höhe)</dd>
@@ -77,12 +72,10 @@ Heise Zeitschriften Verlag.</p>
     <dd>Die per Drag'n'Drop in die unteren acht Rahmen gezogenen Bilder</dd>
 
     <dt><code>uniform vec2 uMouse</code></dt>
-    <dd>Aktuelle Mauskoordinaten in Pixeln innerhalb des
-        OpenGL-Viewport; der Ursprung liegt links oben</dd>
+    <dd>Hieraus kann der Fragment-Shader die aktuellen Mauskoordinaten in Pixeln innerhalb des OpenGL-Viewport (tatsächliche Bildschirmdarstellung) auslesen, wobei der Ursprung links oben liegt.</dd>
 
     <dt><a name="uMarks"></a><code>uniform vec2 uMarks[]</code></dt>
-    <dd>Koordinaten markierter Punkte innerhalb der Textur;
-        links oben liegt (0;0), rechts unten (1;1)</dd>
+    <dd>Koordinaten markierter Punkte innerhalb der Textur; links oben liegt (0,&nbsp;0), rechts unten (1,&nbsp;1)</dd>
 
     <dt><code>uniform int uMarksCount</code></dt>
     <dd>Anzahl der Markierungen</dd>

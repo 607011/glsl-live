@@ -646,6 +646,7 @@ void RenderWidget::keyPressEvent(QKeyEvent* e)
     if (e->modifiers() & Qt::AltModifier) {
         setCursor(Qt::ArrowCursor);
     }
+    e->accept();
 }
 
 void RenderWidget::keyReleaseEvent(QKeyEvent* e)
@@ -659,6 +660,7 @@ void RenderWidget::keyReleaseEvent(QKeyEvent* e)
         break;
     }
     setCursor(Qt::OpenHandCursor);
+    e->accept();
 }
 
 void RenderWidget::timerEvent(QTimerEvent* e)
@@ -728,6 +730,7 @@ void RenderWidget::mousePressEvent(QMouseEvent* e)
     default:
         break;
     }
+    e->accept();
 }
 
 void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
@@ -764,6 +767,7 @@ void RenderWidget::mouseReleaseEvent(QMouseEvent* e)
         break;
     }
     setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::OpenHandCursor);
+    e->accept();
 }
 
 void RenderWidget::wheelEvent(QWheelEvent* e)
@@ -774,6 +778,7 @@ void RenderWidget::wheelEvent(QWheelEvent* e)
     double f = e->delta() * (e->modifiers() & Qt::ControlModifier)? 0.1 : 0.05;
     d->scale *= (e->delta() < 0)? 1-f : 1+f;
     updateViewport();
+    e->accept();
 }
 
 void RenderWidget::dragEnterEvent(QDragEnterEvent* e)

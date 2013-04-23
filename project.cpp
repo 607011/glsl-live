@@ -8,6 +8,7 @@
 #include <QTextCodec>
 #include <QtCore/QDebug>
 #include <QByteArray>
+#include <QVariant>
 #include "renderwidget.h"
 #include "project.h"
 #include "main.h"
@@ -27,6 +28,7 @@ public:
     QString fragmentShaderSource;
     QString scriptSource;
     QImage image;
+    QVariant channel[Project::MAX_TEXTURES];
     QColor backgroundColor;
     bool alphaEnabled;
     bool imageRecyclingEnabled;
@@ -52,6 +54,8 @@ void Project::reset(void)
     d->filename = QString();
     d->vertexShaderSource = QString();
     d->fragmentShaderSource = QString();
+    for (int i = 0; i < MAX_TEXTURES; ++i)
+        d->channel[i] = QVariant();
 }
 
 bool Project::save(void)
@@ -95,16 +99,34 @@ bool Project::save(const QString& filename)
 #ifdef SCRIPTING_ENABLED
         << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n";
 #endif
+    out << "  <input>\n";
     if (hasImage()) {
         QByteArray ba;
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
         d->image.save(&buffer, "PNG");
         buffer.close();
-        out << "  <input>\n";
         out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
-        out << "  </input>\n";
     }
+    for (int i = 0; i < MAX_TEXTURES; ++i) {
+        const QVariant& ch = d->channel[i];
+        if (!ch.isNull() && ch.isValid()) {
+            switch (ch.type()) {
+            case QVariant::Image: {
+                QByteArray ba;
+                QBuffer buffer(&ba);
+                buffer.open(QIODevice::WriteOnly);
+                d->image.save(&buffer, "PNG");
+                buffer.close();
+                out << "    <channel id=\"" << i << "\">![CDATA[" << ba.toBase64() << "]]></channel>\n";
+            }
+            default:
+                qWarning() << "invalid type (" << ch.type() << ") in channel" << i;
+                break;
+            }
+        }
+    }
+    out << "  </input>\n";
     out << "  <options>\n"
         << "    <clamp>" << d->borderClamping << "</clamp>\n"
         << "    <backgroundcolor>" << d->backgroundColor << "</backgroundcolor>\n"
@@ -243,6 +265,7 @@ void Project::setImage(const QImage& image)
 void Project::setChannel(int index, const QImage& img)
 {
     Q_ASSERT_X(index >= 0 && index < MAX_TEXTURES, "Project::setChannel()", "image index out of bounds");
+    Q_UNUSED(index);
     Q_UNUSED(img);
     qFatal("NOT IMPLEMENTED YET");
 }
@@ -541,13 +564,18 @@ const QColor& Project::backgroundColor(void) const
 
 bool Project::hasImage(void) const
 {
-    if (d_ptr->image.isNull())
-        return false;
+    return isEmpty(d_ptr->image);
+}
+
+bool Project::isEmpty(const QImage& img)
+{
+    if (img.isNull())
+        return true;
     // check if image is really empty (transparent)
     bool totallyTransparent = true;
-    const QRgb* imgData = reinterpret_cast<QRgb*>(d_ptr->image.bits());
-    const QRgb* const imgDataEnd = imgData + d_ptr->image.byteCount() / sizeof(QRgb);
-    while (imgData < imgDataEnd && totallyTransparent)
+    const QRgb* imgData = reinterpret_cast<const QRgb*>(img.bits());
+    const QRgb* const imgDataEnd = imgData + img.byteCount() / sizeof(QRgb);
+    while (totallyTransparent && imgData < imgDataEnd)
         totallyTransparent = totallyTransparent && (*imgData++ == 0);
-    return !totallyTransparent;
+    return totallyTransparent;
 }
