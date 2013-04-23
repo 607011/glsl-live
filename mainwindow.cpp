@@ -142,8 +142,8 @@ MainWindow::MainWindow(QWidget* parent)
     prepareEditor(d->fragmentShaderEditor);
 
     for (int i = 0; i < 8; ++i) {
-        ChannelWidget* cw = new ChannelWidget(QString("uChannel%1").arg(i));
-        QObject::connect(cw, SIGNAL(imageDropped(QImage)), d->renderWidget, SLOT(setImage(QImage)));
+        ChannelWidget* cw = new ChannelWidget(i);
+        QObject::connect(cw, SIGNAL(imageDropped(int,QImage)), d->renderWidget, SLOT(setChannel(int,QImage)));
         ui->channelLayout->addWidget(cw);
     }
     ui->channelLayout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::MinimumExpanding, QSizePolicy::Preferred));

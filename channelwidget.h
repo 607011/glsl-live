@@ -28,7 +28,7 @@ public:
         Data3D
     };
 
-    explicit ChannelWidget(const QString& name, QWidget* parent = NULL);
+    explicit ChannelWidget(int index, QWidget* parent = NULL);
     ~ChannelWidget();
     QSize minimumSizeHint(void) const { return QSize(40, 40); }
     QSize sizeHint(void) const { return QSize(80, 80); }
@@ -36,7 +36,10 @@ public:
     int heightForWidth(int w) const { return w; }
 
     void load(const QString& filename, Type = Auto);
-    
+    int index(void) const;
+
+    static QString channelName(int);
+
 protected:
     void paintEvent(QPaintEvent*);
     void dragEnterEvent(QDragEnterEvent*);
@@ -44,7 +47,7 @@ protected:
     void dropEvent(QDropEvent*);
 
 signals:
-    void imageDropped(const QImage&);
+    void imageDropped(int index, const QImage&);
 
 public slots:
 

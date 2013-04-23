@@ -37,6 +37,7 @@ public:
     void setFragmentShaderSource(const QString&);
     void setScriptSource(const QString&);
     void setImage(const QImage&);
+    void setChannel(int index, const QImage&);
     void setFilename(const QString&);
     bool alphaEnabled(void) const;
     bool imageRecyclingEnabled(void) const;

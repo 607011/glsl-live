@@ -30,6 +30,8 @@ public:
     explicit RenderWidget(QWidget* parent = NULL);
     ~RenderWidget();
 
+    static const int MAX_TEXTURES = 8;
+
     virtual QSize minimumSizeHint(void) const { return QSize(240, 160); }
     virtual QSize sizeHint(void) const  { return QSize(640, 480); }
     void setShaderSources(const QString& vs, const QString& fs);
@@ -40,6 +42,7 @@ public:
     const QString& imageFileName(void) const;
     bool loadImage(const QString& fileName);
     const QImage& image(void) const;
+    void setImage(const QImage& = QImage());
     void setUniformValue(const QString& name, int value);
     void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);
@@ -58,7 +61,7 @@ public:
     bool build(void);
 
 public slots:
-    void setImage(const QImage& = QImage());
+    void setChannel(int index, const QImage& = QImage());
     void setScale(double factor);
     void fitImageToWindow(void);
     void resizeToOriginalImageSize(void);

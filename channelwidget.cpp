@@ -41,7 +41,8 @@ ChannelWidget::ChannelWidget(int index, QWidget* parent)
 {
     Q_D(ChannelWidget);
     d->index = index;
-    setObjectName(QString("uChannel%1").arg(index));
+    const QString& name = channelName(index);
+    setObjectName(name);
     setToolTip(name);
     QSizePolicy sp(QSizePolicy::Preferred, QSizePolicy::Preferred);
     sp.setHeightForWidth(true);
@@ -67,6 +68,11 @@ void ChannelWidget::load(const QString& filename, ChannelWidget::Type type)
     d->type = type;
     setToolTip(filename);
     update();
+}
+
+int ChannelWidget::index(void) const
+{
+    return d_ptr->index;
 }
 
 void ChannelWidget::paintEvent(QPaintEvent*)
@@ -103,8 +109,7 @@ void ChannelWidget::paintEvent(QPaintEvent*)
 
 void ChannelWidget::dragEnterEvent(QDragEnterEvent* e)
 {
-    const QMimeData* const d = e->mimeData();
-    if (d->hasUrls() && d->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
+    if (e->mimeData()->hasUrls() && e->mimeData()->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
         e->acceptProposedAction();
     else
         e->ignore();
@@ -117,9 +122,9 @@ void ChannelWidget::dragLeaveEvent(QDragLeaveEvent* e)
 
 void ChannelWidget::dropEvent(QDropEvent* e)
 {
-    const QMimeData* const d = e->mimeData();
-    if (d->hasUrls()) {
-        QString fileUrl = d->urls().first().toString();
+    Q_D(ChannelWidget);
+    if (e->mimeData()->hasUrls()) {
+        QString fileUrl = e->mimeData()->urls().first().toString();
         if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive))) {
 #if defined(WIN32)
             QString filename = fileUrl.remove("file:///");
@@ -127,7 +132,7 @@ void ChannelWidget::dropEvent(QDropEvent* e)
             QString filename = fileUrl.remove("file://");
 #endif
             load(filename);
-            emit imageDropped(d_ptr->image);
+            emit imageDropped(d->index, d->image);
         }
     }
 }
@@ -140,7 +145,14 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     menu.addAction(tr("Remove"));
     QAction* selectedItem = menu.exec(globalPos);
     if (selectedItem->text() == tr("Remove")) {
+        emit imageDropped(d->index, QImage());
         d->reset();
         update();
     }
 }
+
+QString ChannelWidget::channelName(int index)
+{
+    return QString("uChannel%1").arg(index);
+}
+

@@ -8,6 +8,7 @@
 #include <QTextCodec>
 #include <QtCore/QDebug>
 #include <QByteArray>
+#include "renderwidget.h"
 #include "project.h"
 #include "main.h"
 
@@ -237,6 +238,13 @@ void Project::setImage(const QImage& image)
 {
     d_ptr->image = image;
     setDirty();
+}
+
+void Project::setChannel(int index, const QImage& img)
+{
+    Q_ASSERT_X(index >= 0 && index < RenderWidget::MAX_TEXTURES, "Project::setChannel()", "image index out of bounds");
+    Q_UNUSED(img);
+    qFatal("NOT IMPLEMENTED YET");
 }
 
 void Project::setFilename(const QString& filename)
