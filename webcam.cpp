@@ -97,7 +97,7 @@ bool Webcam::getFrame(QImage& img, int* effectiveframenumber, int* effectivefram
 
 void Webcam::getRawFrame(const uchar*& data, int& w, int& h) const
 {
-    if (d_ptr->webcam) {
+    if (d_ptr->webcam && d_ptr->webcam->isOpened()) {
         d_ptr->webcam->read(d_ptr->frame);
         w = d_ptr->frame.cols;
         h = d_ptr->frame.rows;

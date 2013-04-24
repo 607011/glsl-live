@@ -10,9 +10,8 @@ CONFIG += opencv
 opencv {
 DEFINES += WITH_OPENCV
 LIBS += -L$${OPENCVDIR}/lib -lopencv_core245 -lopencv_highgui245
-QMAKE_CXXFLAGS += -ID:\Developer\opencv\build\include -ID:\Developer\opencv\build\include\opencv -ID:\Developer\opencv\build\include\opencv2
+QMAKE_CXXFLAGS += -ID:/Developer/opencv/build/include -ID:/Developer/opencv/build/include/opencv -ID:/Developer/opencv/build/include/opencv2
 DEFINES += _CRT_SECURE_NO_WARNINGS
-# set LIB and INCLUDE accordingly in Qt Creator's build configuration, PATH in run configuration
 }
 
 multimedia {
