@@ -214,6 +214,7 @@ MainWindow::MainWindow(QWidget* parent)
     for (int i = 0; i < Project::MAX_TEXTURES; ++i) {
         d->channelWidget[i] = new ChannelWidget(i);
         QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), SLOT(imageDropped(int, QImage)));
+        QObject::connect(d->channelWidget[i], SIGNAL(rawFrameReady(const uchar*, int, int, int)), SLOT(frameDropped(const uchar*, int, int, int)));
         ui->channelLayout->addWidget(d->channelWidget[i]);
     }
     restoreSettings();
@@ -384,6 +385,12 @@ void MainWindow::imageDropped(int index, const QImage& img)
     d->renderWidget->setChannel(index, img);
     d->project->setChannel(index, img);
     processShaderChange();
+}
+
+void MainWindow::frameDropped(const uchar* data, int w, int h, int index)
+{
+    Q_D(MainWindow);
+    d->renderWidget->setChannel(index, data, w, h);
 }
 
 void MainWindow::reloadImage(void)

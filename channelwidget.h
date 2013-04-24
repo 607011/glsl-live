@@ -45,9 +45,11 @@ protected:
 
 signals:
     void imageDropped(int index, const QImage&);
+    void rawFrameReady(const uchar* data, int w, int h, int index);
 
 public slots:
     void setImage(const QImage&);
+    void setFrame(const uchar*, int, int);
 
 private slots:
     void showContextMenu(const QPoint&);

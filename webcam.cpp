@@ -26,6 +26,7 @@ public:
     QSize frameSize;
     int frameNumber;
     int frameTime;
+    cv::Mat frame;
 };
 
 Webcam::Webcam(QObject* parent)
@@ -47,7 +48,7 @@ bool Webcam::open(int deviceId)
     d->webcam = new cv::VideoCapture(deviceId);
     if (d->webcam->isOpened()) {
         cv::Mat frame;
-        *d->webcam >> frame;
+        d->webcam->read(frame);
         d->frameSize = QSize((int)d->webcam->get(CV_CAP_PROP_FRAME_WIDTH), (int)d->webcam->get(CV_CAP_PROP_FRAME_HEIGHT));
         return !d->frameSize.isNull();
     }
@@ -62,22 +63,21 @@ bool Webcam::isOpen(void) const
 void Webcam::close(void)
 {
     Q_D(Webcam);
-    if (d->webcam)
-        d_ptr->webcam->release();
+    if (d->webcam && d->webcam->isOpened())
+        d->webcam->release();
 }
 
 bool Webcam::seekNextFrame(int)
 {
     Q_D(Webcam);
     Q_ASSERT(d->webcam != NULL);
-    cv::Mat frame;
-    *d->webcam >> frame;
-    const int w = frame.cols;
-    const int h = frame.rows;
-    d->lastFrame = QImage(w, h, QImage::Format_RGB888);
+    d->webcam->read(d->frame);
+    const int w = d->frame.cols;
+    const int h = d->frame.rows;
+    if (d->lastFrame.size() != QSize(w, h))
+        d->lastFrame = QImage(w, h, QImage::Format_RGB888);
     for (int y = 0; y < h; ++y)
-        memcpy(d->lastFrame.scanLine(y), frame.ptr(y), 3*w);
-    d->lastFrame = d->lastFrame.rgbSwapped().mirrored(true, false);
+        memcpy(d->lastFrame.scanLine(y), d->frame.ptr(y), 3*w);
     ++d->frameNumber;
     ++d->frameTime; // XXX
     return true;
@@ -93,6 +93,21 @@ bool Webcam::getFrame(QImage& img, int* effectiveframenumber, int* effectivefram
     if (effectiveframetime)
         *effectiveframetime = d->frameTime;
     return true;
+}
+
+void Webcam::getRawFrame(const uchar*& data, int& w, int& h) const
+{
+    if (d_ptr->webcam) {
+        d_ptr->webcam->read(d_ptr->frame);
+        w = d_ptr->frame.cols;
+        h = d_ptr->frame.rows;
+        data = d_ptr->frame.data;
+    }
+    else {
+        data = NULL;
+        w = 0;
+        h = 0;
+    }
 }
 
 void Webcam::setSize(const QSize& sz)

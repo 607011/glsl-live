@@ -16,10 +16,8 @@
 #include "channelwidget.h"
 #include "util.h"
 
-#ifdef WITH_OPENCV
 #include "webcam.h"
 #include "webcamthread.h"
-#endif
 
 
 class ChannelWidgetPrivate
@@ -35,7 +33,7 @@ public:
     }
     ~ChannelWidgetPrivate()
     {
-//        safeDelete(webcam);
+        // safeDelete(webcam);
     }
 
     void reset(void)
@@ -51,7 +49,7 @@ public:
     int index;
     bool camActive;
 
-    Webcam* decoder(void)
+    inline Webcam* decoder(void)
     {
         if (webcam == NULL) {
             webcam = new Webcam;
@@ -62,12 +60,11 @@ public:
 
     void turnOffWebcam(void)
     {
-        if (webcam->isOpen()) {
+        if (webcam->isOpen())
             webcam->close();
-        }
     }
 
-    WebcamThread* decoderThread(void)
+    inline WebcamThread* decoderThread(void)
     {
         if (webcamThread == NULL)
             webcamThread = new WebcamThread(decoder());
@@ -95,7 +92,6 @@ ChannelWidget::ChannelWidget(int index, QWidget* parent)
     setAcceptDrops(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(showContextMenu(QPoint)));
-
 }
 
 ChannelWidget::~ChannelWidget()
@@ -109,7 +105,11 @@ void ChannelWidget::setImage(const QImage& img)
     d->image = img;
     d->type = Image;
     update();
-    emit imageDropped(d->index, d->image);
+}
+
+void ChannelWidget::setFrame(const uchar* data, int w, int h)
+{
+    emit rawFrameReady(data, w, h, d_ptr->index);
 }
 
 void ChannelWidget::load(const QString& filename, ChannelWidget::Type type)
@@ -142,9 +142,9 @@ void ChannelWidget::paintEvent(QPaintEvent*)
         const qreal windowAspect = qreal(width()) / height();
         QRect r = (imageAspect > windowAspect)
                 ? QRect(1, (height() - height() / imageAspect) / 2,
-                         width() - 2, height() / imageAspect - 2)
+                        width() - 2, height() / imageAspect - 2)
                 : QRect(1 + (width() - width() * imageAspect) / 2, 1,
-                         width() * imageAspect - 2, height() - 2);
+                        width() * imageAspect - 2, height() - 2);
         p.setRenderHint(QPainter::Antialiasing);
         p.drawImage(r, d->image);
         break;
@@ -196,10 +196,8 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     QMenu menu;
     if (!d->image.isNull())
         menu.addAction(tr("Remove"));
-#ifdef WITH_OPENCV
     if (d->webcam == NULL)
         menu.addAction(tr("Use webcam"));
-#endif
     QAction* selectedItem = menu.exec(globalPos);
     if (selectedItem == NULL)
         return;
@@ -211,7 +209,8 @@ void ChannelWidget::showContextMenu(const QPoint& p)
         update();
     }
     else if (selectedItem->text() == tr("Use webcam")) {
-        connect(d->decoderThread(), SIGNAL(frameReady(QImage)), SLOT(setImage(QImage)));
+        QObject::connect(d->decoderThread(), SIGNAL(frameReady(QImage)), SLOT(setImage(QImage)));
+        QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int)), SLOT(setFrame(const uchar*, int, int)));
         d->decoderThread()->startReading();
     }
 }

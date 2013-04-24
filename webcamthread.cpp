@@ -57,10 +57,11 @@ void WebcamThread::run(void)
 {
     Q_D(WebcamThread);
     Q_ASSERT(d->webcam != NULL);
-    QImage frame;
-    int framenumber = 0;
     while (!d->abort) {
-        d->webcam->getFrame(frame, &framenumber);
-        emit frameReady(frame);
+        // d->webcam->getFrame(frame, &framenumber);
+        int w, h;
+        const uchar* data;
+        d->webcam->getRawFrame(data, w, h);
+        emit rawFrameReady(data, w, h);
     }
 }

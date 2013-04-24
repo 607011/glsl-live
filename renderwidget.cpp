@@ -323,6 +323,18 @@ void RenderWidget::setImage(const QImage& img)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
 }
 
+void RenderWidget::setChannel(int index, const uchar* data, int w, int h)
+{
+    Q_ASSERT_X(index >= 0 && index < Project::MAX_TEXTURES, "RenderWidget::setChannel()", "image index out of bounds");
+    Q_D(RenderWidget);
+    makeCurrent();
+    if (glActiveTexture)
+        glActiveTexture(GL_TEXTURE1 + index);
+    glBindTexture(GL_TEXTURE_2D, d->channelHandle[index]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
+    update();
+}
+
 void RenderWidget::setChannel(int index, const QImage& img)
 {
     Q_ASSERT_X(index >= 0 && index < Project::MAX_TEXTURES, "RenderWidget::setChannel()", "image index out of bounds");

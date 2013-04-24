@@ -41,6 +41,7 @@ public:
     bool loadImage(const QString& fileName);
     const QImage& image(void) const;
     void setImage(const QImage& = QImage());
+    void setChannel(int index, const uchar* data, int w, int h);
     void setUniformValue(const QString& name, int value);
     void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);

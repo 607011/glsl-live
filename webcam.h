@@ -34,6 +34,7 @@ public:
     void close(void);
     bool seekNextFrame(int);
     bool getFrame(QImage& img, int* effectiveframenumber = 0, int* effectiveframetime = 0, int* desiredframenumber = 0, int* desiredframetime = 0);
+    void getRawFrame(const uchar*& data, int& w, int& h) const;
     bool seekFrame(qint64);
     bool seekMs(int);
     QSize frameSize(void) const;
