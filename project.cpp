@@ -116,9 +116,10 @@ bool Project::save(const QString& filename)
                 QByteArray ba;
                 QBuffer buffer(&ba);
                 buffer.open(QIODevice::WriteOnly);
-                d->image.save(&buffer, "PNG");
+                ch.value<QImage>().save(&buffer, "PNG");
                 buffer.close();
-                out << "    <channel id=\"" << i << "\">![CDATA[" << ba.toBase64() << "]]></channel>\n";
+                out << "    <channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
+                break;
             }
             default:
                 qWarning() << "invalid type (" << ch.type() << ") in channel" << i;
@@ -228,6 +229,11 @@ const QImage& Project::image(void) const
     return d_ptr->image;
 }
 
+const QVariant &Project::channel(int index) const
+{
+    return d_ptr->channel[index];
+}
+
 void Project::setDirty(bool dirty)
 {
     d_ptr->dirty = dirty;
@@ -265,9 +271,8 @@ void Project::setImage(const QImage& image)
 void Project::setChannel(int index, const QImage& img)
 {
     Q_ASSERT_X(index >= 0 && index < MAX_TEXTURES, "Project::setChannel()", "image index out of bounds");
-    Q_UNUSED(index);
-    Q_UNUSED(img);
-    qFatal("NOT IMPLEMENTED YET");
+    d_ptr->channel[index] = img;
+    setDirty();
 }
 
 void Project::setFilename(const QString& filename)
@@ -376,6 +381,9 @@ void Project::readInput(void)
         if (d->xml.name() == "image") {
             readInputImage();
         }
+        else if (d->xml.name() == "channel") {
+            readInputChannel();
+        }
         else {
             d->xml.skipCurrentElement();
         }
@@ -395,6 +403,29 @@ void Project::readInputImage(void)
     }
     else {
         d->xml.raiseError(QObject::tr("empty <image>: %1").arg(str));
+    }
+}
+
+void Project::readInputChannel(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "channel");
+    bool ok;
+    const QString& idStr = d->xml.attributes().value("id").toString();
+    int id = idStr.toInt(&ok);
+    if (!ok)
+        raiseError(tr("Invalid data in <channel> id attribute"));
+    const QString& str = d->xml.readElementText();
+    if (!str.isEmpty()) {
+        const QByteArray& imgData = QByteArray::fromBase64(str.toUtf8());
+        QImage img;
+        ok = img.loadFromData(imgData);
+        if (!ok)
+            raiseError(tr("Invalid data in <channel> tag"));
+        d->channel[id] = img;
+    }
+    else {
+        d->xml.raiseError(QObject::tr("empty <channel>: %1").arg(str));
     }
 }
 
@@ -564,7 +595,7 @@ const QColor& Project::backgroundColor(void) const
 
 bool Project::hasImage(void) const
 {
-    return isEmpty(d_ptr->image);
+    return !isEmpty(d_ptr->image);
 }
 
 bool Project::isEmpty(const QImage& img)

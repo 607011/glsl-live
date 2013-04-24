@@ -60,6 +60,13 @@ ChannelWidget::~ChannelWidget()
     // ...
 }
 
+void ChannelWidget::setImage(const QImage& img)
+{
+    Q_D(ChannelWidget);
+    d->image = img;
+    d->type = Image;
+}
+
 void ChannelWidget::load(const QString& filename, ChannelWidget::Type type)
 {
     Q_D(ChannelWidget);

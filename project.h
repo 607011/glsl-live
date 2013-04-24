@@ -33,13 +33,13 @@ public:
     const QString& fragmentShaderSource(void) const;
     const QString& scriptSource(void) const;
     const QImage& image(void) const;
+    const QVariant& channel(int index) const;
     void setDirty(bool dirty = true);
     void setClean(bool clean = true);
     void setVertexShaderSource(const QString&);
     void setFragmentShaderSource(const QString&);
     void setScriptSource(const QString&);
     void setImage(const QImage&);
-    void setChannel(int index, const QImage&);
     void setFilename(const QString&);
     bool alphaEnabled(void) const;
     bool imageRecyclingEnabled(void) const;
@@ -51,6 +51,7 @@ public:
     static bool isEmpty(const QImage&);
 
 public slots:
+    void setChannel(int index, const QImage&);
     void enableAlpha(bool enabled = true);
     void enableImageRecycling(bool enabled = true);
     void enableInstantUpdate(bool enabled = true);
@@ -67,6 +68,7 @@ private: // methods
     void readShaderVertex(void);
     void readShaderFragment(void);
     void readInputImage(void);
+    void readInputChannel(void);
     void readOptions(void);
     void readAlpha(void);
     void readClamp(void);

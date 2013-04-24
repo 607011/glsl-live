@@ -78,6 +78,7 @@ public:
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
+    ChannelWidget* channelWidget[Project::MAX_TEXTURES];
 #ifdef ENABLE_SCRIPTING
     ScriptRunner* scriptRunner;
     JSEdit* scriptEditor;
@@ -143,9 +144,10 @@ MainWindow::MainWindow(QWidget* parent)
     prepareEditor(d->fragmentShaderEditor);
 
     for (int i = 0; i < 8; ++i) {
-        ChannelWidget* cw = new ChannelWidget(i);
-        QObject::connect(cw, SIGNAL(imageDropped(int,QImage)), d->renderWidget, SLOT(setChannel(int,QImage)));
-        ui->channelLayout->addWidget(cw);
+        d->channelWidget[i] = new ChannelWidget(i);
+        QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), d->renderWidget, SLOT(setChannel(int, QImage)));
+        QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), d->project, SLOT(setChannel(int, QImage)));
+        ui->channelLayout->addWidget(d->channelWidget[i]);
     }
     ui->channelLayout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::MinimumExpanding, QSizePolicy::Preferred));
     ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
@@ -751,6 +753,20 @@ void MainWindow::openProject(const QString& filename)
         d->renderWidget->enableInstantUpdate(d->project->instantUpdateEnabled());
         d->renderWidget->clampToBorder(d->project->borderClampingEnabled());
         d->renderWidget->enableImageRecycling(d->project->imageRecyclingEnabled());
+        for (int i = 0; i < Project::MAX_TEXTURES; ++i) {
+            const QVariant& ch = d->project->channel(i);
+            switch (ch.type()) {
+            case QVariant::Image:
+            {
+                const QImage& img = ch.value<QImage>();
+                d->renderWidget->setChannel(i, img);
+                d->channelWidget[i]->setImage(img);
+                break;
+            }
+            default:
+                break;
+            }
+        }
 #ifdef ENABLE_SCRIPTING
         d->scriptEditor->setPlainText(d->project->scriptSource());
 #endif

@@ -35,6 +35,7 @@ public:
 
     int heightForWidth(int w) const { return w; }
 
+    void setImage(const QImage&);
     void load(const QString& filename, Type = Auto);
     int index(void) const;
 
