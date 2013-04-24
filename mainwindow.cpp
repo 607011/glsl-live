@@ -47,7 +47,6 @@
 #include "scriptrunner.h"
 #endif
 
-
 static void prepareEditor(AbstractEditor*);
 static void clearLayout(QLayout*);
 

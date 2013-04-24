@@ -14,25 +14,70 @@
 #include <QString>
 
 #include "channelwidget.h"
-#include "opencv/cv.hpp"
+#include "util.h"
+
+#ifdef WITH_OPENCV
+#include "webcam.h"
+#include "webcamthread.h"
+#endif
+
 
 class ChannelWidgetPrivate
 {
 public:
     ChannelWidgetPrivate(void)
+        : webcam(NULL)
+        , webcamThread(NULL)
     {
+        webcam = NULL;
+        webcamThread = NULL;
         reset();
     }
+    ~ChannelWidgetPrivate()
+    {
+//        safeDelete(webcam);
+    }
+
     void reset(void)
     {
         type = ChannelWidget::None;
         image = QImage(":/images/checkered.png");
         filename = QString();
+        camActive = false;
     }
     ChannelWidget::Type type;
     QImage image;
     QString filename;
     int index;
+    bool camActive;
+
+    Webcam* decoder(void)
+    {
+        if (webcam == NULL) {
+            webcam = new Webcam;
+            webcam->open(0);
+        }
+        return webcam;
+    }
+
+    void turnOffWebcam(void)
+    {
+        if (webcam->isOpen()) {
+            webcam->close();
+        }
+    }
+
+    WebcamThread* decoderThread(void)
+    {
+        if (webcamThread == NULL)
+            webcamThread = new WebcamThread(decoder());
+        return webcamThread;
+    }
+
+#ifdef WITH_OPENCV
+    Webcam* webcam;
+    WebcamThread* webcamThread;
+#endif
 };
 
 
@@ -51,13 +96,6 @@ ChannelWidget::ChannelWidget(int index, QWidget* parent)
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(showContextMenu(QPoint)));
 
-//    qDebug() << "QCamera::availableDevices() ->";
-//    QList<QByteArray> cams = QCamera::availableDevices();
-//    QListIterator<QByteArray> c(cams);
-//    while (c.hasNext()) {
-//        const QByteArray& ba = c.next();
-//        qDebug() << "  " << QCamera::deviceDescription(ba);
-//    }
 }
 
 ChannelWidget::~ChannelWidget()
@@ -70,6 +108,8 @@ void ChannelWidget::setImage(const QImage& img)
     Q_D(ChannelWidget);
     d->image = img;
     d->type = Image;
+    update();
+    emit imageDropped(d->index, d->image);
 }
 
 void ChannelWidget::load(const QString& filename, ChannelWidget::Type type)
@@ -156,16 +196,23 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     QMenu menu;
     if (!d->image.isNull())
         menu.addAction(tr("Remove"));
-#ifdef ENABLE_WEBCAM
-    menu.addAction(tr("Use webcam"));
+#ifdef WITH_OPENCV
+    if (d->webcam == NULL)
+        menu.addAction(tr("Use webcam"));
 #endif
     QAction* selectedItem = menu.exec(globalPos);
     if (selectedItem == NULL)
         return;
     if (selectedItem->text() == tr("Remove")) {
+        if (d->webcam != NULL && d->webcam->isOpen())
+            d->turnOffWebcam();
         emit imageDropped(d->index, QImage());
         d->reset();
         update();
+    }
+    else if (selectedItem->text() == tr("Use webcam")) {
+        connect(d->decoderThread(), SIGNAL(frameReady(QImage)), SLOT(setImage(QImage)));
+        d->decoderThread()->startReading();
     }
 }
 

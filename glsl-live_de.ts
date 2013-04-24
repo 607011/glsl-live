@@ -5,15 +5,15 @@
 <context>
     <name>ChannelWidget</name>
     <message>
-        <location filename="channelwidget.cpp" line="147"/>
-        <location filename="channelwidget.cpp" line="152"/>
+        <location filename="channelwidget.cpp" line="158"/>
+        <location filename="channelwidget.cpp" line="165"/>
         <source>Remove</source>
         <translation>Entfernen</translation>
     </message>
     <message>
-        <location filename="channelwidget.cpp" line="148"/>
+        <location filename="channelwidget.cpp" line="160"/>
         <source>Use webcam</source>
-        <translation type="unfinished"></translation>
+        <translation>Webcam verwenden</translation>
     </message>
 </context>
 <context>
@@ -96,8 +96,8 @@
     </message>
     <message>
         <location filename="mainwindow.ui" line="408"/>
-        <location filename="mainwindow.cpp" line="786"/>
-        <location filename="mainwindow.cpp" line="797"/>
+        <location filename="mainwindow.cpp" line="803"/>
+        <location filename="mainwindow.cpp" line="814"/>
         <source>Save project</source>
         <translation>Projekt speichern</translation>
     </message>
@@ -254,155 +254,155 @@
         <translation>Bild auf Originalgröße skalieren</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="322"/>
+        <location filename="mainwindow.cpp" line="329"/>
         <source>Save before exit?</source>
         <translation>Speichern vor dem Beenden?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="322"/>
+        <location filename="mainwindow.cpp" line="329"/>
         <source>Your project has changed. Do you want to save the changes before exiting?</source>
         <translation>Sie haben Änderungen am Projekt vorgenommen. Möchten Sie sie vor dem Beenden speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="383"/>
+        <location filename="mainwindow.cpp" line="398"/>
         <source>Save image snapshot</source>
         <translation>Bild speichern unter</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="383"/>
-        <location filename="mainwindow.cpp" line="394"/>
+        <location filename="mainwindow.cpp" line="398"/>
+        <location filename="mainwindow.cpp" line="409"/>
         <source>Image files (*.png *.jpg *.jpeg *.tiff *.ppm)</source>
         <translation>Bilddateien (*.png *.jpg *.jpeg *.tiff *.ppm)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="394"/>
+        <location filename="mainwindow.cpp" line="409"/>
         <source>Select images to load</source>
         <translation>Zu verarbeitende Bilder auswählen</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="398"/>
+        <location filename="mainwindow.cpp" line="413"/>
         <source>Select save directory</source>
         <translation>Zielverzeichnis auswählen</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="418"/>
+        <location filename="mainwindow.cpp" line="433"/>
         <source>Processing %1 ...</source>
         <translation>Verarbeiten von %1 ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="423"/>
+        <location filename="mainwindow.cpp" line="438"/>
         <source>Batch processing completed.</source>
         <translation>Stapelverarbeitung beendet.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="443"/>
+        <location filename="mainwindow.cpp" line="458"/>
         <source>Stopped.</source>
         <translation>Angehalten.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="472"/>
+        <location filename="mainwindow.cpp" line="487"/>
         <source>Empty script. Doing nothing.</source>
         <translation>Leeres Skript. Ich mach dann mal nix.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="663"/>
+        <location filename="mainwindow.cpp" line="678"/>
         <source>Save before creating a new project?</source>
         <translation>Speichern vor dem Anlegen eines neuen Projekts?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="663"/>
+        <location filename="mainwindow.cpp" line="678"/>
         <source>Your project has changed. Do you want to save the changes before creating a new project?</source>
         <translation>Sie haben Änderungen am Projekt vorgenommen. Möchten Sie sie vor dem Anlegen eines neuen Projekts speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="693"/>
+        <location filename="mainwindow.cpp" line="708"/>
         <source>&amp;%1 %2</source>
         <translation>&amp;%1 %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="718"/>
+        <location filename="mainwindow.cpp" line="733"/>
         <source>Save before loading another project?</source>
         <translation>Vor dem Laden speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="718"/>
+        <location filename="mainwindow.cpp" line="733"/>
         <source>Your project has changed. Do you want to save the changes before loading another project?</source>
         <translation>Sie haben Änderungen am Projekt vorgenommen. Möchten Sie sie vor dem Laden eines anderen Projekts speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="723"/>
+        <location filename="mainwindow.cpp" line="738"/>
         <source>Load project</source>
         <translation>Projekt laden</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="723"/>
-        <location filename="mainwindow.cpp" line="786"/>
-        <location filename="mainwindow.cpp" line="797"/>
+        <location filename="mainwindow.cpp" line="738"/>
+        <location filename="mainwindow.cpp" line="803"/>
+        <location filename="mainwindow.cpp" line="814"/>
         <source>Project files (*.xml *.xmlz)</source>
         <translation>Projektdateien (*.xml *.xmlz)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="776"/>
+        <location filename="mainwindow.cpp" line="793"/>
         <source>Project &apos;%1&apos; loaded.</source>
         <translation>Projekt &apos;%1&apos; geladen.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="777"/>
+        <location filename="mainwindow.cpp" line="794"/>
         <source>Loading &apos;%1&apos; failed: %2</source>
         <translation>Laden von &apos;%1&apos; fehlgeschlagen: %2</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="807"/>
+        <location filename="mainwindow.cpp" line="824"/>
         <source>Save project before loading a new image?</source>
         <translation>Vor dem Laden speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="807"/>
+        <location filename="mainwindow.cpp" line="824"/>
         <source>Your project has changed. Do you want to save the changes before loading a new image?</source>
         <translation>Sie haben Änderungen am Projekt vorgenommen. Möchten Sie sie vor dem Laden eines Bildes speichern?</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="812"/>
+        <location filename="mainwindow.cpp" line="829"/>
         <source>Load image</source>
         <translation>Bild laden</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="812"/>
+        <location filename="mainwindow.cpp" line="829"/>
         <source>Image files (*.png *.jpg *.jpeg *.gif *.ico *.mng *.tga *.tif)</source>
         <translation>Bilddateien (*.png *.jpg *.jpeg *.gif *.ico *.mng *.tga *.tif)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="842"/>
+        <location filename="mainwindow.cpp" line="859"/>
         <source>Project saved as &apos;%1&apos;.</source>
         <translation>Projekt gespeichert unter &apos;%1&apos;.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="843"/>
+        <location filename="mainwindow.cpp" line="860"/>
         <source>Saving failed.</source>
         <translation>Speichern fehlgeschlagen.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="858"/>
+        <location filename="mainwindow.cpp" line="875"/>
         <source>%1 %2 (OpenGL %3) %4</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="864"/>
+        <location filename="mainwindow.cpp" line="881"/>
         <source>- %1%2</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="865"/>
+        <location filename="mainwindow.cpp" line="882"/>
         <source>&lt;untitled&gt;</source>
         <translation>&lt;unbenannt&gt;</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="871"/>
+        <location filename="mainwindow.cpp" line="888"/>
         <source>About %1 %2%3</source>
         <translation>Über %1 %2%3</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="872"/>
+        <location filename="mainwindow.cpp" line="889"/>
         <source>&lt;p&gt;&lt;b&gt;%1&lt;/b&gt; is a live coding environment for OpenGL 1.x shaders. See &lt;a href=&quot;%2&quot; title=&quot;%1 project homepage&quot;&gt;%2&lt;/a&gt; for more info.&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2013 %3 &amp;lt;%4&amp;gt;, Heise Zeitschriften Verlag.&lt;/p&gt;&lt;p&gt;This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.&lt;/p&gt;&lt;p&gt;This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.&lt;/p&gt;You should have received a copy of the GNU General Public License along with this program. If not, see &lt;a href=&quot;http://www.gnu.org/licenses/gpl-3.0&quot;&gt;http://www.gnu.org/licenses&lt;/a&gt;.&lt;/p&gt;</source>
         <translation>&lt;p&gt;&lt;b&gt;%1&lt;/b&gt; ist eine Live-Coding-Umgebung für OpenGL-1.x-Shader. Besuchen Sie &lt;a href=&quot;%2&quot; title=&quot;%1-Projekt-Homepage&quot;&gt;%2&lt;/a&gt; für weitere Informationen.&lt;/p&gt;&lt;p&gt;Copyright &amp;copy; 2013 %3 &amp;lt;%4&amp;gt;, Heise Zeitschriften Verlag.&lt;/p&gt;&lt;p&gt;Dieses Programm ist freie Software. Sie können es unter den Bedingungen der GNU General Public License, wie von der Free Software Foundation veröffentlicht, weitergeben und/oder modifizieren, entweder gemäß Version 3 der Lizenz oder (nach Ihrer Wahl) jeder späteren Version.&lt;/p&gt;&lt;p&gt;Die Software wurde zu Lehr-, Lern- und Demonstrationszwecken geschaffen und ist nicht für den produktiven Einsatz vorgesehen. Der Autor und der Heise Zeitschriften Verlag haften nicht für Schäden, die aus der Nutzung der Software entstehen, und übernehmen keine Gewähr für ihre Vollständigkeit, Fehlerfreiheit und Eignung für einen bestimmten Zweck.&lt;/p&gt;&lt;p&gt;Sie sollten ein Exemplar der GNU General Public License zusammen mit diesem Programm erhalten haben. Falls nicht, siehe &lt;a href=&quot;http://www.gnu.org/licenses/gpl-3.0&quot;&gt;http://www.gnu.org/licenses&lt;/a&gt;.&lt;/p&gt;</translation>
     </message>
@@ -415,40 +415,40 @@
         <translation>Kann Datei &apos;%1&apos; nicht zum Schreiben öffnen</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="141"/>
+        <location filename="project.cpp" line="142"/>
         <source>Error writing data (%1 bytes written)</source>
         <translation>Fehler beim Schreiben der Daten (%1 Bytes geschrieben)</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="161"/>
+        <location filename="project.cpp" line="162"/>
         <source>Cannot open file &apos;%1&apos; for reading</source>
         <translation>Kann Datei &apos;%1&apos; nicht zum Lesen öffnen</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="171"/>
+        <location filename="project.cpp" line="172"/>
         <source>Cannot read from I/O device. (%1)</source>
         <translation>Kann nicht von Eingabegerät lesen. (%1)</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="401"/>
+        <location filename="project.cpp" line="403"/>
         <source>Invalid data in &lt;image&gt; tag</source>
         <translation>Ungültige Daten in &lt;image&gt;-Tag</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="416"/>
+        <location filename="project.cpp" line="418"/>
         <source>Invalid data in &lt;channel&gt; id attribute</source>
-        <translation type="unfinished"></translation>
+        <translation>Ungültige Daten in &lt;channel&gt;-ID</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="423"/>
+        <location filename="project.cpp" line="425"/>
         <source>Invalid data in &lt;channel&gt; tag</source>
-        <translation type="unfinished"></translation>
+        <translation>Ungültige Daten in &lt;channel&gt;</translation>
     </message>
 </context>
 <context>
     <name>QObject</name>
     <message>
-        <location filename="project.cpp" line="180"/>
+        <location filename="project.cpp" line="181"/>
         <source>%1 (line %2, column %3)</source>
         <translation>%1 (Zeile %2, Spalte %3)</translation>
     </message>
@@ -457,52 +457,52 @@
         <translation type="obsolete">Bei dieser Datei handelt es sich nicht um eine GLSL-Live-Coder-0.x-Projektdatei.</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="294"/>
+        <location filename="project.cpp" line="296"/>
         <source>The file is not an GLSL Live Coder v0.x project file .</source>
         <translation>Bei dieser Datei handelt es sich nicht um eine GLSL-Live-Coder-0.x-Projektdatei.</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="371"/>
+        <location filename="project.cpp" line="373"/>
         <source>empty &lt;fragment&gt;: %1</source>
         <translation>leeres &lt;fragment&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="404"/>
+        <location filename="project.cpp" line="406"/>
         <source>empty &lt;image&gt;: %1</source>
         <translation>leeres &lt;image&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="427"/>
+        <location filename="project.cpp" line="429"/>
         <source>empty &lt;channel&gt;: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Leeres &lt;channel&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="469"/>
+        <location filename="project.cpp" line="471"/>
         <source>empty &lt;alpha&gt;: %1</source>
         <translation>leeres &lt;alpha&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="485"/>
+        <location filename="project.cpp" line="487"/>
         <source>empty &lt;clamp&gt;: %1</source>
         <translation>leeres &lt;clampe&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="505"/>
+        <location filename="project.cpp" line="507"/>
         <source>bad data in &lt;backgroundcolor&gt;: %1</source>
         <translation>ungültige Daten in &lt;backgroundcolor&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="509"/>
+        <location filename="project.cpp" line="511"/>
         <source>empty &lt;backgroundcolor&gt;: %1</source>
         <translation>leeres &lt;backgroundcolor&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="525"/>
+        <location filename="project.cpp" line="527"/>
         <source>empty &lt;instantupdate&gt;: %1</source>
         <translation>leeres &lt;instantupdate&gt;: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="541"/>
+        <location filename="project.cpp" line="543"/>
         <source>empty &lt;imagerecycling&gt;: %1</source>
         <translation>leeres &lt;imagerecycling&gt;: %1</translation>
     </message>
@@ -511,7 +511,7 @@
         <translation type="obsolete">Leerer Vertex-Shader: %1</translation>
     </message>
     <message>
-        <location filename="project.cpp" line="358"/>
+        <location filename="project.cpp" line="360"/>
         <source>empty &lt;vertex&gt;: %1</source>
         <oldsource>empty fragment shader: %1</oldsource>
         <translation>leeres &lt;vertex&gt;: %1</translation>

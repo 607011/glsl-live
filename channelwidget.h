@@ -32,7 +32,6 @@ public:
     ~ChannelWidget();
     QSize sizeHint(void) const { return QSize(80, 80); }
 
-    void setImage(const QImage&);
     void load(const QString& filename, Type = Auto);
     int index(void) const;
 
@@ -48,6 +47,7 @@ signals:
     void imageDropped(int index, const QImage&);
 
 public slots:
+    void setImage(const QImage&);
 
 private slots:
     void showContextMenu(const QPoint&);
