@@ -237,6 +237,7 @@ const QVariant &Project::channel(int index) const
 void Project::setDirty(bool dirty)
 {
     d_ptr->dirty = dirty;
+    emit dirtyStateChanged(dirty);
 }
 
 void Project::setClean(bool clean)

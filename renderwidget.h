@@ -72,6 +72,7 @@ public slots:
     void clampToBorder(bool);
 
 signals:
+    void ready(void);
     void vertexShaderError(QString);
     void fragmentShaderError(QString);
     void linkerError(QString);

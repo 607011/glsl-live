@@ -5,6 +5,14 @@ QT += core gui opengl xml
 
 CONFIG += scripting
 # CONFIG += multimedia
+CONFIG += opencv
+
+opencv {
+DEFINES += WITH_OPENCV
+LIBS += -L$${OPENCVDIR}/lib -lopencv_core240 -lopencv_highgui240
+QMAKE_CXXFLAGS += -ID:\Developer\opencv\include\opencv -ID:\Developer\opencv\include
+# set LIB and INCLUDE accordingly in Qt Creator's build configuration, PATH in run configuration
+}
 
 multimedia {
 QT += multimedia

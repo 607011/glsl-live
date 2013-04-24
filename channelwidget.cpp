@@ -14,7 +14,7 @@
 #include <QString>
 
 #include "channelwidget.h"
-
+#include "opencv/cv.hpp"
 
 class ChannelWidgetPrivate
 {
@@ -45,14 +45,19 @@ ChannelWidget::ChannelWidget(int index, QWidget* parent)
     const QString& name = channelName(index);
     setObjectName(name);
     setToolTip(name);
-    QSizePolicy sp(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    sp.setHeightForWidth(true);
-    sp.setWidthForHeight(true);
-    setSizePolicy(sp);
+    setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     setMaximumSize(sizeHint());
     setAcceptDrops(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
     connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(showContextMenu(QPoint)));
+
+//    qDebug() << "QCamera::availableDevices() ->";
+//    QList<QByteArray> cams = QCamera::availableDevices();
+//    QListIterator<QByteArray> c(cams);
+//    while (c.hasNext()) {
+//        const QByteArray& ba = c.next();
+//        qDebug() << "  " << QCamera::deviceDescription(ba);
+//    }
 }
 
 ChannelWidget::~ChannelWidget()
@@ -95,9 +100,12 @@ void ChannelWidget::paintEvent(QPaintEvent*)
     {
         const qreal imageAspect = qreal(d->image.width()) / d->image.height();
         const qreal windowAspect = qreal(width()) / height();
-        QRectF r = (imageAspect > windowAspect)
-                ? QRectF(1, (height() - height() / imageAspect) / 2, width() - 2, height() / imageAspect - 2)
-                : QRectF((width() - width() * imageAspect) / 2, 1, width() * imageAspect - 2, height() - 2);
+        QRect r = (imageAspect > windowAspect)
+                ? QRect(1, (height() - height() / imageAspect) / 2,
+                         width() - 2, height() / imageAspect - 2)
+                : QRect(1 + (width() - width() * imageAspect) / 2, 1,
+                         width() * imageAspect - 2, height() - 2);
+        p.setRenderHint(QPainter::Antialiasing);
         p.drawImage(r, d->image);
         break;
     }
@@ -105,15 +113,11 @@ void ChannelWidget::paintEvent(QPaintEvent*)
         // fall-through
     default:
         p.setBrush(QBrush(d->image));
-        p.setPen(Qt::transparent);
-        p.drawRect(rect());
+        p.setPen(Qt::black);
+        p.drawRect(0, 0, width()-1, height()-1);
         break;
     }
-    p.setBrush(Qt::transparent);
-    p.setPen(QColor(18, 20, 16));
-    p.drawRect(0, 0, width()-1, height()-1);
 }
-
 
 void ChannelWidget::dragEnterEvent(QDragEnterEvent* e)
 {
@@ -135,9 +139,9 @@ void ChannelWidget::dropEvent(QDropEvent* e)
         QString fileUrl = e->mimeData()->urls().first().toString();
         if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive))) {
 #if defined(WIN32)
-            QString filename = fileUrl.remove("file:///");
+            const QString& filename = fileUrl.remove("file:///");
 #else
-            QString filename = fileUrl.remove("file://");
+            const QString& filename = fileUrl.remove("file://");
 #endif
             load(filename);
             emit imageDropped(d->index, d->image);
@@ -152,7 +156,9 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     QMenu menu;
     if (!d->image.isNull())
         menu.addAction(tr("Remove"));
+#ifdef ENABLE_WEBCAM
     menu.addAction(tr("Use webcam"));
+#endif
     QAction* selectedItem = menu.exec(globalPos);
     if (selectedItem == NULL)
         return;
@@ -167,4 +173,3 @@ QString ChannelWidget::channelName(int index)
 {
     return QString("uChannel%1").arg(index);
 }
-

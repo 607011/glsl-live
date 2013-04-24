@@ -127,6 +127,8 @@ MainWindow::MainWindow(QWidget* parent)
 {
     Q_D(MainWindow);
     ui->setupUi(this);
+    QObject::connect(d->renderWidget, SIGNAL(ready()), SLOT(initAfterGL()));
+
     for (int i = 0; i < MainWindowPrivate::MaxRecentFiles; ++i) {
         QAction* act = new QAction(this);
         act->setVisible(false);
@@ -143,12 +145,6 @@ MainWindow::MainWindow(QWidget* parent)
     prepareEditor(d->vertexShaderEditor);
     prepareEditor(d->fragmentShaderEditor);
 
-    for (int i = 0; i < 8; ++i) {
-        d->channelWidget[i] = new ChannelWidget(i);
-        QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), d->renderWidget, SLOT(setChannel(int, QImage)));
-        QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), d->project, SLOT(setChannel(int, QImage)));
-        ui->channelLayout->addWidget(d->channelWidget[i]);
-    }
     ui->channelLayout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::MinimumExpanding, QSizePolicy::Preferred));
     ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
 
@@ -213,9 +209,28 @@ MainWindow::MainWindow(QWidget* parent)
     QScriptValue fPrint = engine->newFunction(scriptPrintFunction);
     fPrint.setData(engine->newQObject(ui->logTextEdit));
     engine->globalObject().setProperty("print", fPrint);
+    // TODO: define onFrame() script function
 #endif
 
+    for (int i = 0; i < Project::MAX_TEXTURES; ++i) {
+        d->channelWidget[i] = new ChannelWidget(i);
+        QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), SLOT(imageDropped(int, QImage)));
+        ui->channelLayout->addWidget(d->channelWidget[i]);
+    }
     restoreSettings();
+}
+
+void MainWindow::initAfterGL(void)
+{
+    Q_D(MainWindow);
+    QSettings settings(Company, AppName);
+    const QString& projectFilename = settings.value("Project/filename").toString();
+    if (projectFilename.isEmpty())
+        newProject();
+    else
+        openProject(projectFilename);
+    d->project->setClean();
+    updateWindowTitle();
 }
 
 MainWindow::~MainWindow()
@@ -264,15 +279,6 @@ void MainWindow::restoreSettings(void)
     appendToRecentFileList(QString(), "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
     d->lastProjectOpenDir = settings.value("Project/lastOpenDir").toString();
     d->lastProjectSaveDir = settings.value("Project/lastSaveDir").toString();
-    const QString& projectFilename = settings.value("Project/filename").toString();
-    if (projectFilename.isEmpty()) {
-        newProject();
-    }
-    else {
-        openProject(projectFilename);
-    }
-    d->project->setClean();
-    updateWindowTitle();
 }
 
 void MainWindow::saveSettings(void)
@@ -370,6 +376,14 @@ void MainWindow::valueChanged(const QColor& color)
 
 void MainWindow::imageDropped(const QImage&)
 {
+    processShaderChange();
+}
+
+void MainWindow::imageDropped(int index, const QImage& img)
+{
+    Q_D(MainWindow);
+    d->renderWidget->setChannel(index, img);
+    d->project->setChannel(index, img);
     processShaderChange();
 }
 

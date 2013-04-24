@@ -35,6 +35,7 @@ protected:
     void closeEvent(QCloseEvent*);
 
 private slots:
+    void initAfterGL(void);
     void about(void);
     void aboutQt(void);
     void showHelp(void);
@@ -60,6 +61,7 @@ private slots:
     void valueChanged(bool);
     void valueChanged(const QColor&);
     void imageDropped(const QImage&);
+    void imageDropped(int index, const QImage&);
     void reloadImage(void);
     void saveImageSnapshot(void);
     void batchProcess(void);

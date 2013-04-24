@@ -54,7 +54,7 @@ h1, h2, h3, h4, h5 {
 
 <p><strong>Shader-Ergebnis in Textur kopieren:</strong> Normalerweise verarbeitet das Shader-Programm das immer gleiche, ursprünglich geladene Ausgangsbild. Die Option "Bild zurückspeisen" sorgt dafür, dass das gezeichnete Bild in die Textur für den nächsten Zeichenvorgang kopiert wird. Das geschieht per <code>glCopyTexImage2D()</code> direkt und schnell auf der Grafikkarte. Diese Option eignet sich demnach zur Umsetzung zellulärer Automaten, bei denen die nächste Generation von der aktuellen abhängt (siehe die Beispieldatei "game-of-life.xml").</p>
 
-<p><strong>Markierungen setzen/löschen:</strong> Sie können innerhalb des GL-Viewport per Mausklick Punkte markieren, wenn Sie beim Klicken die Alt-Taste gedrückt halten. Die Koordinaten landen in <code>uMarks[]</code>, die Anzahl der gesetzten Markieung in <code>uMarksCount</code> (<a href="#uMarks">s.u.</a>). Zum Löschen aller markierten Punkten klicken Sie mit der Maus bei gehaltener Alt-Taste in den GL-Viewport.</p>
+<p><strong>Markierungen setzen/löschen:</strong> Sie können innerhalb des GL-Viewport per Mausklick Punkte markieren, wenn Sie beim Klicken die Alt-Taste gedrückt halten. Die Koordinaten landen in <code>uMarks[]</code>, die Anzahl der gesetzten Markieung in <code>uMarksCount</code> (<a href="#uMarks">s.u.</a>). Zum Löschen aller markierten Punkten rechtsklicken Sie bei gehaltener Alt-Taste in den GL-Viewport.</p>
 
 <h3>Vordefinierte Shader-Variablen</h3>
 
@@ -106,7 +106,6 @@ h1, h2, h3, h4, h5 {
 
 <ul>
   <li>Aktualisierungsrate (zurzeit timergetriggerte 30 fps) frei wählbar machen.</li>
-  <li>Statt einer einzigen Textur mehrere Eingabekanäle (wie bei shadertoy.com)</li>
   <li>Aktuelle Werte der Benutzer-Uniforms in Projektdatei speichern.</li>
   <li>Optionen falsch gesetzt, wenn neues Projekt geladen wird.</li>
   <li><p>Steuerung per QtScript: Starten/Stoppen, Setzen von Uniforms, Setzen neuen Shader-Codes, Laden von Grafiken&nbsp;&hellip;</p>

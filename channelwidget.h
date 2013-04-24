@@ -30,10 +30,7 @@ public:
 
     explicit ChannelWidget(int index, QWidget* parent = NULL);
     ~ChannelWidget();
-    QSize minimumSizeHint(void) const { return QSize(40, 40); }
     QSize sizeHint(void) const { return QSize(80, 80); }
-
-    int heightForWidth(int w) const { return w; }
 
     void setImage(const QImage&);
     void load(const QString& filename, Type = Auto);

@@ -327,7 +327,6 @@ void RenderWidget::setChannel(int index, const QImage& img)
 {
     Q_ASSERT_X(index >= 0 && index < Project::MAX_TEXTURES, "RenderWidget::setChannel()", "image index out of bounds");
     Q_D(RenderWidget);
-    qDebug() << "RenderWidget::setChannel(" << index << "," << img << ")";
     d->channel[index] = img.convertToFormat(QImage::Format_ARGB32);
     makeCurrent();
     if (glActiveTexture)
@@ -608,6 +607,7 @@ void RenderWidget::paintGL(void)
             goLive();
         setImage();
         d->firstPaintEventPending = false;
+        emit ready();
     }
 
     if (d->liveTimerId == 0)

@@ -58,6 +58,9 @@ public slots:
     void enableBorderClamping(bool enabled = true);
     void setBackgroundColor(const QColor&);
 
+signals:
+    void dirtyStateChanged(bool);
+
 private: // methods
     void read(void);
     bool read(QIODevice*);
