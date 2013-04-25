@@ -9,6 +9,8 @@
 #include <QImage>
 #include <QScopedPointer>
 
+#include "project.h"
+
 class Webcam;
 class WebcamThreadPrivate;
 
@@ -23,7 +25,7 @@ public:
 
 signals:
     void frameReady(QImage);
-    void rawFrameReady(const uchar* data, int w, int h);
+    void rawFrameReady(const uchar* data, int w, int h, Project::SourceSelector);
 
 protected:
     void run(void);

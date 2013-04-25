@@ -11,6 +11,7 @@
 #include <QDragLeaveEvent>
 #include <QDropEvent>
 #include <QScopedPointer>
+#include "project.h"
 
 class ChannelWidgetPrivate;
 
@@ -46,11 +47,12 @@ protected:
 
 signals:
     void imageDropped(int index, const QImage&);
-    void rawFrameReady(const uchar* data, int w, int h, int index);
+    void rawFrameReady(const uchar* data, int w, int h, int index, Project::SourceSelector);
+    void camInitialized(int index);
 
 public slots:
     void setImage(const QImage&, Type = Image);
-    void setFrame(const uchar*, int, int);
+    void relayFrame(const uchar*, int, int, Project::SourceSelector);
 
 private slots:
     void showContextMenu(const QPoint&);

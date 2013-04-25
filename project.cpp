@@ -40,10 +40,14 @@ public:
     QString errorString;
 };
 
+Q_DECLARE_METATYPE(Project::SourceSelector)
+
 Project::Project(QObject* parent)
     : QObject(parent)
     , d_ptr(new ProjectPrivate)
-{ /* ... */ }
+{
+    qRegisterMetaType<Project::SourceSelector>();
+}
 
 Project::~Project()
 { /* ... */ }
@@ -120,9 +124,18 @@ bool Project::save(const QString& filename)
     for (int i = 0; i < MAX_CHANNELS; ++i) {
         const QVariant& ch = d->channelData[i];
         const SourceSelector source = d->channelSource[i];
+        qDebug() << ch << source;
         if (source != SourceNone) {
             switch (ch.type()) {
-            case QVariant::Image: {
+            case QVariant::Invalid:
+            {
+                if (source == SourceWebcam) {
+                    out << "    <channel id=\"" << i << "\" source=\"webcam\"></channel>\n";
+                }
+                break;
+            }
+            case QVariant::Image:
+            {
                 if (source == SourceData) {
                     QByteArray ba;
                     QBuffer buffer(&ba);
@@ -131,13 +144,8 @@ bool Project::save(const QString& filename)
                     buffer.close();
                     out << "    <channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
                 }
-                else if (source == SourceWebcam) {
-                    out << "    <channel id=\"" << i << "\" source=\"webcam\"></channel>\n";
-                }
                 break;
             }
-            case QVariant::Invalid:
-                // fall-through
             default:
                 // ignore
                 break;
@@ -289,6 +297,7 @@ void Project::setImage(const QImage& image)
 void Project::setChannel(int index, const QImage& img)
 {
     Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "image index out of bounds");
+    qDebug() << "Project::setChannel(" << index << "," << img << ")";
     d_ptr->channelData[index] = img;
     d_ptr->channelSource[index] = SourceData;
     setDirty();

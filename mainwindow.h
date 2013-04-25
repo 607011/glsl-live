@@ -14,6 +14,8 @@
 #include <QAction>
 #include <QMenu>
 
+#include "project.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -62,7 +64,8 @@ private slots:
     void valueChanged(const QColor&);
     void imageDropped(const QImage&);
     void imageDropped(int index, const QImage&);
-    void frameDropped(const uchar* data, int w, int h, int index);
+    void frameDropped(const uchar* data, int w, int h, int index, Project::SourceSelector);
+    void setCamReady(int);
     void reloadImage(void);
     void saveImageSnapshot(void);
     void batchProcess(void);

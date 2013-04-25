@@ -214,7 +214,10 @@ MainWindow::MainWindow(QWidget* parent)
     for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
         d->channelWidget[i] = new ChannelWidget(i);
         QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), SLOT(imageDropped(int, QImage)));
-        QObject::connect(d->channelWidget[i], SIGNAL(rawFrameReady(const uchar*, int, int, int)), SLOT(frameDropped(const uchar*, int, int, int)));
+        QObject::connect(d->channelWidget[i],
+                         SIGNAL(rawFrameReady(const uchar*, int, int, int, Project::SourceSelector)),
+                         SLOT(frameDropped(const uchar*, int, int, int, Project::SourceSelector)));
+        QObject::connect(d->channelWidget[i], SIGNAL(camInitialized(int)), SLOT(setCamReady(int)));
         ui->channelLayout->addWidget(d->channelWidget[i]);
     }
     restoreSettings();
@@ -387,10 +390,17 @@ void MainWindow::imageDropped(int index, const QImage& img)
     processShaderChange();
 }
 
-void MainWindow::frameDropped(const uchar* data, int w, int h, int index)
+void MainWindow::frameDropped(const uchar* data, int w, int h, int index, Project::SourceSelector)
 {
     Q_D(MainWindow);
     d->renderWidget->setChannel(index, data, w, h);
+}
+
+void MainWindow::setCamReady(int index)
+{
+    Q_D(MainWindow);
+    qDebug() << "MainWindow::setCamReady(" << index << ")";
+    d->project->setChannel(index, Project::SourceWebcam);
 }
 
 void MainWindow::reloadImage(void)

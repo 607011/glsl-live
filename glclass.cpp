@@ -91,6 +91,7 @@ void GLClass::uniform4ui(const QString& location, unsigned int v0, unsigned int 
 void GLClass::uniform1fv(const QString& location, QScriptValue v)
 {
     int loc = d_ptr->renderWidget->shaderProgram()->uniformLocation(location.toLatin1().constData());
+    qDebug() << v.toVariant();
     // d_ptr->renderWidget->shaderProgram()->setUniformValueArray(loc, v.to, v.size(), 1);
 }
 

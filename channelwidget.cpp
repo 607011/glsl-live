@@ -112,7 +112,7 @@ void ChannelWidget::closeWebcam(void)
     Q_D(ChannelWidget);
     if (d->isWebcamOpen()) {
         QObject::disconnect(d->decoderThread(), SIGNAL(frameReady(QImage)), this, SLOT(setImage(QImage)));
-        QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int)), this, SLOT(setFrame(const uchar*, int, int)));
+        QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)), this, SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
         d->turnOffWebcam();
     }
 }
@@ -125,9 +125,9 @@ void ChannelWidget::setImage(const QImage& img, Type type)
     update();
 }
 
-void ChannelWidget::setFrame(const uchar* data, int w, int h)
+void ChannelWidget::relayFrame(const uchar* data, int w, int h, Project::SourceSelector source)
 {
-    emit rawFrameReady(data, w, h, d_ptr->index);
+    emit rawFrameReady(data, w, h, d_ptr->index, source);
 }
 
 void ChannelWidget::load(const QString& filename, ChannelWidget::Type type)
@@ -153,6 +153,8 @@ void ChannelWidget::paintEvent(QPaintEvent*)
     p.fillRect(rect(), Qt::black);
     switch (d->type) {
     case Auto:
+        // fall-through
+    case Volatile:
         // fall-through
     case Image:
     {
@@ -233,9 +235,11 @@ void ChannelWidget::showContextMenu(const QPoint& p)
 #ifdef WITH_OPENCV
     else if (selectedItem->text() == tr("Use webcam")) {
         QObject::connect(d->decoderThread(), SIGNAL(frameReady(QImage)), SLOT(setImage(QImage)));
-        QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int)), SLOT(setFrame(const uchar*, int, int)));
-        if (d->isWebcamOpen())
+        QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)), SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+        if (d->isWebcamOpen()) {
             setImage(d->webcam->getFrame(), Volatile);
+            emit camInitialized(d->index);
+        }
         d->decoderThread()->startReading();
     }
 #endif

@@ -23,15 +23,12 @@ public:
     Webcam(QObject* parent = NULL);
     ~Webcam();
 
-    // IAbstractVideoDecoder methods
     bool open(int deviceId);
     bool isOpen(void) const;
     void close(void);
     const QImage& getFrame(void);
     void getRawFrame(const uchar*& data, int& w, int& h) const;
     QSize frameSize(void) const;
-
-    // other methods
     void setSize(const QSize&);
 
 private: // variables
