@@ -203,6 +203,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
 #ifdef WITH_SCRIPTING
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
+    QObject::connect(d->renderWidget, SIGNAL(frameReady()), d->scriptRunner, SLOT(onFrame()));
     QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
     QScriptEngine* engine = d->scriptRunner->engine();
     QScriptValue fPrint = engine->newFunction(scriptPrintFunction);
@@ -399,7 +400,6 @@ void MainWindow::frameDropped(const uchar* data, int w, int h, int index, Projec
 void MainWindow::setCamReady(int index)
 {
     Q_D(MainWindow);
-    qDebug() << "MainWindow::setCamReady(" << index << ")";
     d->project->setChannel(index, Project::SourceWebcam);
 }
 
@@ -902,7 +902,7 @@ void MainWindow::updateWindowTitle()
 void MainWindow::about(void)
 {
     QMessageBox::about(this, tr("About %1 %2%3").arg(AppName).arg(AppVersionNoDebug).arg(AppMinorVersion),
-                       tr("<p><b>%1</b> is a live coding environment for OpenGL 1.x shaders. "
+                       tr("<p><b>%1</b> is a live coding environment for OpenGL shaders. "
                           "See <a href=\"%2\" title=\"%1 project homepage\">%2</a> for more info.</p>"
                           "<p>Copyright &copy; 2013 %3 &lt;%4&gt;, Heise Zeitschriften Verlag.</p>"
                           "<p>This program is free software: you can redistribute it and/or modify "

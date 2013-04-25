@@ -32,13 +32,13 @@ class GLClass : public QObject
     Q_PROPERTY(QImage frame READ frame)
 
 public:
-    explicit GLClass(RenderWidget* renderWidget);
+    explicit GLClass(RenderWidget* renderWidget, QScriptEngine* engine);
     ~GLClass();
 
     static void Init(RenderWidget* renderWidget, QScriptEngine* engine)
     {
         Q_ASSERT(renderWidget != NULL);
-        engine->globalObject().setProperty("gl", engine->newQObject(new GLClass(renderWidget)));
+        engine->globalObject().setProperty("gl", engine->newQObject(new GLClass(renderWidget, engine)));
     }
 
 public slots:
@@ -54,19 +54,19 @@ public slots:
     void uniform2ui(const QString& location, unsigned int v0, unsigned int v1);
     void uniform3ui(const QString& location, unsigned int v0, unsigned int v1, unsigned int v2);
     void uniform4ui(const QString& location, unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3);
-    void uniform1fv(const QString& location, QScriptValue v);
-    void uniform2fv(const QString& location, QScriptValue v);
-    void uniform3fv(const QString& location, QScriptValue v);
-    void uniform4fv(const QString& location, QScriptValue v);
-    void uniformMatrix2fv(const QString& location, bool transpose, const QMatrix2x2& value);
-    void uniformMatrix3fv(const QString& location, bool transpose, const QMatrix3x3& value);
-    void uniformMatrix4fv(const QString& location, bool transpose, const QMatrix4x4& value);
-    void uniformMatrix2x3fv(const QString& location, bool transpose, const QMatrix2x3& value);
-    void uniformMatrix3x2fv(const QString& location, bool transpose, const QMatrix3x2& value);
-    void uniformMatrix2x4fv(const QString& location, bool transpose, const QMatrix2x4& value);
-    void uniformMatrix4x2fv(const QString& location, bool transpose, const QMatrix4x2& value);
-    void uniformMatrix3x4fv(const QString& location, bool transpose, const QMatrix3x4& value);
-    void uniformMatrix4x3fv(const QString& location, bool transpose, const QMatrix4x3& value);
+
+    void uniformMatrix3fv(const QString& location, bool transpose, const QScriptValue&);
+
+#if 0
+    void uniformMatrix2fv(const QString& location, bool transpose, const QMatrix2x2&);
+    void uniformMatrix4fv(const QString& location, bool transpose, const QMatrix4x4&);
+    void uniformMatrix2x3fv(const QString& location, bool transpose, const QMatrix2x3&);
+    void uniformMatrix3x2fv(const QString& location, bool transpose, const QMatrix3x2&);
+    void uniformMatrix2x4fv(const QString& location, bool transpose, const QMatrix2x4&);
+    void uniformMatrix4x2fv(const QString& location, bool transpose, const QMatrix4x2&);
+    void uniformMatrix3x4fv(const QString& location, bool transpose, const QMatrix3x4&);
+    void uniformMatrix4x3fv(const QString& location, bool transpose, const QMatrix4x3&);
+#endif
 
     void setVertexShaderSource(const QString&);
     const QString& vertexShaderSource(void) const;

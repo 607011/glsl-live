@@ -652,6 +652,7 @@ void RenderWidget::paintGL(void)
         d->goAheadOneFrame = false;
     }
 
+    emit frameReady();
     if (d->instantUpdate)
         update();
 }

@@ -27,6 +27,7 @@ public:
 
 public slots:
     void execute(const QString& source);
+    void onFrame(void);
 
 signals:
     void debug(const QString& message);

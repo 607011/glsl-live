@@ -124,7 +124,6 @@ bool Project::save(const QString& filename)
     for (int i = 0; i < MAX_CHANNELS; ++i) {
         const QVariant& ch = d->channelData[i];
         const SourceSelector source = d->channelSource[i];
-        qDebug() << ch << source;
         if (source != SourceNone) {
             switch (ch.type()) {
             case QVariant::Invalid:
@@ -297,7 +296,6 @@ void Project::setImage(const QImage& image)
 void Project::setChannel(int index, const QImage& img)
 {
     Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "image index out of bounds");
-    qDebug() << "Project::setChannel(" << index << "," << img << ")";
     d_ptr->channelData[index] = img;
     d_ptr->channelSource[index] = SourceData;
     setDirty();
@@ -306,7 +304,6 @@ void Project::setChannel(int index, const QImage& img)
 void Project::setChannel(int index, Project::SourceSelector source, int id)
 {
     Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "image index out of bounds");
-    qDebug() << "Project::setChannel(" << index << "," << source << "," << id << ")";
     d_ptr->channelData[index] = QVariant();
     d_ptr->channelSource[index] = source;
     d_ptr->channelSourceId[index] = id;
@@ -455,12 +452,10 @@ void Project::readInputChannel(void)
     int id = idStr.toInt(&ok);
     if (!ok)
         raiseError(tr("Invalid data in <channel> id attribute"));
-    qDebug() << "id =" << id << " source =" << sourceStr;
     if (!sourceStr.isEmpty()) {
         if (sourceStr == "webcam") {
             d->channelSource[id] = SourceWebcam;
             const QString& sourceIdStr = attr.value("source-id").toString();
-            qDebug() << "sourceIdStr =" << sourceIdStr;
             if (!sourceIdStr.isEmpty()) {
                 int sourceId = sourceIdStr.toInt(&ok);
                 if (ok)

@@ -20,6 +20,7 @@ public:
     QScriptEngine* scriptEngine;
     RenderWidget* renderWidget;
     QString scriptSource;
+    QScriptValue onFrame;
 };
 
 ScriptRunner::ScriptRunner(RenderWidget* renderWidget)
@@ -52,10 +53,18 @@ void ScriptRunner::execute(const QString& source)
     run();
 }
 
+void ScriptRunner::onFrame(void)
+{
+    Q_D(ScriptRunner);
+    if (d->onFrame.isFunction())
+        d->onFrame.call();
+}
+
 void ScriptRunner::run(void)
 {
     Q_D(ScriptRunner);
     QScriptValue& globals = d->scriptEngine->globalObject();
+    globals.setProperty("onFrame", QScriptValue::UndefinedValue);
     globals.setProperty("W", d->renderWidget->width());
     globals.setProperty("H", d->renderWidget->height());
     const QScriptValue& result = d->scriptEngine->evaluate(d->scriptSource);
@@ -68,4 +77,7 @@ void ScriptRunner::run(void)
         while (ex.hasNext())
             emit debug(QString("  %1").arg(ex.next()));
     }
+    d->onFrame = globals.property("onFrame");
+    if (!d->onFrame.isFunction())
+        emit debug(tr("`onFrame()` not defined. Ignoring function."));
 }

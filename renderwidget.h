@@ -74,6 +74,7 @@ public slots:
 
 signals:
     void ready(void);
+    void frameReady(void);
     void vertexShaderError(QString);
     void fragmentShaderError(QString);
     void linkerError(QString);
