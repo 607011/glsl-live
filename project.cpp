@@ -28,7 +28,9 @@ public:
     QString fragmentShaderSource;
     QString scriptSource;
     QImage image;
-    QVariant channel[Project::MAX_TEXTURES];
+    QVariant channelData[Project::MAX_CHANNELS];
+    Project::SourceSelector channelSource[Project::MAX_CHANNELS];
+    int channelSourceId[Project::MAX_CHANNELS];
     QColor backgroundColor;
     bool alphaEnabled;
     bool imageRecyclingEnabled;
@@ -54,8 +56,15 @@ void Project::reset(void)
     d->filename = QString();
     d->vertexShaderSource = QString();
     d->fragmentShaderSource = QString();
-    for (int i = 0; i < MAX_TEXTURES; ++i)
-        d->channel[i] = QVariant();
+    d->alphaEnabled = true;
+    d->imageRecyclingEnabled = false;
+    d->instantUpdate = false;
+    d->borderClamping = true;
+    for (int i = 0; i < MAX_CHANNELS; ++i) {
+        d->channelData[i] = QVariant();
+        d->channelSource[i] = SourceNone;
+        d->channelSourceId[i] = -1;
+    }
 }
 
 bool Project::save(void)
@@ -96,8 +105,8 @@ bool Project::save(const QString& filename)
         << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
         << "    <fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
         << "  </shaders>\n";
-#ifdef SCRIPTING_ENABLED
-        << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n";
+#ifdef WITH_SCRIPTING
+    out << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n";
 #endif
     out << "  <input>\n";
     if (hasImage()) {
@@ -108,21 +117,29 @@ bool Project::save(const QString& filename)
         buffer.close();
         out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
     }
-    for (int i = 0; i < MAX_TEXTURES; ++i) {
-        const QVariant& ch = d->channel[i];
-        if (!ch.isNull() && ch.isValid()) {
+    for (int i = 0; i < MAX_CHANNELS; ++i) {
+        const QVariant& ch = d->channelData[i];
+        const SourceSelector source = d->channelSource[i];
+        if (source != SourceNone) {
             switch (ch.type()) {
             case QVariant::Image: {
-                QByteArray ba;
-                QBuffer buffer(&ba);
-                buffer.open(QIODevice::WriteOnly);
-                ch.value<QImage>().save(&buffer, "PNG");
-                buffer.close();
-                out << "    <channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
+                if (source == SourceData) {
+                    QByteArray ba;
+                    QBuffer buffer(&ba);
+                    buffer.open(QIODevice::WriteOnly);
+                    ch.value<QImage>().save(&buffer, "PNG");
+                    buffer.close();
+                    out << "    <channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
+                }
+                else if (source == SourceWebcam) {
+                    out << "    <channel id=\"" << i << "\" source=\"webcam\"></channel>\n";
+                }
                 break;
             }
+            case QVariant::Invalid:
+                // fall-through
             default:
-                qWarning() << "invalid type (" << ch.type() << ") in channel" << i;
+                // ignore
                 break;
             }
         }
@@ -231,7 +248,7 @@ const QImage& Project::image(void) const
 
 const QVariant &Project::channel(int index) const
 {
-    return d_ptr->channel[index];
+    return d_ptr->channelData[index];
 }
 
 void Project::setDirty(bool dirty)
@@ -271,8 +288,19 @@ void Project::setImage(const QImage& image)
 
 void Project::setChannel(int index, const QImage& img)
 {
-    Q_ASSERT_X(index >= 0 && index < MAX_TEXTURES, "Project::setChannel()", "image index out of bounds");
-    d_ptr->channel[index] = img;
+    Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "image index out of bounds");
+    d_ptr->channelData[index] = img;
+    d_ptr->channelSource[index] = SourceData;
+    setDirty();
+}
+
+void Project::setChannel(int index, Project::SourceSelector source, int id)
+{
+    Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "image index out of bounds");
+    qDebug() << "Project::setChannel(" << index << "," << source << "," << id << ")";
+    d_ptr->channelData[index] = QVariant();
+    d_ptr->channelSource[index] = source;
+    d_ptr->channelSourceId[index] = id;
     setDirty();
 }
 
@@ -310,7 +338,7 @@ void Project::read(void)
         else if (d->xml.name() == "input") {
             readInput();
         }
-#ifdef SCRIPTING_ENABLED
+#ifdef WITH_SCRIPTING
         else if (d->xml.name() == "script") {
             readScript();
         }
@@ -412,10 +440,27 @@ void Project::readInputChannel(void)
     Q_D(Project);
     Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "channel");
     bool ok;
-    const QString& idStr = d->xml.attributes().value("id").toString();
+    QXmlStreamAttributes attr = d->xml.attributes();
+    const QString& sourceStr = attr.value("source").toString();
+    const QString& idStr = attr.value("id").toString();
     int id = idStr.toInt(&ok);
     if (!ok)
         raiseError(tr("Invalid data in <channel> id attribute"));
+    qDebug() << "id =" << id << " source =" << sourceStr;
+    if (!sourceStr.isEmpty()) {
+        if (sourceStr == "webcam") {
+            d->channelSource[id] = SourceWebcam;
+            const QString& sourceIdStr = attr.value("source-id").toString();
+            qDebug() << "sourceIdStr =" << sourceIdStr;
+            if (!sourceIdStr.isEmpty()) {
+                int sourceId = sourceIdStr.toInt(&ok);
+                if (ok)
+                    d->channelSourceId[id] = sourceId;
+                else
+                    raiseError(tr("Invalid data in <channel> source-id attribute"));
+            }
+        }
+    }
     const QString& str = d->xml.readElementText();
     if (!str.isEmpty()) {
         const QByteArray& imgData = QByteArray::fromBase64(str.toUtf8());
@@ -423,10 +468,7 @@ void Project::readInputChannel(void)
         ok = img.loadFromData(imgData);
         if (!ok)
             raiseError(tr("Invalid data in <channel> tag"));
-        d->channel[id] = img;
-    }
-    else {
-        d->xml.raiseError(QObject::tr("empty <channel>: %1").arg(str));
+        d->channelData[id] = img;
     }
 }
 

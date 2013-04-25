@@ -88,6 +88,29 @@ void GLClass::uniform4ui(const QString& location, unsigned int v0, unsigned int 
     d_ptr->renderWidget->shaderProgram()->setUniformValue(location.toLatin1().constData(), (GLuint)v0, (GLuint)v1, (GLuint)v2, (GLuint)v3);
 }
 
+void GLClass::uniform1fv(const QString& location, QScriptValue v)
+{
+    int loc = d_ptr->renderWidget->shaderProgram()->uniformLocation(location.toLatin1().constData());
+    // d_ptr->renderWidget->shaderProgram()->setUniformValueArray(loc, v.to, v.size(), 1);
+}
+
+void GLClass::uniform2fv(const QString& location, QScriptValue v)
+{
+    int loc = d_ptr->renderWidget->shaderProgram()->uniformLocation(location.toLatin1().constData());
+    // d_ptr->renderWidget->shaderProgram()->setUniformValueArray(loc, v.data(), v.size());
+}
+
+void GLClass::uniform3fv(const QString& location, QScriptValue v)
+{
+    int loc = d_ptr->renderWidget->shaderProgram()->uniformLocation(location.toLatin1().constData());
+    // d_ptr->renderWidget->shaderProgram()->setUniformValueArray(loc, v.data(), v.size());
+}
+
+void GLClass::uniform4fv(const QString& location, QScriptValue v)
+{
+    int loc = d_ptr->renderWidget->shaderProgram()->uniformLocation(location.toLatin1().constData());
+    // d_ptr->renderWidget->shaderProgram()->setUniformValueArray(loc, v.data(), v.size());
+}
 
 void GLClass::uniformMatrix2fv(const QString& location, bool transpose, const QMatrix2x2& value)
 {

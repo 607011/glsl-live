@@ -10,37 +10,26 @@
 #include <QSize>
 #include <QScopedPointer>
 
-#include "abstractvideodecoder.h"
-
-
 namespace cv {
     class VideoCapture;
 }
 
 class WebcamPrivate;
 
-class Webcam : public IAbstractVideoDecoder
+class Webcam : public QObject
 {
     Q_OBJECT
 public:
     Webcam(QObject* parent = NULL);
-    virtual ~Webcam();
+    ~Webcam();
 
     // IAbstractVideoDecoder methods
-    bool open(const char*) { return false; }
-
     bool open(int deviceId);
     bool isOpen(void) const;
     void close(void);
-    bool seekNextFrame(int);
-    bool getFrame(QImage& img, int* effectiveframenumber = 0, int* effectiveframetime = 0, int* desiredframenumber = 0, int* desiredframetime = 0);
+    const QImage& getFrame(void);
     void getRawFrame(const uchar*& data, int& w, int& h) const;
-    bool seekFrame(qint64);
-    bool seekMs(int);
     QSize frameSize(void) const;
-    int getVideoLengthMs(void);
-    QString codecInfo(void) const;
-    const QString typeName(void) const;
 
     // other methods
     void setSize(const QSize&);

@@ -16,19 +16,20 @@
 #include "channelwidget.h"
 #include "util.h"
 
+#ifdef WITH_OPENCV
 #include "webcam.h"
 #include "webcamthread.h"
-
+#endif
 
 class ChannelWidgetPrivate
 {
 public:
     ChannelWidgetPrivate(void)
+#ifdef WITH_OPENCV
         : webcam(NULL)
         , webcamThread(NULL)
+#endif
     {
-        webcam = NULL;
-        webcamThread = NULL;
         reset();
     }
     ~ChannelWidgetPrivate()
@@ -41,14 +42,13 @@ public:
         type = ChannelWidget::None;
         image = QImage(":/images/checkered.png");
         filename = QString();
-        camActive = false;
     }
     ChannelWidget::Type type;
     QImage image;
     QString filename;
     int index;
-    bool camActive;
 
+#ifdef WITH_OPENCV
     inline Webcam* decoder(void)
     {
         if (webcam == NULL) {
@@ -58,12 +58,6 @@ public:
         return webcam;
     }
 
-    void turnOffWebcam(void)
-    {
-        if (webcam->isOpen())
-            webcam->close();
-    }
-
     inline WebcamThread* decoderThread(void)
     {
         if (webcamThread == NULL)
@@ -71,7 +65,21 @@ public:
         return webcamThread;
     }
 
-#ifdef WITH_OPENCV
+    void turnOffWebcam(void)
+    {
+        if (webcamThread)
+            webcamThread->stopReading();
+        if (webcam)
+            webcam->close();
+        safeDelete(webcam);
+        safeDelete(webcamThread);
+    }
+
+    bool isWebcamOpen(void)
+    {
+        return webcam != NULL && webcam->isOpen();
+    }
+
     Webcam* webcam;
     WebcamThread* webcamThread;
 #endif
@@ -96,14 +104,24 @@ ChannelWidget::ChannelWidget(int index, QWidget* parent)
 
 ChannelWidget::~ChannelWidget()
 {
-    // ...
+    closeWebcam();
 }
 
-void ChannelWidget::setImage(const QImage& img)
+void ChannelWidget::closeWebcam(void)
+{
+    Q_D(ChannelWidget);
+    if (d->isWebcamOpen()) {
+        QObject::disconnect(d->decoderThread(), SIGNAL(frameReady(QImage)), this, SLOT(setImage(QImage)));
+        QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int)), this, SLOT(setFrame(const uchar*, int, int)));
+        d->turnOffWebcam();
+    }
+}
+
+void ChannelWidget::setImage(const QImage& img, Type type)
 {
     Q_D(ChannelWidget);
     d->image = img;
-    d->type = Image;
+    d->type = type;
     update();
 }
 
@@ -196,23 +214,31 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     QMenu menu;
     if (!d->image.isNull())
         menu.addAction(tr("Remove"));
+#ifdef WITH_OPENCV
     if (d->webcam == NULL)
         menu.addAction(tr("Use webcam"));
+#endif
     QAction* selectedItem = menu.exec(globalPos);
     if (selectedItem == NULL)
         return;
     if (selectedItem->text() == tr("Remove")) {
-        if (d->webcam != NULL && d->webcam->isOpen())
-            d->turnOffWebcam();
+#ifdef WITH_OPENCV
+        if (d->isWebcamOpen())
+            closeWebcam();
+#endif
         emit imageDropped(d->index, QImage());
         d->reset();
         update();
     }
+#ifdef WITH_OPENCV
     else if (selectedItem->text() == tr("Use webcam")) {
         QObject::connect(d->decoderThread(), SIGNAL(frameReady(QImage)), SLOT(setImage(QImage)));
         QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int)), SLOT(setFrame(const uchar*, int, int)));
+        if (d->isWebcamOpen())
+            setImage(d->webcam->getFrame(), Volatile);
         d->decoderThread()->startReading();
     }
+#endif
 }
 
 QString ChannelWidget::channelName(int index)

@@ -20,6 +20,7 @@ class ChannelWidget : public QWidget
 public:
     enum Type {
         None = 0,
+        Volatile,
         Auto,
         Image,
         Video,
@@ -48,11 +49,14 @@ signals:
     void rawFrameReady(const uchar* data, int w, int h, int index);
 
 public slots:
-    void setImage(const QImage&);
+    void setImage(const QImage&, Type = Image);
     void setFrame(const uchar*, int, int);
 
 private slots:
     void showContextMenu(const QPoint&);
+
+private: // methods
+    void closeWebcam(void);
 
 private: // variables
     QScopedPointer<ChannelWidgetPrivate> d_ptr;

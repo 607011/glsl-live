@@ -9,14 +9,17 @@ CONFIG += opencv
 
 opencv {
 DEFINES += WITH_OPENCV
-LIBS += -L$${OPENCVDIR}/lib -lopencv_core245 -lopencv_highgui245
-QMAKE_CXXFLAGS += -ID:/Developer/opencv/build/include -ID:/Developer/opencv/build/include/opencv -ID:/Developer/opencv/build/include/opencv2
+LIBS += -lopencv_core245 -lopencv_highgui245
 DEFINES += _CRT_SECURE_NO_WARNINGS
+SOURCES += webcamthread.cpp \
+    webcam.cpp
+HEADERS += webcamthread.h \
+    webcam.h
 }
 
 multimedia {
 QT += multimedia
-DEFINES += ENABLE_CAMERA ENABLE_SOUND
+DEFINES += WITH_QCAMERA
 }
 
 TARGET = GLSL-Live-Coder
@@ -28,7 +31,7 @@ RC_FILE = glsl-live.rc
 
 scripting {
 QT += script
-DEFINES += ENABLE_SCRIPTING
+DEFINES += WITH_SCRIPTING
 SOURCES += editors/js/jsedit.cpp \
     scriptrunner.cpp \
     glclass.cpp \
@@ -57,9 +60,7 @@ SOURCES += main.cpp\
     editors/glsl/glsldoclayout.cpp \
     editors/sidebarwidget.cpp \
     colorpicker.cpp \
-    channelwidget.cpp \
-    webcamthread.cpp \
-    webcam.cpp
+    channelwidget.cpp
 
 HEADERS += main.h \
     mainwindow.h \
@@ -74,10 +75,7 @@ HEADERS += main.h \
     editors/sidebarwidget.h \
     editors/abstracteditor.h \
     colorpicker.h \
-    channelwidget.h \
-    webcamthread.h \
-    webcam.h \
-    abstractvideodecoder.h
+    channelwidget.h
 
 FORMS += mainwindow.ui
 

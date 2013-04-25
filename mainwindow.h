@@ -70,7 +70,7 @@ private slots:
     void chooseBackgroundColor(void);
     void setTimerActive(bool);
     void setFPS(double);
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
     void processScriptChange(void);
     void executeScript(void);
 #endif

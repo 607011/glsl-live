@@ -54,6 +54,10 @@ public slots:
     void uniform2ui(const QString& location, unsigned int v0, unsigned int v1);
     void uniform3ui(const QString& location, unsigned int v0, unsigned int v1, unsigned int v2);
     void uniform4ui(const QString& location, unsigned int v0, unsigned int v1, unsigned int v2, unsigned int v3);
+    void uniform1fv(const QString& location, QScriptValue v);
+    void uniform2fv(const QString& location, QScriptValue v);
+    void uniform3fv(const QString& location, QScriptValue v);
+    void uniform4fv(const QString& location, QScriptValue v);
     void uniformMatrix2fv(const QString& location, bool transpose, const QMatrix2x2& value);
     void uniformMatrix3fv(const QString& location, bool transpose, const QMatrix3x3& value);
     void uniformMatrix4fv(const QString& location, bool transpose, const QMatrix4x4& value);

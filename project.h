@@ -18,7 +18,13 @@ class Project : public QObject
     Q_OBJECT
 
 public:
-    static const int MAX_TEXTURES = 8;
+    static const int MAX_CHANNELS = 8;
+
+    enum SourceSelector {
+        SourceNone = 0,
+        SourceData,
+        SourceWebcam
+    };
 
     explicit Project(QObject* parent = NULL);
     ~Project();
@@ -52,6 +58,7 @@ public:
 
 public slots:
     void setChannel(int index, const QImage&);
+    void setChannel(int index, SourceSelector, int id = 0);
     void enableAlpha(bool enabled = true);
     void enableImageRecycling(bool enabled = true);
     void enableInstantUpdate(bool enabled = true);

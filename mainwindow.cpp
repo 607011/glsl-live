@@ -42,7 +42,7 @@
 #include "renderer.h"
 #include "editors/glsl/glsledit.h"
 #include "util.h"
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
 #include "editors/js/jsedit.h"
 #include "scriptrunner.h"
 #endif
@@ -58,7 +58,7 @@ public:
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
         , scriptRunner(new ScriptRunner(renderWidget))
         , scriptEditor(new JSEdit)
 #endif
@@ -77,8 +77,8 @@ public:
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
     QWidget* paramWidget;
-    ChannelWidget* channelWidget[Project::MAX_TEXTURES];
-#ifdef ENABLE_SCRIPTING
+    ChannelWidget* channelWidget[Project::MAX_CHANNELS];
+#ifdef WITH_SCRIPTING
     ScriptRunner* scriptRunner;
     JSEdit* scriptEditor;
 #endif
@@ -107,7 +107,7 @@ public:
         safeDelete(vertexShaderEditor);
         safeDelete(fragmentShaderEditor);
         safeDelete(docBrowser);
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
         safeDelete(scriptEditor);
         safeDelete(scriptRunner);
 #endif
@@ -115,7 +115,7 @@ public:
 };
 
 
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine);
 #endif
 
@@ -147,7 +147,7 @@ MainWindow::MainWindow(QWidget* parent)
     ui->channelLayout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::MinimumExpanding, QSizePolicy::Preferred));
     ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
 
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
     ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     prepareEditor(d->scriptEditor);
     QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
@@ -201,7 +201,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->project, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
     QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
     QScriptEngine* engine = d->scriptRunner->engine();
@@ -211,7 +211,7 @@ MainWindow::MainWindow(QWidget* parent)
     // TODO: define onFrame() script function
 #endif
 
-    for (int i = 0; i < Project::MAX_TEXTURES; ++i) {
+    for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
         d->channelWidget[i] = new ChannelWidget(i);
         QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), SLOT(imageDropped(int, QImage)));
         QObject::connect(d->channelWidget[i], SIGNAL(rawFrameReady(const uchar*, int, int, int)), SLOT(frameDropped(const uchar*, int, int, int)));
@@ -470,7 +470,7 @@ void MainWindow::setFPS(double fps)
     ui->labelFPS->setText(QString("%1 fps").arg(fps, 7, 'f', 1));
 }
 
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
 {
     QString result;
@@ -773,7 +773,7 @@ void MainWindow::openProject(const QString& filename)
         d->renderWidget->enableInstantUpdate(d->project->instantUpdateEnabled());
         d->renderWidget->clampToBorder(d->project->borderClampingEnabled());
         d->renderWidget->enableImageRecycling(d->project->imageRecyclingEnabled());
-        for (int i = 0; i < Project::MAX_TEXTURES; ++i) {
+        for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
             const QVariant& ch = d->project->channel(i);
             switch (ch.type()) {
             case QVariant::Image:
@@ -787,7 +787,7 @@ void MainWindow::openProject(const QString& filename)
                 break;
             }
         }
-#ifdef ENABLE_SCRIPTING
+#ifdef WITH_SCRIPTING
         d->scriptEditor->setPlainText(d->project->scriptSource());
 #endif
         processShaderChange();

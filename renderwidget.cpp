@@ -81,12 +81,12 @@ public:
     QGLShaderProgram* shaderProgram;
     QGLFramebufferObject* fbo;
     GLuint textureHandle;
-    GLuint channelHandle[Project::MAX_TEXTURES];
+    GLuint channelHandle[Project::MAX_CHANNELS];
     QTime totalTime;
     QTime frameTime;
     QString imgFilename;
     QImage img;
-    QImage channel[Project::MAX_TEXTURES];
+    QImage channel[Project::MAX_CHANNELS];
     int liveTimerId;
     QPointF mousePos;
     QSizeF resolution;
@@ -98,7 +98,7 @@ public:
     int uLocMouse;
     int uLocResolution;
     int uLocTexture;
-    int uLocChannel[Project::MAX_TEXTURES];
+    int uLocChannel[Project::MAX_CHANNELS];
     int uLocMarks;
     int uLocMarksCount;
     bool updateImageGL;
@@ -325,7 +325,7 @@ void RenderWidget::setImage(const QImage& img)
 
 void RenderWidget::setChannel(int index, const uchar* data, int w, int h)
 {
-    Q_ASSERT_X(index >= 0 && index < Project::MAX_TEXTURES, "RenderWidget::setChannel()", "image index out of bounds");
+    Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::setChannel()", "image index out of bounds");
     Q_D(RenderWidget);
     makeCurrent();
     if (glActiveTexture)
@@ -337,7 +337,7 @@ void RenderWidget::setChannel(int index, const uchar* data, int w, int h)
 
 void RenderWidget::setChannel(int index, const QImage& img)
 {
-    Q_ASSERT_X(index >= 0 && index < Project::MAX_TEXTURES, "RenderWidget::setChannel()", "image index out of bounds");
+    Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::setChannel()", "image index out of bounds");
     Q_D(RenderWidget);
     d->channel[index] = img.convertToFormat(QImage::Format_ARGB32);
     makeCurrent();
@@ -386,7 +386,7 @@ void RenderWidget::updateUniforms(void)
     d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
     d->shaderProgram->setUniformValue(d->uLocResolution, d->resolution);
     d->shaderProgram->setUniformValue(d->uLocTexture, 0);
-    for (int i = 0; i < Project::MAX_TEXTURES; ++i)
+    for (int i = 0; i < Project::MAX_CHANNELS; ++i)
         d->shaderProgram->setUniformValue(d->uLocChannel[i], 1 + i);
     d->shaderProgram->setUniformValueArray(d->uLocMarks, d->marks.data(), d->marks.size());
     d->shaderProgram->setUniformValue(d->uLocMarksCount, d->marks.size());
@@ -460,7 +460,7 @@ void RenderWidget::buildProgram(const QString& vs, const QString& fs)
 
     d->uLocT = d->shaderProgram->uniformLocation("uT");
     d->uLocTexture = d->shaderProgram->uniformLocation("uTexture");
-    for (int i = 0; i < Project::MAX_TEXTURES; ++i)
+    for (int i = 0; i < Project::MAX_CHANNELS; ++i)
         d->uLocChannel[i] = d->shaderProgram->uniformLocation(ChannelWidget::channelName(i));
     d->uLocMouse = d->shaderProgram->uniformLocation("uMouse");
     d->uLocResolution = d->shaderProgram->uniformLocation("uResolution");
@@ -593,8 +593,8 @@ void RenderWidget::initializeGL(void)
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, d->textureHandle);
     configureTexture();
-    glGenTextures(Project::MAX_TEXTURES, d->channelHandle);
-    for (int i = 0; i < Project::MAX_TEXTURES; ++i) {
+    glGenTextures(Project::MAX_CHANNELS, d->channelHandle);
+    for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
         glActiveTexture(GL_TEXTURE1 + i);
         glBindTexture(GL_TEXTURE_2D, d->channelHandle[i]);
         configureTexture();

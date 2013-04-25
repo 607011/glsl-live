@@ -16,9 +16,7 @@ public:
         , abort(false)
     { /* ... */ }
     ~WebcamThreadPrivate()
-    {
-        safeDelete(webcam);
-    }
+    { /* ... */ }
     Webcam* webcam;
     bool abort;
 };
@@ -58,7 +56,6 @@ void WebcamThread::run(void)
     Q_D(WebcamThread);
     Q_ASSERT(d->webcam != NULL);
     while (!d->abort) {
-        // d->webcam->getFrame(frame, &framenumber);
         int w = -1, h = -1;
         const uchar* data = 0;
         d->webcam->getRawFrame(data, w, h);

@@ -14,23 +14,19 @@ class WebcamPrivate
 public:
     WebcamPrivate(void)
         : webcam(NULL)
-        , frameNumber(0)
-        , frameTime(0)
     { /* ... */ }
     ~WebcamPrivate()
     {
-        safeDelete(webcam);
+        // safeDelete(webcam);
     }
     cv::VideoCapture* webcam;
     QImage lastFrame;
     QSize frameSize;
-    int frameNumber;
-    int frameTime;
     cv::Mat frame;
 };
 
 Webcam::Webcam(QObject* parent)
-    : IAbstractVideoDecoder(parent)
+    : QObject(parent)
     , d_ptr(new WebcamPrivate)
 {
     /* ... */
@@ -67,7 +63,7 @@ void Webcam::close(void)
         d->webcam->release();
 }
 
-bool Webcam::seekNextFrame(int)
+const QImage& Webcam::getFrame(void)
 {
     Q_D(Webcam);
     Q_ASSERT(d->webcam != NULL);
@@ -75,24 +71,19 @@ bool Webcam::seekNextFrame(int)
     const int w = d->frame.cols;
     const int h = d->frame.rows;
     if (d->lastFrame.size() != QSize(w, h))
-        d->lastFrame = QImage(w, h, QImage::Format_RGB888);
-    for (int y = 0; y < h; ++y)
-        memcpy(d->lastFrame.scanLine(y), d->frame.ptr(y), 3*w);
-    ++d->frameNumber;
-    ++d->frameTime; // XXX
-    return true;
-}
-
-bool Webcam::getFrame(QImage& img, int* effectiveframenumber, int* effectiveframetime, int*, int*)
-{
-    Q_D(Webcam);
-    seekNextFrame(0);
-    img = d->lastFrame;
-    if (effectiveframenumber)
-        *effectiveframenumber = d->frameNumber;
-    if (effectiveframetime)
-        *effectiveframetime = d->frameTime;
-    return true;
+        d->lastFrame = QImage(w, h, QImage::Format_RGB32);
+    for (int y = 0; y < h; ++y) {
+        const uchar* src = d->frame.ptr(y);
+        uchar* dst = d->lastFrame.scanLine(y);
+        const uchar* const dstEnd = dst + 4*w;
+        while (dst < dstEnd) {
+            *dst++ = *src++;
+            *dst++ = *src++;
+            *dst++ = *src++;
+            *dst++ = 0xffU;
+        }
+    }
+    return d->lastFrame;
 }
 
 void Webcam::getRawFrame(const uchar*& data, int& w, int& h) const
@@ -119,9 +110,7 @@ void Webcam::setSize(const QSize& sz)
     d->webcam->set(CV_CAP_PROP_FRAME_HEIGHT, sz.height());
 }
 
-bool Webcam::seekFrame(qint64) { return false; }
-bool Webcam::seekMs(int) { return false; }
-QSize Webcam::frameSize() const { return d_ptr->frameSize; }
-int Webcam::getVideoLengthMs(void) { return -1; }
-QString Webcam::codecInfo(void) const { return QString(); }
-const QString Webcam::typeName(void) const { return "Webcam"; }
+QSize Webcam::frameSize(void) const
+{
+    return d_ptr->frameSize;
+}
