@@ -8,9 +8,8 @@ out vec2 vTexCoord;
 
 void main(void)
 {
-  vTexCoord = aTexCoord;
-  
-  gl_Position = vec4(aVertex, 0.0, 1.0);
+	vTexCoord = aTexCoord;
+	gl_Position = vec4(aVertex, 0.0, 1.0);
 }
 ]]></vertex>
     <fragment><![CDATA[// Glow fragment filter 
@@ -30,26 +29,26 @@ uniform int uD; // 1, 3, 1
 
 void main(void)
 { 
-  vec2 d = vec2(uD, uD) / uResolution;
-  vec3 t1 = texture2D(uChannel0, vTexCoord + d * vec2(-1.0, -1.0)).rgb;
-  vec3 t2 = texture2D(uChannel0, vTexCoord + d * vec2( 0.0, -1.0)).rgb;
-  vec3 t3 = texture2D(uChannel0, vTexCoord + d * vec2(+1.0, -1.0)).rgb;
-  vec3 t4 = texture2D(uChannel0, vTexCoord + d * vec2(-1.0,  0.0)).rgb;
-  vec3 t5 = texture2D(uChannel0, vTexCoord).rgb;
-  vec3 t6 = texture2D(uChannel0, vTexCoord + d * vec2(+1.0,  0.0)).rgb;
-  vec3 t7 = texture2D(uChannel0, vTexCoord + d * vec2(-1.0, +1.0)).rgb;
-  vec3 t8 = texture2D(uChannel0, vTexCoord + d * vec2( 0.0, +1.0)).rgb;
-  vec3 t9 = texture2D(uChannel0, vTexCoord + d * vec2(+1.0, +1.0)).rgb;
-  vec3 xx = t1 + 2.0 * t2 + t3 - t7 - 2.0 * t8 - t9;
-  vec3 yy = t1 - t3 + 2.0 * t4 - 2.0 * t6 + t7 - t9;    
-  vec3 rr = sqrt(xx * xx + yy * yy);    
-  color = vec4(rr * uIntensity * t5, 1.0);
+	vec2 d = vec2(uD, uD) / uResolution;
+	vec3 t1 = texture2D(uChannel0, vTexCoord + d * vec2(-1.0, -1.0)).rgb;
+	vec3 t2 = texture2D(uChannel0, vTexCoord + d * vec2( 0.0, -1.0)).rgb;
+	vec3 t3 = texture2D(uChannel0, vTexCoord + d * vec2(+1.0, -1.0)).rgb;
+	vec3 t4 = texture2D(uChannel0, vTexCoord + d * vec2(-1.0,  0.0)).rgb;
+	vec3 t5 = texture2D(uChannel0, vTexCoord).rgb;
+	vec3 t6 = texture2D(uChannel0, vTexCoord + d * vec2(+1.0,  0.0)).rgb;
+	vec3 t7 = texture2D(uChannel0, vTexCoord + d * vec2(-1.0, +1.0)).rgb;
+	vec3 t8 = texture2D(uChannel0, vTexCoord + d * vec2( 0.0, +1.0)).rgb;
+	vec3 t9 = texture2D(uChannel0, vTexCoord + d * vec2(+1.0, +1.0)).rgb;
+	vec3 xx = t1 + 2.0 * t2 + t3 - t7 - 2.0 * t8 - t9;
+	vec3 yy = t1 - t3 + 2.0 * t4 - 2.0 * t6 + t7 - t9;    
+	vec3 rr = sqrt(xx * xx + yy * yy);    
+	color = vec4(rr * uIntensity * t5, 1.0);
 }
 ]]></fragment>
   </shaders>
   <script><![CDATA[]]></script>
   <input>
-    <channel id="0" source="webcam"></channel>
+    <channel id="0"><![CDATA[]]></channel>
   </input>
   <options>
     <clamp>0</clamp>

@@ -105,21 +105,21 @@ bool Project::save(const QString& filename)
     out.setAutoDetectUnicode(false);
     out.setCodec(QTextCodec::codecForMib(106/* UTF-8 */));
     out << "<glsl-live-coder-project version=\"" << AppVersionNoDebug << "\">\n"
-        << "  <shaders>\n"
-        << "    <vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
-        << "    <fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
-        << "  </shaders>\n";
+        << "\t<shaders>\n"
+        << "\t\t<vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
+        << "\t\t<fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
+        << "\t</shaders>\n";
 #ifdef WITH_SCRIPTING
-    out << "  <script><![CDATA[" << d->scriptSource << "]]></script>\n";
+    out << "\t<script><![CDATA[" << d->scriptSource << "]]></script>\n";
 #endif
-    out << "  <input>\n";
+    out << "\t<input>\n";
     if (hasImage()) {
         QByteArray ba;
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
         d->image.save(&buffer, "PNG");
         buffer.close();
-        out << "    <image><![CDATA[" << ba.toBase64() << "]]></image>\n";
+        out << "\t\t<image><![CDATA[" << ba.toBase64() << "]]></image>\n";
     }
     for (int i = 0; i < MAX_CHANNELS; ++i) {
         const QVariant& ch = d->channelData[i];
@@ -129,7 +129,7 @@ bool Project::save(const QString& filename)
             case QVariant::Invalid:
             {
                 if (source == SourceWebcam) {
-                    out << "    <channel id=\"" << i << "\" source=\"webcam\"></channel>\n";
+                    out << "\t\t<channel id=\"" << i << "\" source=\"webcam\"></channel>\n";
                 }
                 break;
             }
@@ -141,7 +141,7 @@ bool Project::save(const QString& filename)
                     buffer.open(QIODevice::WriteOnly);
                     ch.value<QImage>().save(&buffer, "PNG");
                     buffer.close();
-                    out << "    <channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
+                    out << "\t\t<channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
                 }
                 break;
             }
@@ -151,14 +151,14 @@ bool Project::save(const QString& filename)
             }
         }
     }
-    out << "  </input>\n";
-    out << "  <options>\n"
-        << "    <clamp>" << d->borderClamping << "</clamp>\n"
-        << "    <backgroundcolor>" << d->backgroundColor << "</backgroundcolor>\n"
-        << "    <instantupdate>" << d->instantUpdate << "</instantupdate>\n"
-        << "    <imagerecycling>" << d->imageRecyclingEnabled << "</imagerecycling>\n"
-        << "    <alpha>" << d->alphaEnabled << "</alpha>\n"
-        << "  </options>\n"
+    out << "\t</input>\n";
+    out << "\t<options>\n"
+        << "\t\t<clamp>" << d->borderClamping << "</clamp>\n"
+        << "\t\t<backgroundcolor>" << d->backgroundColor << "</backgroundcolor>\n"
+        << "\t\t<instantupdate>" << d->instantUpdate << "</instantupdate>\n"
+        << "\t\t<imagerecycling>" << d->imageRecyclingEnabled << "</imagerecycling>\n"
+        << "\t\t<alpha>" << d->alphaEnabled << "</alpha>\n"
+        << "\t</options>\n"
         << "</glsl-live-coder-project>\n";
     qint64 bytesWritten = file.write(compress? qCompress(dstr.toUtf8(), 9) : dstr.toUtf8());
     ok = ok && (bytesWritten > 0);
@@ -323,11 +323,12 @@ bool Project::read(QIODevice* device)
     resetErrors();
     d->xml.setDevice(device);
     if (d->xml.readNextStartElement()) {
-        if (d->xml.name() == "glsl-live-coder-project" && d->xml.attributes().value("version").toString().startsWith("0.")) {
+        const QString& version = d->xml.attributes().value("version").toString();
+        if (d->xml.name() == "glsl-live-coder-project" && (version.startsWith("0.") || version.startsWith("1."))) {
             read();
         }
         else {
-            d->xml.raiseError(QObject::tr("The file is not an GLSL Live Coder v0.x project file ."));
+            d->xml.raiseError(QObject::tr("The file is not an GLSL Live Coder v0.x or 1.0 project file ."));
         }
     }
     return !d->xml.error();

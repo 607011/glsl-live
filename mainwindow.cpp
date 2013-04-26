@@ -935,7 +935,6 @@ void MainWindow::showHelp(void)
 static void prepareEditor(AbstractEditor* editor)
 {
     //editor->blockSignals(true);
-    editor->setTabStopWidth(2);
     editor->setWordWrapMode(QTextOption::NoWrap);
     QFont monospace;
 #if defined(Q_OS_MAC)
@@ -946,7 +945,11 @@ static void prepareEditor(AbstractEditor* editor)
     monospace.setFamily("Monospace");
 #endif
     monospace.setStyleHint(QFont::TypeWriter);
+    const int tabStop = 2;
     editor->setFont(monospace);
+    QFontMetrics metrics(monospace);
+    editor->setTabStopWidth(tabStop * metrics.width(' '));
+
     editor->setTextWrapEnabled(true);
     editor->setBracketsMatchingEnabled(true);
     editor->setCodeFoldingEnabled(true);
