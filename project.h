@@ -10,6 +10,8 @@
 #include <QString>
 #include <QIODevice>
 #include <QScopedPointer>
+#include <QMap>
+#include <QVariant>
 
 class ProjectPrivate;
 
@@ -53,6 +55,8 @@ public:
     bool borderClampingEnabled(void) const;
     const QColor& backgroundColor(void) const;
     bool hasImage(void) const;
+    void setUniforms(const QMap<QString, QVariant>&);
+    const QMap<QString, QVariant>& uniforms(void) const;
 
     static bool isEmpty(const QImage&);
 
@@ -80,6 +84,8 @@ private: // methods
     void readInputImage(void);
     void readInputChannel(void);
     void readOptions(void);
+    void readUniforms(void);
+    void readUniform(void);
     void readAlpha(void);
     void readClamp(void);
     void readBackgroundColor(void);

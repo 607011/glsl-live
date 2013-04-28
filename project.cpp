@@ -1,14 +1,14 @@
 // Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 // All rights reserved.
 
+#include <QtCore/QDebug>
 #include <QBuffer>
 #include <QFile>
 #include <QTextStream>
 #include <QXmlStreamReader>
 #include <QTextCodec>
-#include <QtCore/QDebug>
 #include <QByteArray>
-#include <QVariant>
+
 #include "renderwidget.h"
 #include "project.h"
 #include "main.h"
@@ -31,6 +31,7 @@ public:
     QVariant channelData[Project::MAX_CHANNELS];
     Project::SourceSelector channelSource[Project::MAX_CHANNELS];
     int channelSourceId[Project::MAX_CHANNELS];
+    QMap<QString, QVariant> uniforms;
     QColor backgroundColor;
     bool alphaEnabled;
     bool imageRecyclingEnabled;
@@ -85,6 +86,17 @@ QTextStream& operator<<(QTextStream& out, const QColor& color)
     return out;
 }
 
+
+QColor rgba2Color(const QString& str)
+{
+    QColor color;
+    QRegExp reC("rgba\\s*\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)");
+    if (reC.indexIn(str) > -1)
+        color = QColor(reC.cap(1).toInt(), reC.cap(2).toInt(), reC.cap(3).toInt(), reC.cap(4).toInt());
+    return color;
+}
+
+
 bool Project::save(const QString& filename)
 {
     Q_D(Project);
@@ -108,9 +120,10 @@ bool Project::save(const QString& filename)
         << "\t<shaders>\n"
         << "\t\t<vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
         << "\t\t<fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
-        << "\t</shaders>\n"
-        << "\t<script><![CDATA[" << d->scriptSource << "]]></script>\n"
-        << "\t<input>\n";
+        << "\t</shaders>\n";
+    if (!d->scriptSource.isEmpty())
+        out << "\t<script><![CDATA[" << d->scriptSource << "]]></script>\n";
+    out << "\t<input>\n";
     if (hasImage()) {
         QByteArray ba;
         QBuffer buffer(&ba);
@@ -141,6 +154,8 @@ bool Project::save(const QString& filename)
                     buffer.close();
                     out << "\t\t<channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
                 }
+                else
+                    qWarning() << "Project::save(): invalid source (" << source << ") for type " << ch.type();
                 break;
             }
             default:
@@ -156,8 +171,38 @@ bool Project::save(const QString& filename)
         << "\t\t<instantupdate>" << d->instantUpdate << "</instantupdate>\n"
         << "\t\t<imagerecycling>" << d->imageRecyclingEnabled << "</imagerecycling>\n"
         << "\t\t<alpha>" << d->alphaEnabled << "</alpha>\n"
-        << "\t</options>\n"
-        << "</glsl-live-coder-project>\n";
+        << "\t</options>\n";
+    if (d->uniforms.size() > 0) {
+        out << "\t<uniforms>\n";
+        QStringListIterator k(d->uniforms.keys());
+        while (k.hasNext()) {
+            const QString& key = k.next();
+            const QVariant& value = d->uniforms[key];
+            switch (value.type()) {
+            case QVariant::Int:
+                out << "\t\t<uniform type=\"int\" name=\"" << key.toUtf8().data() << "\">"
+                    << value.toInt() << "</uniform>\n";
+                break;
+            case QVariant::Double:
+                out << "\t\t<uniform type=\"double\" name=\"" << key.toUtf8().data() << "\">"
+                    << value.toDouble() << "</uniform>\n";
+                break;
+            case QVariant::Bool:
+                out << "\t\t<uniform type=\"bool\" name=\"" << key.toUtf8().data() << "\">"
+                    << value.toBool() << "</uniform>\n";
+                break;
+            case QVariant::Color:
+                out << "\t\t<uniform type=\"color\" name=\"" << key.toUtf8().data() << "\">"
+                    << value.value<QColor>() << "</uniform>\n";
+                break;
+            default:
+                qWarning() << "Project::save(): invalid value type in d->uniforms";
+                break;
+            }
+        }
+        out << "\t</uniforms>\n";
+    }
+    out << "</glsl-live-coder-project>\n";
     qint64 bytesWritten = file.write(compress? qCompress(dstr.toUtf8(), 9) : dstr.toUtf8());
     ok = ok && (bytesWritten > 0);
     if (bytesWritten <= 0)
@@ -174,6 +219,7 @@ bool Project::load(const QString& filename)
     resetErrors();
     d->image = QImage();
     d->filename = filename;
+    d->uniforms.clear();
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
     if (!compressed)
@@ -349,6 +395,9 @@ void Project::read(void)
         else if (d->xml.name() == "options") {
             readOptions();
         }
+        else if (d->xml.name() == "uniforms") {
+            readUniforms();
+        }
         else {
             d->xml.skipCurrentElement();
         }
@@ -499,6 +548,69 @@ void Project::readOptions(void)
     }
 }
 
+void Project::readUniforms(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "uniforms");
+    while (d->xml.readNextStartElement()) {
+        if (d->xml.name() == "uniform") {
+            readUniform();
+        }
+        else {
+            d->xml.skipCurrentElement();
+        }
+    }
+}
+
+void Project::readUniform(void)
+{
+    Q_D(Project);
+    Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "uniform");
+    bool ok;
+    const QXmlStreamAttributes& attr = d->xml.attributes();
+    const QString& nameStr = attr.value("name").toString();
+    const QString& typeStr = attr.value("type").toString();
+    const QString& str = d->xml.readElementText();
+    if (!str.isEmpty()) {
+        if (typeStr == "int") {
+            const int v = str.toInt(&ok);
+            if (ok)
+                d->uniforms[nameStr] = v;
+            else
+                d->xml.raiseError(QObject::tr("bad int data in <uniform>: %1").arg(str));
+        }
+        else if (typeStr == "double") {
+            const double v = str.toDouble(&ok);
+            if (ok)
+                d->uniforms[nameStr] = v;
+            else
+                d->xml.raiseError(QObject::tr("bad double data in <uniform>: %1").arg(str));
+        }
+        else if (typeStr == "bool") {
+            const bool v = (str.toInt(&ok) == 1);
+            if (ok)
+                d->uniforms[nameStr] = v;
+            else
+                d->xml.raiseError(QObject::tr("bad bool data in <uniform>: %1").arg(str));
+        }
+        else if (typeStr == "color") {
+            const QColor& color = rgba2Color(str);
+            if (color.isValid()) {
+                d->uniforms[nameStr] = color;
+            }
+            else {
+                d->xml.raiseError(QObject::tr("bad color data in <uniform>: %1").arg(str));
+            }
+        }
+        else {
+            d->xml.raiseError(QObject::tr("invalid type `%2` in <uniform>: %1").arg(str).arg(typeStr));
+        }
+    }
+    else {
+        d->xml.raiseError(QObject::tr("empty <uniform>: %1").arg(str));
+    }
+}
+
 void Project::readAlpha(void)
 {
     Q_D(Project);
@@ -537,18 +649,11 @@ void Project::readBackgroundColor(void)
     Q_ASSERT(d->xml.isStartElement() && d->xml.name() == "backgroundcolor");
     const QString& str = d->xml.readElementText();
     if (!str.isEmpty()) {
-        QRegExp reC("rgba\\s*\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\)");
-        bool ok1, ok2, ok3, ok4;
-        if (reC.indexIn(str) > -1) {
-            QColor newColor(reC.cap(1).toInt(&ok1),
-                            reC.cap(2).toInt(&ok2),
-                            reC.cap(3).toInt(&ok3),
-                            reC.cap(4).toInt(&ok4));
-            if (ok1 && ok2 && ok3 && ok4)
-                d->backgroundColor = newColor;
-            else
-                d->xml.raiseError(QObject::tr("bad data in <backgroundcolor>: %1").arg(str));
-        }
+        const QColor& color = rgba2Color(str);
+        if (color.isValid())
+            d->backgroundColor = color;
+        else
+            d->xml.raiseError(QObject::tr("bad data in <backgroundcolor>: %1").arg(str));
     }
     else {
         d->xml.raiseError(QObject::tr("empty <backgroundcolor>: %1").arg(str));
@@ -655,6 +760,16 @@ const QColor& Project::backgroundColor(void) const
 bool Project::hasImage(void) const
 {
     return !isEmpty(d_ptr->image);
+}
+
+void Project::setUniforms(const QMap<QString, QVariant>& v)
+{
+    d_ptr->uniforms = v;
+}
+
+const QMap<QString, QVariant>& Project::uniforms(void) const
+{
+    return d_ptr->uniforms;
 }
 
 bool Project::isEmpty(const QImage& img)

@@ -14,8 +14,6 @@
 #include <QMimeData>
 #include <QUrl>
 #include <QTime>
-#include <QMap>
-#include <QVariant>
 #include <qmath.h>
 #include "renderwidget.h"
 #include "channelwidget.h"
@@ -408,7 +406,7 @@ void RenderWidget::updateUniforms(void)
             d->shaderProgram->setUniformValue(key.toUtf8().data(), value.value<QColor>());
             break;
         default:
-            qWarning() << "RenderWidget::updateUniforms(): invalid value type in mUniforms";
+            qWarning() << "RenderWidget::updateUniforms(): invalid value type in d->uniforms";
             break;
         }
     }
@@ -866,6 +864,13 @@ void RenderWidget::setUniformValue(const QString& name, const QColor& value)
 {
     d_ptr->uniforms[name] = value;
     updateUniforms();
+}
+
+void RenderWidget::setUniforms(const QMap<QString, QVariant>& value)
+{
+    d_ptr->uniforms = value;
+    if (!value.isEmpty())
+        updateUniforms();
 }
 
 void RenderWidget::startMotion(const QPointF& velocity)

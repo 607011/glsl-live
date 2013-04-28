@@ -9,6 +9,8 @@
 #include <QPointF>
 #include <QString>
 #include <QImage>
+#include <QMap>
+#include <QVariant>
 #include <QTimerEvent>
 #include <QKeyEvent>
 #include <QWheelEvent>
@@ -46,10 +48,11 @@ public:
     void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);
     void setUniformValue(const QString& name, const QColor& value);
+    void setUniforms(const QMap<QString, QVariant>&);
+    const QMap<QString, QVariant>& uniforms(void) const;
     void updateUniforms(void);
     void clearUniforms(void);
     QImage resultImage(void);
-    const QMap<QString, QVariant>& uniforms(void) const;
     double scale(void) const;
     void goLive(void);
     void stopCode(void);

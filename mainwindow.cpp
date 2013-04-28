@@ -336,33 +336,41 @@ void MainWindow::closeEvent(QCloseEvent* e)
 
 void MainWindow::valueChanged(int v)
 {
+    Q_D(MainWindow);
     if (sender()) {
         const QString& name = sender()->objectName();
-        d_ptr->renderWidget->setUniformValue(name, v);
+        d->renderWidget->setUniformValue(name, v);
+        d->project->setDirty();
     }
 }
 
 void MainWindow::valueChanged(double v)
 {
+    Q_D(MainWindow);
     if (sender()) {
         const QString& name = sender()->objectName();
-        d_ptr->renderWidget->setUniformValue(name, v);
+        d->renderWidget->setUniformValue(name, v);
+        d->project->setDirty();
     }
 }
 
 void MainWindow::valueChanged(bool v)
 {
+    Q_D(MainWindow);
     if (sender()) {
         const QString& name = sender()->objectName();
-        d_ptr->renderWidget->setUniformValue(name, v);
+        d->renderWidget->setUniformValue(name, v);
+        d->project->setDirty();
     }
 }
 
 void MainWindow::valueChanged(const QColor& color)
 {
+    Q_D(MainWindow);
     if (sender()) {
         const QString& name = sender()->objectName();
-        d_ptr->renderWidget->setUniformValue(name, color);
+        d->renderWidget->setUniformValue(name, color);
+        d->project->setDirty();
     }
 }
 
@@ -555,19 +563,18 @@ void MainWindow::parseShadersForParameters(void)
                         groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                         QSlider* slider = new QSlider(Qt::Horizontal);
                         innerLayout->addWidget(slider);
-                        connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
                         slider->setObjectName(name);
                         slider->setMinimum(minV.toInt());
                         slider->setMaximum(maxV.toInt());
                         slider->setValue(defaultV.toInt());
                         QSpinBox* spinbox = new QSpinBox;
                         innerLayout->addWidget(spinbox);
-                        spinbox->setObjectName(name);
                         spinbox->setMinimum(minV.toInt());
                         spinbox->setMaximum(maxV.toInt());
                         spinbox->setValue(defaultV.toInt());
-                        connect(slider, SIGNAL(valueChanged(int)), spinbox, SLOT(setValue(int)));
-                        connect(spinbox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
+                        QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
+                        QObject::connect(slider, SIGNAL(valueChanged(int)), spinbox, SLOT(setValue(int)));
+                        QObject::connect(spinbox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
                         layout->addWidget(groupbox);
                     }
                     else if (type == "float") {
@@ -581,9 +588,6 @@ void MainWindow::parseShadersForParameters(void)
                         innerLayout->addWidget(slider);
                         QDoubleSpinBox* spinbox = new QDoubleSpinBox;
                         innerLayout->addWidget(spinbox);
-                        connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
-                        connect(spinbox, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
-                        spinbox->setObjectName(name);
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
                         spinbox->setValue(defaultV.toDouble());
@@ -593,7 +597,9 @@ void MainWindow::parseShadersForParameters(void)
                         for (QVector<double>::const_iterator i = d->steps.constBegin(); i != d->steps.constEnd(); ++i)
                             if (x < *i) { x = *i / 1000; break; }
                         spinbox->setSingleStep(x);
-                        connect(spinbox, SIGNAL(valueChanged(double)), slider, SLOT(setDoubleValue(double)));
+                        QObject::connect(slider, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
+                        QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
+                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), slider, SLOT(setDoubleValue(double)));
                         layout->addWidget(groupbox);
                     }
                     else
@@ -605,7 +611,7 @@ void MainWindow::parseShadersForParameters(void)
                         if (type == "bool") {
                             bool b = (v == "true");
                             QCheckBox* checkbox = new QCheckBox(name);
-                            connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
+                            QObject::connect(checkbox, SIGNAL(toggled(bool)), SLOT(valueChanged(bool)));
                             checkbox->setObjectName(name);
                             checkbox->setCheckable(true);
                             checkbox->setChecked(b);
@@ -631,8 +637,8 @@ void MainWindow::parseShadersForParameters(void)
                 groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                 groupbox->setLayout(innerLayout);
                 ColorPicker* colorPicker = new ColorPicker(name);
-                connect(colorPicker, SIGNAL(colorSelected(QColor)), SLOT(valueChanged(QColor)));
-                connect(colorPicker, SIGNAL(currentColorChanged(QColor)), SLOT(valueChanged(QColor)));
+                QObject::connect(colorPicker, SIGNAL(colorSelected(QColor)), SLOT(valueChanged(QColor)));
+                QObject::connect(colorPicker, SIGNAL(currentColorChanged(QColor)), SLOT(valueChanged(QColor)));
                 bool ok1, ok2, ok3;
                 const QColor& defaultColor = (reColor.cap(2).startsWith("#"))
                         ? QColor(reColor.cap(7).toInt(&ok1, 16), reColor.cap(8).toInt(&ok2, 16), reColor.cap(9).toInt(&ok3, 16))
@@ -800,6 +806,35 @@ void MainWindow::openProject(const QString& filename)
         d->project->setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
         d->renderWidget->resizeToOriginalImageSize();
+        d->renderWidget->setUniforms(d->project->uniforms());
+        QStringListIterator k(d->project->uniforms().keys());
+        while (k.hasNext()) {
+            const QString& key = k.next();
+            const QList<QWidget*>& children = d->paramWidget->findChildren<QWidget*>(key);
+            if (children.size() != 1)
+                continue;
+            const QVariant& value = d->project->uniforms()[key];
+            QListIterator<QWidget*> ch(children);
+            while (ch.hasNext()) {
+                QWidget* const w = ch.next();
+                switch (value.type()) {
+                case QVariant::Int:
+                    reinterpret_cast<QSlider*>(w)->setValue(value.toInt());
+                    break;
+                case QVariant::Double:
+                    reinterpret_cast<DoubleSlider*>(w)->setDoubleValue(value.toDouble());
+                    break;
+                case QVariant::Bool:
+                    reinterpret_cast<QCheckBox*>(w)->setChecked(value.toBool());
+                    break;
+                case QVariant::Color:
+                    reinterpret_cast<ColorPicker*>(w)->setColor(value.value<QColor>());
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())
@@ -827,6 +862,23 @@ void MainWindow::saveProjectAs(void)
     if (filename.isNull())
         return;
     saveProject(filename);
+}
+
+void MainWindow::saveProject(const QString& filename)
+{
+    Q_D(MainWindow);
+    d->project->setFilename(filename);
+    d->project->setVertexShaderSource(d->vertexShaderEditor->toPlainText());
+    d->project->setFragmentShaderSource(d->fragmentShaderEditor->toPlainText());
+    d->project->setImage(d->renderWidget->image());
+    d->project->setUniforms(d->renderWidget->uniforms());
+    bool ok = d->project->save();
+    ui->statusBar->showMessage(ok
+                               ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
+                               : tr("Saving failed."), 3000);
+    if (ok)
+        appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
+    updateWindowTitle();
 }
 
 void MainWindow::loadImage(void)
@@ -857,22 +909,6 @@ void MainWindow::loadImage(const QString& filename)
     d->project->setImage(img);
     d->renderWidget->setImage(img);
     processShaderChange();
-}
-
-void MainWindow::saveProject(const QString& filename)
-{
-    Q_D(MainWindow);
-    d->project->setFilename(filename);
-    d->project->setVertexShaderSource(d->vertexShaderEditor->toPlainText());
-    d->project->setFragmentShaderSource(d->fragmentShaderEditor->toPlainText());
-    d->project->setImage(d->renderWidget->image());
-    bool ok = d->project->save();
-    ui->statusBar->showMessage(ok
-                               ? tr("Project saved as '%1'.").arg(QFileInfo(filename).fileName())
-                               : tr("Saving failed."), 3000);
-    if (ok)
-        appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
-    updateWindowTitle();
 }
 
 void MainWindow::updateShaderSources(void)
