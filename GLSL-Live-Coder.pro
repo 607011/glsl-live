@@ -3,9 +3,9 @@
 
 QT += core gui opengl xml
 
-CONFIG += scripting
 # CONFIG += multimedia
 CONFIG += opencv
+CONFIG += scripting
 
 opencv {
 DEFINES += WITH_OPENCV

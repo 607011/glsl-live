@@ -716,6 +716,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent* e)
         if (d->shaderProgramIsLinked()) {
             d->mousePos = QPointF(e->pos() - QPoint(d->viewport.left(), height() - d->viewport.bottom()));
             d->shaderProgram->setUniformValue(d->uLocMouse, d->mousePos);
+            emit mousePosChanged(d->mousePos);
             update();
         }
         setCursor((e->modifiers() & Qt::AltModifier)? Qt::ArrowCursor : Qt::OpenHandCursor);

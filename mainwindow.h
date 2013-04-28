@@ -41,6 +41,7 @@ private slots:
     void about(void);
     void aboutQt(void);
     void showHelp(void);
+    void updateWindowTitle(void);
     void badVertexShaderCode(const QString&);
     void badFragmentShaderCode(const QString&);
     void linkerError(const QString&);
@@ -73,15 +74,13 @@ private slots:
     void chooseBackgroundColor(void);
     void setTimerActive(bool);
     void setFPS(double);
-#ifdef WITH_SCRIPTING
+    void setMousePos(const QPointF&);
     void processScriptChange(void);
     void executeScript(void);
-#endif
 
 private: //methods
     void saveSettings(void);
     void restoreSettings(void);
-    void updateWindowTitle(void);
     void processBatch(const QList<QString>& filenames, const QString& outDir);
 
 private:

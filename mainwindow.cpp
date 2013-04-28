@@ -42,10 +42,8 @@
 #include "renderer.h"
 #include "editors/glsl/glsledit.h"
 #include "util.h"
-#ifdef WITH_SCRIPTING
 #include "editors/js/jsedit.h"
 #include "scriptrunner.h"
-#endif
 
 static void prepareEditor(AbstractEditor*);
 static void clearLayout(QLayout*);
@@ -58,10 +56,8 @@ public:
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
         , paramWidget(new QWidget)
-#ifdef WITH_SCRIPTING
         , scriptRunner(new ScriptRunner(renderWidget))
         , scriptEditor(new JSEdit)
-#endif
         , vertexShaderEditor(new GLSLEdit)
         , fragmentShaderEditor(new GLSLEdit)
         , docBrowser(new QTextBrowser)
@@ -78,10 +74,8 @@ public:
     RenderWidget* renderWidget;
     QWidget* paramWidget;
     ChannelWidget* channelWidget[Project::MAX_CHANNELS];
-#ifdef WITH_SCRIPTING
     ScriptRunner* scriptRunner;
     JSEdit* scriptEditor;
-#endif
     QString vertexShaderFilename;
     QString fragmentShaderFilename;
     QString imageFilename;
@@ -97,6 +91,7 @@ public:
     QString lastProjectOpenDir;
     QString lastProjectSaveDir;
     int programHasJustStarted;
+    QScriptValue onMousePosChanged;
 
     ~MainWindowPrivate()
     {
@@ -107,17 +102,13 @@ public:
         safeDelete(vertexShaderEditor);
         safeDelete(fragmentShaderEditor);
         safeDelete(docBrowser);
-#ifdef WITH_SCRIPTING
         safeDelete(scriptEditor);
         safeDelete(scriptRunner);
-#endif
     }
 };
 
 
-#ifdef WITH_SCRIPTING
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine);
-#endif
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -141,21 +132,16 @@ MainWindow::MainWindow(QWidget* parent)
     ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
     ui->vsplitter->setStretchFactor(0, 5);
     ui->vsplitter->setStretchFactor(1, 1);
+
     prepareEditor(d->vertexShaderEditor);
     prepareEditor(d->fragmentShaderEditor);
 
-    ui->channelLayout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::MinimumExpanding, QSizePolicy::Preferred));
-    ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
-
-#ifdef WITH_SCRIPTING
     ui->scriptEditorVerticalLayout->addWidget(d->scriptEditor);
     prepareEditor(d->scriptEditor);
     QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
-#else
-    clearLayout(ui->tabScript->layout());
-    ui->tabWidget->removeTab(2);
-    delete ui->tabScript;
-#endif
+
+
+    QObject::connect(d->project, SIGNAL(dirtyStateChanged(bool)), SLOT(updateWindowTitle()));
     QObject::connect(d->vertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(d->fragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(d->renderWidget, SIGNAL(vertexShaderError(QString)), SLOT(badVertexShaderCode(QString)));
@@ -165,6 +151,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->renderWidget, SIGNAL(linkingSuccessful()), SLOT(successfullyLinkedShader()));
     QObject::connect(d->renderWidget, SIGNAL(imageDropped(QImage)), SLOT(imageDropped(QImage)));
     QObject::connect(d->renderWidget, SIGNAL(fpsChanged(double)), SLOT(setFPS(double)));
+    QObject::connect(d->renderWidget, SIGNAL(mousePosChanged(QPointF)), SLOT(setMousePos(QPointF)));
     QObject::connect(ui->actionExit, SIGNAL(triggered()), SLOT(close()));
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
@@ -181,14 +168,14 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionFitImageToWindow, SIGNAL(triggered()), d->renderWidget, SLOT(fitImageToWindow()));
     QObject::connect(ui->actionResizeToOriginalImageSize, SIGNAL(triggered()), d->renderWidget, SLOT(resizeToOriginalImageSize()));
     QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableAlpha(bool)));
+    QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
     QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableImageRecycling(bool)));
+    QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->project, SLOT(enableImageRecycling(bool)));
     QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->renderWidget, SLOT(enableInstantUpdate(bool)));
-    QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
+    QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->project, SLOT(enableInstantUpdate(bool)));
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->renderWidget, SLOT(clampToBorder(bool)));
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->project, SLOT(enableBorderClamping(bool)));
-    QObject::connect(ui->actionEnableAlpha, SIGNAL(toggled(bool)), d->project, SLOT(enableAlpha(bool)));
-    QObject::connect(ui->actionRecycleImage, SIGNAL(toggled(bool)), d->project, SLOT(enableImageRecycling(bool)));
-    QObject::connect(ui->actionInstantUpdate, SIGNAL(toggled(bool)), d->project, SLOT(enableInstantUpdate(bool)));
+    QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
     QObject::connect(ui->actionZoom5, SIGNAL(triggered()), SLOT(zoom()));
     QObject::connect(ui->actionZoom10, SIGNAL(triggered()), SLOT(zoom()));
     QObject::connect(ui->actionZoom25, SIGNAL(triggered()), SLOT(zoom()));
@@ -201,16 +188,14 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->project, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
-#ifdef WITH_SCRIPTING
     QObject::connect(d->scriptRunner, SIGNAL(debug(const QString&)), SLOT(debug(const QString&)));
     QObject::connect(d->renderWidget, SIGNAL(frameReady()), d->scriptRunner, SLOT(onFrame()));
     QObject::connect(ui->scriptExecutePushButton, SIGNAL(clicked()), SLOT(executeScript()));
+
     QScriptEngine* engine = d->scriptRunner->engine();
     QScriptValue fPrint = engine->newFunction(scriptPrintFunction);
     fPrint.setData(engine->newQObject(ui->logTextEdit));
     engine->globalObject().setProperty("print", fPrint);
-    // TODO: define onFrame() script function
-#endif
 
     for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
         d->channelWidget[i] = new ChannelWidget(i);
@@ -221,6 +206,9 @@ MainWindow::MainWindow(QWidget* parent)
         QObject::connect(d->channelWidget[i], SIGNAL(camInitialized(int)), SLOT(setCamReady(int)));
         ui->channelLayout->addWidget(d->channelWidget[i]);
     }
+    ui->channelLayout->addSpacerItem(new QSpacerItem(1, 1, QSizePolicy::MinimumExpanding, QSizePolicy::Preferred));
+    ui->channelScrollArea->setBackgroundRole(QPalette::Dark);
+
     restoreSettings();
 }
 
@@ -480,7 +468,13 @@ void MainWindow::setFPS(double fps)
     ui->labelFPS->setText(QString("%1 fps").arg(fps, 7, 'f', 1));
 }
 
-#ifdef WITH_SCRIPTING
+void MainWindow::setMousePos(const QPointF& pos)
+{
+    QScriptValueList args;
+    args << pos.x() << pos.y();
+    d_ptr->onMousePosChanged.call(QScriptValue(), args);
+}
+
 QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
 {
     QString result;
@@ -504,6 +498,7 @@ void MainWindow::executeScript(void)
     }
     else {
         d->scriptRunner->execute(d->scriptEditor->toPlainText());
+        d->onMousePosChanged = d->scriptRunner->engine()->globalObject().property("onMousePosChanged");
     }
 }
 
@@ -512,7 +507,6 @@ void MainWindow::processScriptChange(void)
     Q_D(MainWindow);
     d->project->setScriptSource(d->scriptEditor->toPlainText());
 }
-#endif
 
 void MainWindow::debug(const QString& message)
 {
@@ -780,9 +774,13 @@ void MainWindow::openProject(const QString& filename)
         d->renderWidget->setImage(d->project->image());
         d->renderWidget->setBackgroundColor(d->project->backgroundColor());
         d->renderWidget->enableAlpha(d->project->alphaEnabled());
+        ui->actionEnableAlpha->setChecked(d->project->alphaEnabled());
         d->renderWidget->enableInstantUpdate(d->project->instantUpdateEnabled());
+        ui->actionInstantUpdate->setChecked(d->project->instantUpdateEnabled());
         d->renderWidget->clampToBorder(d->project->borderClampingEnabled());
+        ui->actionClampToBorder->setChecked(d->project->borderClampingEnabled());
         d->renderWidget->enableImageRecycling(d->project->imageRecyclingEnabled());
+        ui->actionRecycleImage->setChecked(d->project->imageRecyclingEnabled());
         for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
             const QVariant& ch = d->project->channel(i);
             switch (ch.type()) {
@@ -797,9 +795,7 @@ void MainWindow::openProject(const QString& filename)
                 break;
             }
         }
-#ifdef WITH_SCRIPTING
         d->scriptEditor->setPlainText(d->project->scriptSource());
-#endif
         processShaderChange();
         d->project->setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
@@ -949,7 +945,6 @@ static void prepareEditor(AbstractEditor* editor)
     editor->setFont(monospace);
     QFontMetrics metrics(monospace);
     editor->setTabStopWidth(tabStop * metrics.width(' '));
-
     editor->setTextWrapEnabled(true);
     editor->setBracketsMatchingEnabled(true);
     editor->setCodeFoldingEnabled(true);

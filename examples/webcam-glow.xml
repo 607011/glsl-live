@@ -1,6 +1,6 @@
 <glsl-live-coder-project version="0.9.9">
-  <shaders>
-    <vertex><![CDATA[#version 130
+	<shaders>
+		<vertex><![CDATA[#version 130
 
 in vec2 aVertex;
 in vec2 aTexCoord;
@@ -12,7 +12,7 @@ void main(void)
 	gl_Position = vec4(aVertex, 0.0, 1.0);
 }
 ]]></vertex>
-    <fragment><![CDATA[// Glow fragment filter 
+		<fragment><![CDATA[// Glow fragment filter 
 // http://kodemongki.blogspot.de/2011/06/kameraku-custom-shader-effects-example.html
 
 #version 130
@@ -45,16 +45,22 @@ void main(void)
 	color = vec4(rr * uIntensity * t5, 1.0);
 }
 ]]></fragment>
-  </shaders>
-  <script><![CDATA[]]></script>
-  <input>
-    <channel id="0"><![CDATA[]]></channel>
-  </input>
-  <options>
-    <clamp>0</clamp>
-    <backgroundcolor>rgba(0,0,0,255)</backgroundcolor>
-    <instantupdate>0</instantupdate>
-    <imagerecycling>0</imagerecycling>
-    <alpha>1</alpha>
-  </options>
+	</shaders>
+	<script><![CDATA[function onMousePosChanged(x, y) {
+	// ...
+}
+
+function onFrame() {
+	// ...
+}
+]]></script>
+	<input>
+	</input>
+	<options>
+		<clamp>0</clamp>
+		<backgroundcolor>rgba(39,33,24,255)</backgroundcolor>
+		<instantupdate>0</instantupdate>
+		<imagerecycling>0</imagerecycling>
+		<alpha>1</alpha>
+	</options>
 </glsl-live-coder-project>

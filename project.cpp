@@ -108,11 +108,9 @@ bool Project::save(const QString& filename)
         << "\t<shaders>\n"
         << "\t\t<vertex><![CDATA[" << d->vertexShaderSource << "]]></vertex>\n"
         << "\t\t<fragment><![CDATA[" << d->fragmentShaderSource << "]]></fragment>\n"
-        << "\t</shaders>\n";
-#ifdef WITH_SCRIPTING
-    out << "\t<script><![CDATA[" << d->scriptSource << "]]></script>\n";
-#endif
-    out << "\t<input>\n";
+        << "\t</shaders>\n"
+        << "\t<script><![CDATA[" << d->scriptSource << "]]></script>\n"
+        << "\t<input>\n";
     if (hasImage()) {
         QByteArray ba;
         QBuffer buffer(&ba);
@@ -345,11 +343,9 @@ void Project::read(void)
         else if (d->xml.name() == "input") {
             readInput();
         }
-#ifdef WITH_SCRIPTING
         else if (d->xml.name() == "script") {
             readScript();
         }
-#endif
         else if (d->xml.name() == "options") {
             readOptions();
         }
@@ -593,27 +589,42 @@ void Project::readImageRecycling(void)
 
 void Project::enableAlpha(bool enabled)
 {
-    d_ptr->alphaEnabled = enabled;
+    Q_D(Project);
+    if (d->alphaEnabled != enabled)
+        setDirty();
+    d->alphaEnabled = enabled;
 }
 
 void Project::enableImageRecycling(bool enabled)
 {
-    d_ptr->imageRecyclingEnabled = enabled;
+    Q_D(Project);
+    if (d->imageRecyclingEnabled != enabled)
+        setDirty();
+    d->imageRecyclingEnabled = enabled;
 }
 
 void Project::enableInstantUpdate(bool enabled)
 {
-    d_ptr->instantUpdate = enabled;
+    Q_D(Project);
+    if (d->instantUpdate != enabled)
+        setDirty();
+    d->instantUpdate = enabled;
 }
 
 void Project::enableBorderClamping(bool enabled)
 {
-    d_ptr->borderClamping = enabled;
+    Q_D(Project);
+    if (d->borderClamping != enabled)
+        setDirty();
+    d->borderClamping = enabled;
 }
 
 void Project::setBackgroundColor(const QColor& color)
 {
-    d_ptr->backgroundColor = color;
+    Q_D(Project);
+    if (d->backgroundColor != color)
+        setDirty();
+    d->backgroundColor = color;
 }
 
 bool Project::alphaEnabled(void) const

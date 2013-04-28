@@ -65,6 +65,7 @@ void ScriptRunner::run(void)
     Q_D(ScriptRunner);
     QScriptValue& globals = d->scriptEngine->globalObject();
     globals.setProperty("onFrame", QScriptValue::UndefinedValue);
+    globals.setProperty("onMousePosChanged", QScriptValue::UndefinedValue);
     globals.setProperty("W", d->renderWidget->width());
     globals.setProperty("H", d->renderWidget->height());
     const QScriptValue& result = d->scriptEngine->evaluate(d->scriptSource);

@@ -81,6 +81,7 @@ signals:
     void linkingSuccessful(void);
     void imageDropped(const QImage&);
     void fpsChanged(double);
+    void mousePosChanged(const QPointF&);
 
 protected:
     void resizeEvent(QResizeEvent*);
