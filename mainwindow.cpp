@@ -156,6 +156,7 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionAbout, SIGNAL(triggered()), SLOT(about()));
     QObject::connect(ui->actionAboutQt, SIGNAL(triggered()), SLOT(aboutQt()));
     QObject::connect(ui->actionOpen, SIGNAL(triggered()), SLOT(openProject()));
+    QObject::connect(ui->actionCloseProject, SIGNAL(triggered()), SLOT(closeProject()));
     QObject::connect(ui->actionLoadImage, SIGNAL(triggered()), SLOT(loadImage()));
     QObject::connect(ui->actionSave, SIGNAL(triggered()), SLOT(saveProject()));
     QObject::connect(ui->actionSaveProjectAs, SIGNAL(triggered()), SLOT(saveProjectAs()));
@@ -842,6 +843,20 @@ void MainWindow::openProject(const QString& filename)
     updateWindowTitle();
 }
 
+void MainWindow::closeProject(void)
+{
+    Q_D(MainWindow);
+    int rc = (d->project->isDirty())
+            ? QMessageBox::question(this, tr("Save before closing project?"), tr("Your project has changed. Do you want to save the changes before closing the project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            : QMessageBox::NoButton;
+    if (rc == QMessageBox::Yes)
+        saveProject();
+    if (rc != QMessageBox::Cancel) {
+        openProject(":/examples/default.xml");
+        d->project->setFilename(QString());
+    }
+}
+
 void MainWindow::saveProject(void)
 {
     Q_D(MainWindow);
@@ -937,6 +952,7 @@ void MainWindow::about(void)
                        tr("<p><b>%1</b> is a live coding environment for OpenGL shaders. "
                           "See <a href=\"%2\" title=\"%1 project homepage\">%2</a> for more info.</p>"
                           "<p>Copyright &copy; 2013 %3 &lt;%4&gt;, Heise Zeitschriften Verlag.</p>"
+                          "<p>Editor widgets copyright &copy; 2010&ndash;2011 Ariya Hidayat &lt;ariya.hidayat@gmail.com&gt;.</p>"
                           "<p>This program is free software: you can redistribute it and/or modify "
                           "it under the terms of the GNU General Public License as published by "
                           "the Free Software Foundation, either version 3 of the License, or "

@@ -3,9 +3,7 @@
 
 QT += core gui opengl xml
 
-# CONFIG += multimedia
-CONFIG += opencv
-CONFIG += scripting
+CONFIG += opencv scripting
 
 opencv {
 DEFINES += WITH_OPENCV
@@ -15,11 +13,6 @@ SOURCES += webcamthread.cpp \
     webcam.cpp
 HEADERS += webcamthread.h \
     webcam.h
-}
-
-multimedia {
-QT += multimedia
-DEFINES += WITH_QCAMERA
 }
 
 TARGET = GLSL-Live-Coder

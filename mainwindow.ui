@@ -316,6 +316,7 @@
     <addaction name="menuRecentProjects"/>
     <addaction name="actionSave"/>
     <addaction name="actionSaveProjectAs"/>
+    <addaction name="actionCloseProject"/>
     <addaction name="separator"/>
     <addaction name="actionLoadImage"/>
     <addaction name="actionReloadImage"/>
@@ -375,7 +376,7 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionAbout">
    <property name="text">
-    <string>About</string>
+    <string>About GLSL Live Coder</string>
    </property>
    <property name="shortcut">
     <string notr="true"/>
@@ -626,6 +627,14 @@
    </property>
    <property name="text">
     <string>Reload image</string>
+   </property>
+  </action>
+  <action name="actionCloseProject">
+   <property name="text">
+    <string>Close project</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
    </property>
   </action>
  </widget>

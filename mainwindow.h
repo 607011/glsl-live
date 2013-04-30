@@ -57,6 +57,7 @@ private slots:
     void saveProject(void);
     void saveProject(const QString& filename);
     void saveProjectAs(void);
+    void closeProject(void);
     void loadImage(void);
     void loadImage(const QString& filename);
     void valueChanged(int);

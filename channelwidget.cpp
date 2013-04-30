@@ -93,7 +93,7 @@ ChannelWidget::ChannelWidget(int index, QWidget* parent)
     setMaximumSize(sizeHint());
     setAcceptDrops(true);
     setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(showContextMenu(QPoint)));
+    QObject::connect(this, SIGNAL(customContextMenuRequested(QPoint)), SLOT(showContextMenu(QPoint)));
 }
 
 ChannelWidget::~ChannelWidget()
