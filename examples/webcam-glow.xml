@@ -55,12 +55,17 @@ function onFrame() {
 }
 ]]></script>
 	<input>
+		<channel id="0" source="webcam"></channel>
 	</input>
 	<options>
-		<clamp>0</clamp>
+		<clamp>1</clamp>
 		<backgroundcolor>rgba(39,33,24,255)</backgroundcolor>
 		<instantupdate>0</instantupdate>
 		<imagerecycling>0</imagerecycling>
 		<alpha>1</alpha>
 	</options>
+	<uniforms>
+		<uniform type="int" name="uD">1</uniform>
+		<uniform type="double" name="uIntensity">3.5</uniform>
+	</uniforms>
 </glsl-live-coder-project>

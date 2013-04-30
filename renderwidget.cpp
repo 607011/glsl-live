@@ -866,10 +866,16 @@ void RenderWidget::setUniformValue(const QString& name, const QColor& value)
     updateUniforms();
 }
 
-void RenderWidget::setUniforms(const QMap<QString, QVariant>& value)
+void RenderWidget::setUniforms(const QMap<QString, QVariant>& uniforms)
 {
-    d_ptr->uniforms = value;
-    if (!value.isEmpty())
+    Q_D(RenderWidget);
+    QStringListIterator k(uniforms.keys());
+    while (k.hasNext()) {
+        const QString& key = k.next();
+        d->uniforms[key] = uniforms[key];
+        qDebug() << "  " << key << "->" << uniforms[key];
+    }
+    if (!uniforms.isEmpty() && !d->uniforms.isEmpty())
         updateUniforms();
 }
 

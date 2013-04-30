@@ -1,6 +1,6 @@
 <glsl-live-coder-project version="0.9.9">
-  <shaders>
-    <vertex><![CDATA[#version 130
+	<shaders>
+		<vertex><![CDATA[#version 130
 
 in vec2 aVertex;
 in vec2 aTexCoord;
@@ -13,10 +13,18 @@ void main(void)
   gl_Position = vec4(aVertex, 0.0, 1.0);
 }
 ]]></vertex>
-    <fragment><![CDATA[#version 130
+		<fragment><![CDATA[// Con
+
+#version 130
 
 #pragma size(640, 480)
 
+/*
+  ANLEITUNG:
+  - Channel 0 aktivieren
+  - Skript ausführen
+  - schwindlig werden ;-)
+*/
 in vec2 vTexCoord;
 out vec4 color;
 
@@ -29,13 +37,12 @@ uniform float uT;
 
 uniform float uIntensity; // -20.0, 20.0, 1.0
 uniform float uF; // 1.0, 20.0, 3.0
-uniform float uScale;
 
 const vec2 CENTER = vec2(0.5, 0.5);
 
 void main(void)
 { 
-  vec2 coord = uScale * (vTexCoord - CENTER) + CENTER;
+  vec2 coord = vTexCoord;
   mat3 Gx = uGx * uIntensity * sin(uF*uT);
   mat3 Gy = uGy * uIntensity * cos(uF*uT);
   vec2 d = vec2(1.0) / uResolution;
@@ -55,8 +62,8 @@ void main(void)
   color = sum;
 }
 ]]></fragment>
-  </shaders>
-  <script><![CDATA[var G = [
+	</shaders>
+	<script><![CDATA[var G = [
     [ -1, -2, -1 ],
     [  0,  0,  0 ],
     [  1,  2,  1 ]
@@ -71,19 +78,20 @@ function onFrame() {
   var uScale = frame / 1000;
   gl.uniform1f("uScale", uScale);
   ++frame;
-
-  if (frame == 1000)
-    gl.stop();
 }
 ]]></script>
-  <input>
-    <channel id="0" source="webcam"></channel>
-  </input>
-  <options>
-    <clamp>0</clamp>
-    <backgroundcolor>rgba(0,0,0,255)</backgroundcolor>
-    <instantupdate>0</instantupdate>
-    <imagerecycling>0</imagerecycling>
-    <alpha>1</alpha>
-  </options>
+	<input>
+		<channel id="0" source="webcam"></channel>
+	</input>
+	<options>
+		<clamp>0</clamp>
+		<backgroundcolor>rgba(0,0,0,255)</backgroundcolor>
+		<instantupdate>0</instantupdate>
+		<imagerecycling>0</imagerecycling>
+		<alpha>1</alpha>
+	</options>
+	<uniforms>
+		<uniform type="double" name="uF">1.66</uniform>
+		<uniform type="double" name="uIntensity">-0.87</uniform>
+	</uniforms>
 </glsl-live-coder-project>

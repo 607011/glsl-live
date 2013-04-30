@@ -57,19 +57,22 @@ void Project::reset(void)
 {
     Q_D(Project);
     setClean();
-    d->image = QImage();
     d->filename = QString();
     d->vertexShaderSource = QString();
     d->fragmentShaderSource = QString();
-    d->alphaEnabled = true;
-    d->imageRecyclingEnabled = false;
-    d->instantUpdate = false;
-    d->borderClamping = true;
+    d->scriptSource = QString();
+    d->image = QImage();
     for (int i = 0; i < MAX_CHANNELS; ++i) {
         d->channelData[i] = QVariant();
         d->channelSource[i] = SourceNone;
         d->channelSourceId[i] = -1;
     }
+    d->uniforms.clear();
+    d->backgroundColor = Qt::black;
+    d->alphaEnabled = true;
+    d->imageRecyclingEnabled = false;
+    d->instantUpdate = false;
+    d->borderClamping = true;
 }
 
 bool Project::save(void)
@@ -86,7 +89,6 @@ QTextStream& operator<<(QTextStream& out, const QColor& color)
     return out;
 }
 
-
 QColor rgba2Color(const QString& str)
 {
     QColor color;
@@ -95,7 +97,6 @@ QColor rgba2Color(const QString& str)
         color = QColor(reC.cap(1).toInt(), reC.cap(2).toInt(), reC.cap(3).toInt(), reC.cap(4).toInt());
     return color;
 }
-
 
 bool Project::save(const QString& filename)
 {
@@ -128,9 +129,12 @@ bool Project::save(const QString& filename)
         QByteArray ba;
         QBuffer buffer(&ba);
         buffer.open(QIODevice::WriteOnly);
-        d->image.save(&buffer, "PNG");
+        bool ok = d->image.save(&buffer, "PNG");
         buffer.close();
-        out << "\t\t<image><![CDATA[" << ba.toBase64() << "]]></image>\n";
+        if (ok)
+            out << "\t\t<image><![CDATA[" << ba.toBase64() << "]]></image>\n";
+        else
+            qWarning() << "Project::save(): saving image to buffer failed. no <image> written.";
     }
     for (int i = 0; i < MAX_CHANNELS; ++i) {
         const QVariant& ch = d->channelData[i];
@@ -139,9 +143,8 @@ bool Project::save(const QString& filename)
             switch (ch.type()) {
             case QVariant::Invalid:
             {
-                if (source == SourceWebcam) {
+                if (source == SourceWebcam)
                     out << "\t\t<channel id=\"" << i << "\" source=\"webcam\"></channel>\n";
-                }
                 break;
             }
             case QVariant::Image:
@@ -150,9 +153,12 @@ bool Project::save(const QString& filename)
                     QByteArray ba;
                     QBuffer buffer(&ba);
                     buffer.open(QIODevice::WriteOnly);
-                    ch.value<QImage>().save(&buffer, "PNG");
+                    bool ok = ch.value<QImage>().save(&buffer, "PNG");
                     buffer.close();
-                    out << "\t\t<channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
+                    if (ok)
+                        out << "\t\t<channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
+                    else
+                        qWarning() << "Project::save(): saving image to buffer failed. no <channel> written.";
                 }
                 else
                     qWarning() << "Project::save(): invalid source (" << source << ") for type " << ch.type();
@@ -180,20 +186,16 @@ bool Project::save(const QString& filename)
             const QVariant& value = d->uniforms[key];
             switch (value.type()) {
             case QVariant::Int:
-                out << "\t\t<uniform type=\"int\" name=\"" << key.toUtf8().data() << "\">"
-                    << value.toInt() << "</uniform>\n";
+                out << "\t\t<uniform type=\"int\" name=\"" << key.toUtf8().data() << "\">" << value.toInt() << "</uniform>\n";
                 break;
             case QVariant::Double:
-                out << "\t\t<uniform type=\"double\" name=\"" << key.toUtf8().data() << "\">"
-                    << value.toDouble() << "</uniform>\n";
+                out << "\t\t<uniform type=\"double\" name=\"" << key.toUtf8().data() << "\">" << value.toDouble() << "</uniform>\n";
                 break;
             case QVariant::Bool:
-                out << "\t\t<uniform type=\"bool\" name=\"" << key.toUtf8().data() << "\">"
-                    << value.toBool() << "</uniform>\n";
+                out << "\t\t<uniform type=\"bool\" name=\"" << key.toUtf8().data() << "\">" << value.toBool() << "</uniform>\n";
                 break;
             case QVariant::Color:
-                out << "\t\t<uniform type=\"color\" name=\"" << key.toUtf8().data() << "\">"
-                    << value.value<QColor>() << "</uniform>\n";
+                out << "\t\t<uniform type=\"color\" name=\"" << key.toUtf8().data() << "\">" << value.value<QColor>() << "</uniform>\n";
                 break;
             default:
                 qWarning() << "Project::save(): invalid value type in d->uniforms";
@@ -297,7 +299,7 @@ const QImage& Project::image(void) const
     return d_ptr->image;
 }
 
-const QVariant &Project::channel(int index) const
+const QVariant& Project::channel(int index) const
 {
     return d_ptr->channelData[index];
 }

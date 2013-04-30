@@ -563,19 +563,19 @@ void MainWindow::parseShadersForParameters(void)
                         groupbox->setLayout(innerLayout);
                         groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                         QSlider* slider = new QSlider(Qt::Horizontal);
-                        innerLayout->addWidget(slider);
+                        QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
                         slider->setObjectName(name);
                         slider->setMinimum(minV.toInt());
                         slider->setMaximum(maxV.toInt());
                         slider->setValue(defaultV.toInt());
                         QSpinBox* spinbox = new QSpinBox;
-                        innerLayout->addWidget(spinbox);
+                        QObject::connect(slider, SIGNAL(valueChanged(int)), spinbox, SLOT(setValue(int)));
+                        QObject::connect(spinbox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
                         spinbox->setMinimum(minV.toInt());
                         spinbox->setMaximum(maxV.toInt());
                         spinbox->setValue(defaultV.toInt());
-                        QObject::connect(slider, SIGNAL(valueChanged(int)), SLOT(valueChanged(int)));
-                        QObject::connect(slider, SIGNAL(valueChanged(int)), spinbox, SLOT(setValue(int)));
-                        QObject::connect(spinbox, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
+                        innerLayout->addWidget(slider);
+                        innerLayout->addWidget(spinbox);
                         layout->addWidget(groupbox);
                     }
                     else if (type == "float") {
@@ -585,10 +585,11 @@ void MainWindow::parseShadersForParameters(void)
                         groupbox->setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
                         DoubleSlider* slider = new DoubleSlider(minV.toDouble(), maxV.toDouble(), Qt::Horizontal);
                         slider->setObjectName(name);
+                        QObject::connect(slider, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
                         slider->setDoubleValue(defaultV.toDouble());
-                        innerLayout->addWidget(slider);
                         QDoubleSpinBox* spinbox = new QDoubleSpinBox;
-                        innerLayout->addWidget(spinbox);
+                        QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
+                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), slider, SLOT(setDoubleValue(double)));
                         spinbox->setMinimum(minV.toDouble());
                         spinbox->setMaximum(maxV.toDouble());
                         spinbox->setValue(defaultV.toDouble());
@@ -598,9 +599,8 @@ void MainWindow::parseShadersForParameters(void)
                         for (QVector<double>::const_iterator i = d->steps.constBegin(); i != d->steps.constEnd(); ++i)
                             if (x < *i) { x = *i / 1000; break; }
                         spinbox->setSingleStep(x);
-                        QObject::connect(slider, SIGNAL(valueChanged(double)), SLOT(valueChanged(double)));
-                        QObject::connect(slider, SIGNAL(valueChanged(double)), spinbox, SLOT(setValue(double)));
-                        QObject::connect(spinbox, SIGNAL(valueChanged(double)), slider, SLOT(setDoubleValue(double)));
+                        innerLayout->addWidget(slider);
+                        innerLayout->addWidget(spinbox);
                         layout->addWidget(groupbox);
                     }
                     else
@@ -799,6 +799,7 @@ void MainWindow::openProject(const QString& filename)
                 break;
             }
             default:
+                // ignore
                 break;
             }
         }
@@ -808,6 +809,7 @@ void MainWindow::openProject(const QString& filename)
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
         d->renderWidget->resizeToOriginalImageSize();
         d->renderWidget->setUniforms(d->project->uniforms());
+        // update parameter widgets
         QStringListIterator k(d->project->uniforms().keys());
         while (k.hasNext()) {
             const QString& key = k.next();
