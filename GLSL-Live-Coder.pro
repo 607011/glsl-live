@@ -7,7 +7,12 @@ CONFIG += opencv scripting
 
 opencv {
 DEFINES += WITH_OPENCV
+win32 {
 LIBS += -lopencv_core245 -lopencv_highgui245
+}
+macx {
+LIBS += -L/opt/local/lib -lopencv_core -lopencv_highgui
+}
 DEFINES += _CRT_SECURE_NO_WARNINGS
 SOURCES += webcamthread.cpp \
     webcam.cpp
@@ -20,6 +25,10 @@ TEMPLATE = app
 
 win32 {
 RC_FILE = glsl-live.rc
+}
+
+macx {
+QMAKE_CXXFLAGS += -I/opt/local/include -I/opt/local/include/opencv -I/opt/local/include/opencv2
 }
 
 scripting {

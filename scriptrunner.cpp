@@ -10,8 +10,8 @@
 class ScriptRunnerPrivate {
 public:
     ScriptRunnerPrivate(RenderWidget* renderWidget)
-        : renderWidget(renderWidget)
-        , scriptEngine(new QScriptEngine)
+        : scriptEngine(new QScriptEngine)
+        , renderWidget(renderWidget)
     { /* ... */ }
     ~ScriptRunnerPrivate()
     {
@@ -63,7 +63,7 @@ void ScriptRunner::onFrame(void)
 void ScriptRunner::run(void)
 {
     Q_D(ScriptRunner);
-    QScriptValue& globals = d->scriptEngine->globalObject();
+    QScriptValue globals = d->scriptEngine->globalObject();
     globals.setProperty("onFrame", QScriptValue::UndefinedValue);
     globals.setProperty("onMousePosChanged", QScriptValue::UndefinedValue);
     globals.setProperty("W", d->renderWidget->width());
