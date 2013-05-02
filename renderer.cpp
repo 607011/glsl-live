@@ -34,9 +34,9 @@ class RendererPrivate {
 public:
     RendererPrivate(void)
         : textureHandle(0)
-        , shaderProgram(NULL)
         , vertexShader(NULL)
         , fragmentShader(NULL)
+        , shaderProgram(NULL)
         , fbo(NULL)
     { /* ... */ }
     ~RendererPrivate() {
