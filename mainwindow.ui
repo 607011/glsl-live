@@ -283,7 +283,7 @@
         <property name="widgetResizable">
          <bool>true</bool>
         </property>
-        <widget class="QWidget" name="scrollAreaWidgetContents">
+        <widget class="QWidget" name="channelScrollAreaWidgetContents">
          <property name="geometry">
           <rect>
            <x>0</x>
@@ -305,6 +305,30 @@
           </item>
          </layout>
         </widget>
+       </widget>
+      </widget>
+      <widget class="QScrollArea" name="paramScrollArea">
+       <property name="widgetResizable">
+        <bool>true</bool>
+       </property>
+       <widget class="QWidget" name="paramScrollAreaWidgetContents">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>69</width>
+          <height>422</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <layout class="QVBoxLayout" name="paramLayout">
+           <property name="spacing">
+            <number>3</number>
+           </property>
+          </layout>
+         </item>
+        </layout>
        </widget>
       </widget>
      </widget>

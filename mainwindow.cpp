@@ -46,7 +46,7 @@
 #include "scriptrunner.h"
 
 static void prepareEditor(AbstractEditor*);
-static void clearLayout(QLayout*);
+static void emptyLayout(QLayout*);
 
 
 class MainWindowPrivate {
@@ -55,7 +55,6 @@ public:
         : project(new Project)
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
-        , paramWidget(new QWidget)
         , scriptRunner(new ScriptRunner(renderWidget))
         , scriptEditor(new JSEdit)
         , vertexShaderEditor(new GLSLEdit)
@@ -72,7 +71,6 @@ public:
     Project* project;
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
-    QWidget* paramWidget;
     ChannelWidget* channelWidget[Project::MAX_CHANNELS];
     ScriptRunner* scriptRunner;
     JSEdit* scriptEditor;
@@ -98,7 +96,6 @@ public:
         safeDelete(project);
         safeDelete(colorDialog);
         safeDelete(renderWidget);
-        safeDelete(paramWidget);
         safeDelete(vertexShaderEditor);
         safeDelete(fragmentShaderEditor);
         safeDelete(docBrowser);
@@ -127,7 +124,6 @@ MainWindow::MainWindow(QWidget* parent)
         ui->menuRecentProjects->addAction(act);
     }
     ui->vsplitter2->insertWidget(0, d->renderWidget);
-    ui->hsplitter->addWidget(d->paramWidget);
     ui->tabVertexShader->layout()->addWidget(d->vertexShaderEditor);
     ui->tabFragmentShader->layout()->addWidget(d->fragmentShaderEditor);
     ui->vsplitter->setStretchFactor(0, 5);
@@ -540,10 +536,11 @@ void MainWindow::parseShadersForParameters(void)
     }
     // if changes occured regenerate widgets
     if (d->currentParameterHash != hash.result()) {
+        ui->paramLayout->setEnabled(false); // hinder layout manager from relayouting every time a widget or sublayout is added which is an expensive operation
+        emptyLayout(ui->paramLayout);
         QRegExp reFI("([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)\\s*,\\s*([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)\\s*,\\s*([-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?)");
         QRegExp reB("(true|false)");
         d->currentParameterHash = hash.result();
-        QVBoxLayout* layout = new QVBoxLayout;
         d->renderWidget->clearUniforms();
         in.seek(0);
         while (!in.atEnd()) {
@@ -575,7 +572,7 @@ void MainWindow::parseShadersForParameters(void)
                         spinbox->setValue(defaultV.toInt());
                         innerLayout->addWidget(slider);
                         innerLayout->addWidget(spinbox);
-                        layout->addWidget(groupbox);
+                        ui->paramLayout->addWidget(groupbox);
                     }
                     else if (type == "float") {
                         QVBoxLayout* innerLayout = new QVBoxLayout;
@@ -600,7 +597,7 @@ void MainWindow::parseShadersForParameters(void)
                         spinbox->setSingleStep(x);
                         innerLayout->addWidget(slider);
                         innerLayout->addWidget(spinbox);
-                        layout->addWidget(groupbox);
+                        ui->paramLayout->addWidget(groupbox);
                     }
                     else
                         qWarning() << "invalid type:" << type;
@@ -615,7 +612,7 @@ void MainWindow::parseShadersForParameters(void)
                             checkbox->setObjectName(name);
                             checkbox->setCheckable(true);
                             checkbox->setChecked(b);
-                            layout->addWidget(checkbox);
+                            ui->paramLayout->addWidget(checkbox);
                         }
                         else
                             qWarning() << "invalid type:" << type;
@@ -646,13 +643,11 @@ void MainWindow::parseShadersForParameters(void)
                 if (ok1 && ok2 && ok3)
                     colorPicker->setColor(defaultColor);
                 innerLayout->addWidget(colorPicker);
-                layout->addWidget(groupbox);
+                ui->paramLayout->addWidget(groupbox);
             }
         }
-        layout->addStretch(1);
-        if (d->paramWidget->layout() != NULL)
-            clearLayout(d->paramWidget->layout());
-        d->paramWidget->setLayout(layout);
+        ui->paramLayout->addStretch(1);
+        ui->paramLayout->setEnabled(true); // reactivate layout manager
     }
 }
 
@@ -691,7 +686,10 @@ void MainWindow::newProject(void)
 {
     Q_D(MainWindow);
     int rc = (d->project->isDirty())
-            ? QMessageBox::question(this, tr("Save before creating a new project?"), tr("Your project has changed. Do you want to save the changes before creating a new project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            ? QMessageBox::question(this,
+                                    tr("Save before creating a new project?"),
+                                    tr("Your project has changed. Do you want to save the changes before creating a new project?"),
+                                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
         saveProject();
@@ -746,12 +744,19 @@ void MainWindow::openProject(void)
 {
     Q_D(MainWindow);
     int rc = (d->project->isDirty())
-            ? QMessageBox::question(this, tr("Save before loading another project?"), tr("Your project has changed. Do you want to save the changes before loading another project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            ? QMessageBox::question(this,
+                                    tr("Save before loading another project?"),
+                                    tr("Your project has changed. Do you want to save the changes before loading another project?"),
+                                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
         saveProject();
     if (rc != QMessageBox::Cancel) {
-        const QString& filename = QFileDialog::getOpenFileName(this, tr("Load project"), d->lastProjectOpenDir, tr("Project files (*.xml *.xmlz)"));
+        const QString& filename =
+                QFileDialog::getOpenFileName(this,
+                                             tr("Load project"),
+                                             d->lastProjectOpenDir,
+                                             tr("Project files (*.xml *.xmlz)"));
         if (filename.isEmpty())
             return;
         d->lastProjectOpenDir = QFileInfo(filename).path();
@@ -812,7 +817,7 @@ void MainWindow::openProject(const QString& filename)
         QStringListIterator k(d->project->uniforms().keys());
         while (k.hasNext()) {
             const QString& key = k.next();
-            const QList<QWidget*>& children = d->paramWidget->findChildren<QWidget*>(key);
+            const QList<QWidget*>& children = ui->paramLayout->findChildren<QWidget*>(key);
             if (children.size() != 1)
                 continue;
             const QVariant& value = d->project->uniforms()[key];
@@ -837,7 +842,7 @@ void MainWindow::openProject(const QString& filename)
                 }
             }
         }
-        d->programHasJustStarted = 3;
+        d->programHasJustStarted = 3; // dirty hack
         d->project->setClean();
     }
     ui->statusBar->showMessage(ok
@@ -850,7 +855,10 @@ void MainWindow::closeProject(void)
 {
     Q_D(MainWindow);
     int rc = (d->project->isDirty())
-            ? QMessageBox::question(this, tr("Save before closing project?"), tr("Your project has changed. Do you want to save the changes before closing the project?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            ? QMessageBox::question(this,
+                                    tr("Save before closing project?"),
+                                    tr("Your project has changed. Do you want to save the changes before closing the project?"),
+                                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
         saveProject();
@@ -865,7 +873,10 @@ void MainWindow::saveProject(void)
     Q_D(MainWindow);
     QString filename = d->project->filename();
     if (filename.isEmpty()) {
-        filename = QFileDialog::getSaveFileName(this, tr("Save project"), d->lastProjectSaveDir, tr("Project files (*.xml *.xmlz)"));
+        filename = QFileDialog::getSaveFileName(this,
+                                                tr("Save project"),
+                                                d->lastProjectSaveDir,
+                                                tr("Project files (*.xml *.xmlz)"));
         if (filename.isNull())
             return;
     }
@@ -876,7 +887,10 @@ void MainWindow::saveProject(void)
 void MainWindow::saveProjectAs(void)
 {
     Q_D(MainWindow);
-    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save project"), d->lastProjectSaveDir, tr("Project files (*.xml *.xmlz)"));
+    const QString& filename = QFileDialog::getSaveFileName(this,
+                                                           tr("Save project"),
+                                                           d->lastProjectSaveDir,
+                                                           tr("Project files (*.xml *.xmlz)"));
     if (filename.isNull())
         return;
     saveProject(filename);
@@ -903,12 +917,19 @@ void MainWindow::loadImage(void)
 {
     Q_D(MainWindow);
     int rc = (d->project->isDirty())
-            ? QMessageBox::question(this, tr("Save project before loading a new image?"), tr("Your project has changed. Do you want to save the changes before loading a new image?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            ? QMessageBox::question(this,
+                                    tr("Save project before loading a new image?"),
+                                    tr("Your project has changed. Do you want to save the changes before loading a new image?"),
+                                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
         saveProject();
     if (rc != QMessageBox::Cancel) {
-        const QString& filename = QFileDialog::getOpenFileName(this, tr("Load image"), d->lastImageOpenDir, tr("Image files (*.png *.jpg *.jpeg *.gif *.ico *.mng *.tga *.tif)"));
+        const QString& filename =
+                QFileDialog::getOpenFileName(this,
+                                             tr("Load image"),
+                                             d->lastImageOpenDir,
+                                             tr("Image files (*.png *.jpg *.jpeg *.gif *.ico *.mng *.tga *.tif)"));
         if (filename.isEmpty())
             return;
         d->lastImageOpenDir = QFileInfo(filename).path();
@@ -985,7 +1006,6 @@ void MainWindow::showHelp(void)
 
 static void prepareEditor(AbstractEditor* editor)
 {
-    //editor->blockSignals(true);
     editor->setWordWrapMode(QTextOption::NoWrap);
     QFont monospace;
 #if defined(Q_OS_MAC)
@@ -1017,19 +1037,20 @@ static void prepareEditor(AbstractEditor* editor)
     editor->setColor(GLSLEdit::BracketMatch,  QColor("#1ab0a6"));
     editor->setColor(GLSLEdit::BracketError,  QColor("#a82224"));
     editor->setColor(GLSLEdit::FoldIndicator, QColor("#555555"));
-    // editor->blockSignals(false);
 }
 
-static void clearLayout(QLayout* layout)
+static void emptyLayout(QLayout* layout)
 {
     Q_ASSERT(layout != NULL);
+    if (layout == NULL)
+        return;
     QLayoutItem* item;
     while ((item = layout->takeAt(0)) != NULL) {
         QLayout* subLayout = item->layout();
         QWidget* widget = item->widget();
         if (subLayout) {
             subLayout->removeItem(item);
-            clearLayout(subLayout);
+            emptyLayout(subLayout);
         }
         else if (widget) {
             widget->hide();
@@ -1039,5 +1060,4 @@ static void clearLayout(QLayout* layout)
             delete item;
         }
     }
-    delete layout;
 }
