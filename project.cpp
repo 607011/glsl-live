@@ -65,7 +65,6 @@ void Project::reset(void)
     for (int i = 0; i < MAX_CHANNELS; ++i) {
         d->channelData[i] = QVariant();
         d->channelSource[i] = SourceNone;
-        d->channelSourceId[i] = -1;
     }
     d->uniforms.clear();
     d->backgroundColor = Qt::black;
@@ -149,11 +148,12 @@ bool Project::save(const QString& filename)
             }
             case QVariant::Image:
             {
-                if (source == SourceData) {
+                const QImage& img = ch.value<QImage>();
+                if (source == SourceData && !isEmpty(img)) {
                     QByteArray ba;
                     QBuffer buffer(&ba);
                     buffer.open(QIODevice::WriteOnly);
-                    bool ok = ch.value<QImage>().save(&buffer, "PNG");
+                    bool ok = img.save(&buffer, "PNG");
                     buffer.close();
                     if (ok)
                         out << "\t\t<channel id=\"" << i << "\"><![CDATA[" << ba.toBase64() << "]]></channel>\n";
@@ -218,10 +218,9 @@ bool Project::load(const QString& filename)
 {
     Q_D(Project);
     Q_ASSERT(!filename.isEmpty());
+    reset();
     resetErrors();
-    d->image = QImage();
     d->filename = filename;
-    d->uniforms.clear();
     int flags = QIODevice::ReadOnly;
     bool compressed = filename.endsWith("z");
     if (!compressed)
@@ -301,6 +300,7 @@ const QImage& Project::image(void) const
 
 const QVariant& Project::channel(int index) const
 {
+    Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::channel()", "index out of bounds");
     return d_ptr->channelData[index];
 }
 
@@ -341,18 +341,17 @@ void Project::setImage(const QImage& image)
 
 void Project::setChannel(int index, const QImage& img)
 {
-    Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "image index out of bounds");
+    Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "index out of bounds");
     d_ptr->channelData[index] = img;
     d_ptr->channelSource[index] = SourceData;
     setDirty();
 }
 
-void Project::setChannel(int index, Project::SourceSelector source, int id)
+void Project::setChannel(int index, Project::SourceSelector source)
 {
-    Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "image index out of bounds");
+    Q_ASSERT_X(index >= 0 && index < MAX_CHANNELS, "Project::setChannel()", "index out of bounds");
     d_ptr->channelData[index] = QVariant();
     d_ptr->channelSource[index] = source;
-    d_ptr->channelSourceId[index] = id;
     setDirty();
 }
 
@@ -500,17 +499,11 @@ void Project::readInputChannel(void)
     int id = idStr.toInt(&ok);
     if (!ok)
         raiseError(tr("Invalid data in <channel> id attribute"));
+    if (id < 0 || id > MAX_CHANNELS)
+        raiseError(tr("<channel> id attribute out of range, must be in between %1 and %2").arg(0).arg(MAX_CHANNELS));
     if (!sourceStr.isEmpty()) {
         if (sourceStr == "webcam") {
             d->channelSource[id] = SourceWebcam;
-            const QString& sourceIdStr = attr.value("source-id").toString();
-            if (!sourceIdStr.isEmpty()) {
-                int sourceId = sourceIdStr.toInt(&ok);
-                if (ok)
-                    d->channelSourceId[id] = sourceId;
-                else
-                    raiseError(tr("Invalid data in <channel> source-id attribute"));
-            }
         }
     }
     const QString& str = d->xml.readElementText();

@@ -22,27 +22,30 @@
 class ChannelWidgetPrivate
 {
 public:
-    ChannelWidgetPrivate(void)
-        : webcam(NULL)
+    ChannelWidgetPrivate(int idx)
+        : index(idx)
+        , type(ChannelWidget::None)
+        , webcam(NULL)
         , webcamThread(NULL)
-    {
-        reset();
-    }
+    { /* ... */ }
 
     ~ChannelWidgetPrivate()
     { /* ... */ }
 
     void reset(void)
     {
+        turnOffWebcam();
         type = ChannelWidget::None;
-        image = QImage(":/images/checkered.png");
+        image = QImage();
         filename = QString();
     }
 
+    int index;
     ChannelWidget::Type type;
     QImage image;
     QString filename;
-    int index;
+    Webcam* webcam;
+    WebcamThread* webcamThread;
 
     inline Webcam* decoder(void)
     {
@@ -64,7 +67,7 @@ public:
     {
         if (webcamThread)
             webcamThread->stopReading();
-        if (webcam)
+        if (isWebcamOpen())
             webcam->close();
         safeDelete(webcam);
         safeDelete(webcamThread);
@@ -74,18 +77,13 @@ public:
     {
         return webcam != NULL && webcam->isOpen();
     }
-
-    Webcam* webcam;
-    WebcamThread* webcamThread;
 };
 
 
 ChannelWidget::ChannelWidget(int index, QWidget* parent)
     : QWidget(parent)
-    , d_ptr(new ChannelWidgetPrivate)
+    , d_ptr(new ChannelWidgetPrivate(index))
 {
-    Q_D(ChannelWidget);
-    d->index = index;
     const QString& name = channelName(index);
     setObjectName(name);
     setToolTip(name);
@@ -140,11 +138,18 @@ int ChannelWidget::index(void) const
     return d_ptr->index;
 }
 
+void ChannelWidget::clear(void)
+{
+    Q_D(ChannelWidget);
+    d->reset();
+    emit imageDropped(d->index, QImage());
+    update();
+}
+
 void ChannelWidget::paintEvent(QPaintEvent*)
 {
     Q_D(ChannelWidget);
     QPainter p(this);
-    p.fillRect(rect(), Qt::black);
     switch (d->type) {
     case Auto:
         // fall-through
@@ -152,6 +157,7 @@ void ChannelWidget::paintEvent(QPaintEvent*)
         // fall-through
     case Image:
     {
+        p.fillRect(rect(), Qt::black);
         const qreal imageAspect = qreal(d->image.width()) / d->image.height();
         const qreal windowAspect = qreal(width()) / height();
         QRect r = (imageAspect > windowAspect)
@@ -166,7 +172,7 @@ void ChannelWidget::paintEvent(QPaintEvent*)
     case None:
         // fall-through
     default:
-        p.setBrush(QBrush(d->image));
+        p.setBrush(QBrush(QImage(":/images/checkered.png")));
         p.setPen(Qt::black);
         p.drawRect(0, 0, width()-1, height()-1);
         break;
@@ -216,11 +222,7 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     if (selectedItem == NULL)
         return;
     if (selectedItem->text() == tr("Remove")) {
-        if (d->isWebcamOpen())
-            closeWebcam();
-        emit imageDropped(d->index, QImage());
-        d->reset();
-        update();
+        clear();
     }
     else if (selectedItem->text() == tr("Use webcam")) {
         QObject::connect(d->decoderThread(), SIGNAL(frameReady(QImage)), SLOT(setImage(QImage)));

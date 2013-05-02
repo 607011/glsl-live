@@ -198,11 +198,38 @@
           </layout>
          </item>
          <item>
-          <widget class="QLabel" name="labelErrors">
-           <property name="text">
-            <string>Errors</string>
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <property name="topMargin">
+            <number>0</number>
            </property>
-          </widget>
+           <item>
+            <widget class="QLabel" name="labelErrors">
+             <property name="text">
+              <string>Errors</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer_3">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+           <item>
+            <widget class="QPushButton" name="clearErrorsPushButton">
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item>
           <widget class="QTextEdit" name="logTextEdit">
@@ -642,5 +669,22 @@
  <resources>
   <include location="glsl-live.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>clearErrorsPushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>logTextEdit</receiver>
+   <slot>clear()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>376</x>
+     <y>332</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>213</x>
+     <y>405</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

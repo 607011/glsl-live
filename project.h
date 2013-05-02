@@ -62,7 +62,7 @@ public:
 
 public slots:
     void setChannel(int index, const QImage&);
-    void setChannel(int index, SourceSelector, int id = 0);
+    void setChannel(int index, SourceSelector);
     void enableAlpha(bool enabled = true);
     void enableImageRecycling(bool enabled = true);
     void enableInstantUpdate(bool enabled = true);

@@ -140,7 +140,6 @@ MainWindow::MainWindow(QWidget* parent)
     prepareEditor(d->scriptEditor);
     QObject::connect(d->scriptEditor, SIGNAL(textChanged()), SLOT(processScriptChange()));
 
-
     QObject::connect(d->project, SIGNAL(dirtyStateChanged(bool)), SLOT(updateWindowTitle()));
     QObject::connect(d->vertexShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
     QObject::connect(d->fragmentShaderEditor, SIGNAL(textChangedDelayed()), SLOT(processShaderChange()));
@@ -799,13 +798,13 @@ void MainWindow::openProject(const QString& filename)
                 break;
             }
             default:
-                // ignore
+                d->renderWidget->setChannel(0);
+                d->channelWidget[i]->clear();
                 break;
             }
         }
         d->scriptEditor->setPlainText(d->project->scriptSource());
         processShaderChange();
-        d->project->setClean();
         appendToRecentFileList(filename, "Project/recentFiles", ui->menuRecentProjects, d->recentProjectsActs);
         d->renderWidget->resizeToOriginalImageSize();
         d->renderWidget->setUniforms(d->project->uniforms());
@@ -838,6 +837,8 @@ void MainWindow::openProject(const QString& filename)
                 }
             }
         }
+        d->programHasJustStarted = 3;
+        d->project->setClean();
     }
     ui->statusBar->showMessage(ok
                                ? tr("Project '%1' loaded.").arg(QFileInfo(filename).fileName())

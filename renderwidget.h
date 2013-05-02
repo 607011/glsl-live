@@ -4,6 +4,7 @@
 #ifndef __RENDERWIDGET_H_
 #define __RENDERWIDGET_H_
 
+#include <QGLFunctions>
 #include <QGLWidget>
 #include <QPoint>
 #include <QPointF>
@@ -25,7 +26,7 @@
 
 class RenderWidgetPrivate;
 
-class RenderWidget : public QGLWidget
+class RenderWidget : public QGLWidget, protected QGLFunctions
 {
     Q_OBJECT
 public:
@@ -114,8 +115,6 @@ private: // methods
 
 
 private:
-    typedef void(*glActiveTexture_func)(GLenum);
-    glActiveTexture_func glActiveTexture;
 
     QScopedPointer<RenderWidgetPrivate> d_ptr;
     Q_DECLARE_PRIVATE(RenderWidget)

@@ -20,6 +20,12 @@
 #include "project.h"
 #include "util.h"
 
+#ifdef WIN32
+#include <Windows.h>
+#define GL_GLEXT_PROTOTYPES
+#include <gl/GL.h>
+#endif
+
 enum { AVERTEX, ATEXCOORD };
 
 static const QVector2D TexCoords[4] =
@@ -178,7 +184,6 @@ const int RenderWidgetPrivate::NumKineticDataSamples = 4;
 
 RenderWidget::RenderWidget(QWidget* parent)
     : QGLWidget(QGLFormat(QGL::SingleBuffer | QGL::NoDepthBuffer | QGL::AlphaChannel | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers | QGL::HasOverlay | QGL::NoSampleBuffers), parent)
-    , glActiveTexture(NULL)
     , d_ptr(new RenderWidgetPrivate)
 {
     Q_D(RenderWidget);
@@ -315,8 +320,7 @@ void RenderWidget::setImage(const QImage& img)
         makeImageFBO();
     }
     makeCurrent();
-    if (glActiveTexture)
-        glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, d->textureHandle);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->img.width(), d->img.height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->img.bits());
 }
@@ -326,8 +330,7 @@ void RenderWidget::setChannel(int index, const uchar* data, int w, int h)
     Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::setChannel()", "image index out of bounds");
     Q_D(RenderWidget);
     makeCurrent();
-    if (glActiveTexture)
-        glActiveTexture(GL_TEXTURE1 + index);
+    glActiveTexture(GL_TEXTURE1 + index);
     glBindTexture(GL_TEXTURE_2D, d->channelHandle[index]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_BGR, GL_UNSIGNED_BYTE, data);
     update();
@@ -339,8 +342,7 @@ void RenderWidget::setChannel(int index, const QImage& img)
     Q_D(RenderWidget);
     d->channel[index] = img.convertToFormat(QImage::Format_ARGB32);
     makeCurrent();
-    if (glActiveTexture)
-        glActiveTexture(GL_TEXTURE1 + index);
+    glActiveTexture(GL_TEXTURE1 + index);
     glBindTexture(GL_TEXTURE_2D, d->channelHandle[index]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, d->channel[index].width(), d->channel[index].height(), 0, GL_BGRA, GL_UNSIGNED_BYTE, d->channel[index].bits());
     update();
@@ -577,9 +579,7 @@ void RenderWidget::resizeGL(int w, int h)
 void RenderWidget::initializeGL(void)
 {
     Q_D(RenderWidget);
-    glActiveTexture = (glActiveTexture_func)context()->getProcAddress("glActiveTexture");
-    if (glActiveTexture == NULL)
-        qFatal("glActiveTexture() not found.");
+    initializeGLFunctions();
     glGetIntegerv(GL_MAJOR_VERSION, &d->glVersionMajor);
     glGetIntegerv(GL_MINOR_VERSION, &d->glVersionMinor);
     qglClearColor(d->backgroundColor);
@@ -873,7 +873,6 @@ void RenderWidget::setUniforms(const QMap<QString, QVariant>& uniforms)
     while (k.hasNext()) {
         const QString& key = k.next();
         d->uniforms[key] = uniforms[key];
-        qDebug() << "  " << key << "->" << uniforms[key];
     }
     if (!uniforms.isEmpty() && !d->uniforms.isEmpty())
         updateUniforms();
