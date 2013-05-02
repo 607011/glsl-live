@@ -12,8 +12,8 @@
 #include "renderer.h"
 
 
-static const int PROGRAM_VERTEX_ATTRIBUTE = 0;
-static const int PROGRAM_TEXCOORD_ATTRIBUTE = 1;
+enum { AVERTEX, ATEXCOORD };
+
 static const QVector2D TexCoords[4] =
 {
     QVector2D(0, 0),
@@ -150,13 +150,13 @@ void Renderer::buildProgram(const QString& vs, const QString& fs)
     d->vertexShader->compileSourceCode(vs);
     d->fragmentShader->compileSourceCode(fs);
     d->shaderProgram->link();
-    d->shaderProgram->bindAttributeLocation("aVertex", PROGRAM_VERTEX_ATTRIBUTE);
-    d->shaderProgram->bindAttributeLocation("aTexCoord", PROGRAM_TEXCOORD_ATTRIBUTE);
+    d->shaderProgram->bindAttributeLocation("aVertex", AVERTEX);
+    d->shaderProgram->bindAttributeLocation("aTexCoord", ATEXCOORD);
     d->shaderProgram->bind();
-    d->shaderProgram->enableAttributeArray(PROGRAM_VERTEX_ATTRIBUTE);
-    d->shaderProgram->enableAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE);
-    d->shaderProgram->setAttributeArray(PROGRAM_VERTEX_ATTRIBUTE, Vertices);
-    d->shaderProgram->setAttributeArray(PROGRAM_TEXCOORD_ATTRIBUTE, TexCoords);
+    d->shaderProgram->enableAttributeArray(AVERTEX);
+    d->shaderProgram->enableAttributeArray(ATEXCOORD);
+    d->shaderProgram->setAttributeArray(AVERTEX, Vertices);
+    d->shaderProgram->setAttributeArray(ATEXCOORD, TexCoords);
     doneCurrent();
 }
 

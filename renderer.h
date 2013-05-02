@@ -5,6 +5,7 @@
 #define __RENDERER_H_
 
 #include <QGLWidget>
+#include <QGLFunctions>
 #include <QImage>
 #include <QString>
 #include <QVariant>
@@ -21,7 +22,7 @@ class RendererPrivate;
 // Kontextes in einem weiteren QGLWidget die sauberere Lösung zu sein, auch wenn das
 // bedeutet, die Mimik zum Kompilieren der Shader (buildProgram()) und Setzen der Uniforms
 // doppelt zu implementieren.
-class Renderer : public QGLWidget
+class Renderer : public QGLWidget, protected QGLFunctions
 {
 public:
     Renderer(QWidget* parent = NULL);

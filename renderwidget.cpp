@@ -20,12 +20,6 @@
 #include "project.h"
 #include "util.h"
 
-#ifdef WIN32
-#include <Windows.h>
-#define GL_GLEXT_PROTOTYPES
-#include <gl/GL.h>
-#endif
-
 enum { AVERTEX, ATEXCOORD };
 
 static const QVector2D TexCoords[4] =
