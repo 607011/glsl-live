@@ -23,6 +23,8 @@ public:
     ~ColorPicker();
     QSize minimumSizeHint(void) const { return QSize(16, 16); }
     QSize sizeHint(void) const { return QSize(16, 16); }
+    const QColor& oldColor(void) const;
+    const QColor& currentColor(void) const;
 
 protected:
     void paintEvent(QPaintEvent*);
@@ -38,7 +40,11 @@ signals:
 
 public slots:
     void setColor(const QColor&);
-    
+
+private slots:
+    void acceptColor(void);
+    void rejectColor(void);
+
 private:
     QScopedPointer<ColorPickerPrivate> d_ptr;
     Q_DECLARE_PRIVATE(ColorPicker)

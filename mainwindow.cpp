@@ -379,12 +379,23 @@ void MainWindow::valueChanged(const QColor& color)
 
 void MainWindow::acceptColor(void)
 {
-    // TODO
+    Q_D(MainWindow);
+    if (sender()) {
+        ColorPicker* const colorPicker = reinterpret_cast<ColorPicker*>(sender());
+        const QString& name = colorPicker->objectName();
+        d->renderWidget->setUniformValue(name, colorPicker->currentColor());
+        d->project->setDirty();
+    }
 }
 
 void MainWindow::rejectColor(void)
 {
-    // TODO
+    Q_D(MainWindow);
+    if (sender()) {
+        ColorPicker* const colorPicker = reinterpret_cast<ColorPicker*>(sender());
+        const QString& name = colorPicker->objectName();
+        d->renderWidget->setUniformValue(name, colorPicker->oldColor());
+    }
 }
 
 void MainWindow::imageDropped(const QImage&)

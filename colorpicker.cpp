@@ -20,6 +20,7 @@ public:
     }
     QCursor oldCursor;
     QColorDialog* colorDialog;
+    QColor oldColor;
 };
 
 ColorPicker::ColorPicker(const QString& name, QWidget* parent)
@@ -31,8 +32,8 @@ ColorPicker::ColorPicker(const QString& name, QWidget* parent)
     setSizePolicy(QSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), SIGNAL(currentColorChanged(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), SLOT(setColor(QColor)));
-    QObject::connect(d->colorDialog, SIGNAL(accepted()), SIGNAL(accepted()));
-    QObject::connect(d->colorDialog, SIGNAL(rejected()), SIGNAL(rejected()));
+    QObject::connect(d->colorDialog, SIGNAL(accepted()), SLOT(acceptColor()));
+    QObject::connect(d->colorDialog, SIGNAL(rejected()), SLOT(rejectColor()));
     setMinimumSize(80, 17);
     setMaximumSize(120, 17);
 }
@@ -40,6 +41,16 @@ ColorPicker::ColorPicker(const QString& name, QWidget* parent)
 ColorPicker::~ColorPicker()
 {
     /* ... */
+}
+
+const QColor& ColorPicker::oldColor(void) const
+{
+    return d_ptr->oldColor;
+}
+
+const QColor& ColorPicker::currentColor(void) const
+{
+    return d_ptr->colorDialog->currentColor();
 }
 
 void ColorPicker::paintEvent(QPaintEvent*)
@@ -59,19 +70,22 @@ void ColorPicker::paintEvent(QPaintEvent*)
 
 void ColorPicker::enterEvent(QEvent*)
 {
-    d_ptr->oldCursor = cursor();
+    Q_D(ColorPicker);
+    d->oldCursor = cursor();
     setCursor(Qt::PointingHandCursor);
 }
 
 void ColorPicker::leaveEvent(QEvent*)
 {
-    setCursor(d_ptr->oldCursor);
+    Q_D(ColorPicker);
+    setCursor(d->oldCursor);
 }
 
 void ColorPicker::mousePressEvent(QMouseEvent* e)
 {
     Q_D(ColorPicker);
     if (e->button() == Qt::LeftButton) {
+        d->oldColor = d->colorDialog->currentColor();
         d->colorDialog->show();
         d->colorDialog->raise();
         d->colorDialog->activateWindow();
@@ -80,7 +94,23 @@ void ColorPicker::mousePressEvent(QMouseEvent* e)
 
 void ColorPicker::setColor(const QColor& color)
 {
-    d_ptr->colorDialog->setCurrentColor(color);
+    Q_D(ColorPicker);
+    d->colorDialog->setCurrentColor(color);
     emit colorSelected(color);
     update();
 }
+
+void ColorPicker::acceptColor(void)
+{
+    Q_D(ColorPicker);
+    emit colorSelected(d->colorDialog->currentColor());
+    update();
+}
+
+void ColorPicker::rejectColor(void)
+{
+    Q_D(ColorPicker);
+    d->colorDialog->setCurrentColor(d->oldColor);
+    emit colorSelected(d->oldColor);
+}
+
