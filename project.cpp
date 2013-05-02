@@ -186,16 +186,24 @@ bool Project::save(const QString& filename)
             const QVariant& value = d->uniforms[key];
             switch (value.type()) {
             case QVariant::Int:
-                out << "\t\t<uniform type=\"int\" name=\"" << key.toUtf8().data() << "\">" << value.toInt() << "</uniform>\n";
+                out << "\t\t<uniform type=\"int\" name=\""
+                    << key.toUtf8().data() << "\">"
+                    << value.toInt() << "</uniform>\n";
                 break;
             case QVariant::Double:
-                out << "\t\t<uniform type=\"double\" name=\"" << key.toUtf8().data() << "\">" << value.toDouble() << "</uniform>\n";
+                out << "\t\t<uniform type=\"double\" name=\""
+                    << key.toUtf8().data() << "\">"
+                    << value.toDouble() << "</uniform>\n";
                 break;
             case QVariant::Bool:
-                out << "\t\t<uniform type=\"bool\" name=\"" << key.toUtf8().data() << "\">" << value.toBool() << "</uniform>\n";
+                out << "\t\t<uniform type=\"bool\" name=\""
+                    << key.toUtf8().data() << "\">"
+                    << value.toBool() << "</uniform>\n";
                 break;
             case QVariant::Color:
-                out << "\t\t<uniform type=\"color\" name=\"" << key.toUtf8().data() << "\">" << value.value<QColor>() << "</uniform>\n";
+                out << "\t\t<uniform type=\"color\" name=\""
+                    << key.toUtf8().data() << "\">"
+                    << value.value<QColor>() << "</uniform>\n";
                 break;
             default:
                 qWarning() << "Project::save(): invalid value type in d->uniforms";

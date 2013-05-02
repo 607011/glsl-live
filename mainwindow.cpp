@@ -88,6 +88,8 @@ public:
     QString lastImageSaveDir;
     QString lastProjectOpenDir;
     QString lastProjectSaveDir;
+    QString lastBatchOpenDir;
+    QString lastBatchSaveDir;
     int programHasJustStarted;
     QScriptValue onMousePosChanged;
 
@@ -314,7 +316,10 @@ void MainWindow::closeEvent(QCloseEvent* e)
 {
     Q_D(MainWindow);
     int rc = (d->project->isDirty())
-            ? QMessageBox::question(this, tr("Save before exit?"), tr("Your project has changed. Do you want to save the changes before exiting?"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
+            ? QMessageBox::question(this,
+                                    tr("Save before exit?"),
+                                    tr("Your project has changed. Do you want to save the changes before exiting?"),
+                                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes)
             : QMessageBox::NoButton;
     if (rc == QMessageBox::Yes)
         saveProject();
@@ -403,24 +408,38 @@ void MainWindow::reloadImage(void)
 
 void MainWindow::saveImageSnapshot(void)
 {
-    const QString& filename = QFileDialog::getSaveFileName(this, tr("Save image snapshot"), d_ptr->lastImageSaveDir, tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
+    Q_D(MainWindow);
+    const QString& filename =
+            QFileDialog::getSaveFileName(this,
+                                         tr("Save image snapshot"),
+                                         d->lastImageSaveDir,
+                                         tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
     if (filename.isNull())
         return;
-    bool ok = d_ptr->renderWidget->resultImage().save(filename);
+    bool ok = d->renderWidget->resultImage().save(filename);
     if (ok)
-        d_ptr->lastImageSaveDir = QFileInfo(filename).path();
+        d->lastImageSaveDir = QFileInfo(filename).path();
 }
 
 void MainWindow::batchProcess(void)
 {
     Q_D(MainWindow);
-    const QList<QString>& filenames = QFileDialog::getOpenFileNames(this, tr("Select images to load"), QString(), tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
-    int i = filenames.size();
-    if (i == 0)
+    const QList<QString>& filenames =
+            QFileDialog::getOpenFileNames(this,
+                                          tr("Select images to load"),
+                                          d->lastBatchOpenDir,
+                                          tr("Image files (*.png *.jpg *.jpeg *.tiff *.ppm)"));
+    if (filenames.isEmpty())
         return;
-    const QString& outDir = QFileDialog::getExistingDirectory(this, tr("Select save directory"));
+    d->lastBatchOpenDir = QFileInfo(filenames.first()).path();
+
+    const QString& outDir =
+            QFileDialog::getExistingDirectory(this,
+                                              tr("Select save directory"),
+                                              d->lastBatchSaveDir);
     if (outDir.isEmpty())
         return;
+    d->lastBatchSaveDir = QFileInfo(outDir).path();
     QCursor oldCursor = cursor();
     setCursor(Qt::WaitCursor);
     QProgressBar progress(ui->logTextEdit);
@@ -430,12 +449,14 @@ void MainWindow::batchProcess(void)
     progress.resize(ui->logTextEdit->size());
     progress.show();
 
-    // weil Renderer von QWidget ableitet, kann er nur im Hauptthread laufen, aber nicht im Hintergrund, etwa per QtConcurrent::run()
+    // weil Renderer von QWidget ableitet, kann er nur im Hauptthread laufen,
+    // aber nicht im Hintergrund, etwa per QtConcurrent::run()
     Renderer renderer;
     renderer.buildProgram(d->vertexShaderEditor->toPlainText(), d->fragmentShaderEditor->toPlainText());
     renderer.setUniforms(d->renderWidget->uniforms());
+
     QStringListIterator fn(filenames);
-    i = 0;
+    int i = 0;
     while (fn.hasNext()) {
         QFileInfo fInfo(fn.next());
         ui->statusBar->showMessage(tr("Processing %1 ...").arg(fInfo.fileName()));
@@ -444,6 +465,8 @@ void MainWindow::batchProcess(void)
         renderer.process(QImage(fInfo.canonicalFilePath()), outFile);
     }
     ui->statusBar->showMessage(tr("Batch processing completed."), 3000);
+
+
     setCursor(oldCursor);
 }
 
@@ -458,7 +481,10 @@ void MainWindow::zoom(void)
 
 void MainWindow::chooseBackgroundColor(void)
 {
-    d_ptr->colorDialog->show();
+    Q_D(MainWindow);
+    d->colorDialog->show();
+    d->colorDialog->raise();
+    d->colorDialog->activateWindow();
 }
 
 void MainWindow::setTimerActive(bool active)

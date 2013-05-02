@@ -16,13 +16,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <QtCore/QDebug>
 #include <QApplication>
 #include <QTranslator>
 #include <QLocale>
-
-#ifndef QT_NO_DEBUG
-#include <QtCore/QDebug>
-#endif
 
 #include "main.h"
 #include "mainwindow.h"
@@ -32,7 +29,7 @@ const QString AppName = "GLSL Live Coder";
 const QString AppUrl = "http://code.google.com/p/glsl-live/";
 const QString AppAuthor = "Oliver Lau";
 const QString AppAuthorMail = "ola@ct.de";
-const QString AppVersionNoDebug = "0.9.9";
+const QString AppVersionNoDebug = "0.9.10";
 const QString AppMinorVersion = "";
 #ifdef QT_NO_DEBUG
 const QString AppVersion = AppVersionNoDebug + AppMinorVersion;
