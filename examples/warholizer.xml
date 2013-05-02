@@ -28,9 +28,9 @@ uniform float u1; // 0.0, 1.0, 0.11
 uniform float u2; // 0.0, 1.0, 0.34
 uniform float u3; // 0.0, 1.0, 0.84
 
-uniform vec4 uColor0; // #08100a
+uniform vec4 uColor0; // #00ea7a
 uniform vec4 uColor3; // #d80000
-uniform vec4 uColor2; // #8fe700
+uniform vec4 uColor2; // #ffaf0e
 uniform vec4 uColor1; // #86ceee
 
 uniform int uSize; // 2, 100, 4
@@ -156,15 +156,15 @@ void main(void)
 		<uniform type="double" name="u1">0.11</uniform>
 		<uniform type="double" name="u2">0.34</uniform>
 		<uniform type="double" name="u3">0.84</uniform>
-		<uniform type="double" name="uAngle">66.5753</uniform>
-		<uniform type="int" name="uBlur">3</uniform>
-		<uniform type="color" name="uColor0">rgba(0,234,125,255)</uniform>
+		<uniform type="double" name="uAngle">60</uniform>
+		<uniform type="int" name="uBlur">2</uniform>
+		<uniform type="color" name="uColor0">rgba(0,234,122,255)</uniform>
 		<uniform type="color" name="uColor1">rgba(134,206,238,255)</uniform>
 		<uniform type="color" name="uColor2">rgba(255,175,14,255)</uniform>
 		<uniform type="color" name="uColor3">rgba(216,0,0,255)</uniform>
 		<uniform type="color" name="uGrey">rgba(76,150,29,255)</uniform>
-		<uniform type="double" name="uSigma0">10</uniform>
+		<uniform type="double" name="uSigma0">5</uniform>
 		<uniform type="int" name="uSize">4</uniform>
-		<uniform type="double" name="uThreshold">0.96</uniform>
+		<uniform type="double" name="uThreshold">0.95</uniform>
 	</uniforms>
 </glsl-live-coder-project>
