@@ -786,6 +786,10 @@ void RenderWidget::wheelEvent(QWheelEvent* e)
         return;
     double f = e->delta() * (e->modifiers() & Qt::ControlModifier)? 0.1 : 0.05;
     d->scale *= (e->delta() < 0)? 1-f : 1+f;
+    if (d->scale > 25)
+        d->scale = 25;
+    else if (d->scale < 0.002)
+        d->scale = 0.002;
     updateViewport();
     e->accept();
 }

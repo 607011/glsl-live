@@ -27,6 +27,7 @@
 #include <QByteArray>
 #include <QString>
 #include <QVector>
+#include <QMap>
 #include <QEvent>
 #include <QMimeData>
 #include <QListView>
@@ -92,6 +93,7 @@ public:
     QString lastBatchSaveDir;
     int programHasJustStarted;
     QScriptValue onMousePosChanged;
+    QMap<QString, QVariant> oldValues;
 
     ~MainWindowPrivate()
     {
@@ -373,6 +375,16 @@ void MainWindow::valueChanged(const QColor& color)
         d->renderWidget->setUniformValue(name, color);
         d->project->setDirty();
     }
+}
+
+void MainWindow::acceptColor(void)
+{
+    // TODO
+}
+
+void MainWindow::rejectColor(void)
+{
+    // TODO
 }
 
 void MainWindow::imageDropped(const QImage&)
@@ -662,6 +674,8 @@ void MainWindow::parseShadersForParameters(void)
                 ColorPicker* colorPicker = new ColorPicker(name);
                 QObject::connect(colorPicker, SIGNAL(colorSelected(QColor)), SLOT(valueChanged(QColor)));
                 QObject::connect(colorPicker, SIGNAL(currentColorChanged(QColor)), SLOT(valueChanged(QColor)));
+                QObject::connect(colorPicker, SIGNAL(accepted()), SLOT(acceptColor()));
+                QObject::connect(colorPicker, SIGNAL(rejected()), SLOT(rejectColor()));
                 bool ok1, ok2, ok3;
                 const QColor& defaultColor = (reColor.cap(2).startsWith("#"))
                         ? QColor(reColor.cap(7).toInt(&ok1, 16), reColor.cap(8).toInt(&ok2, 16), reColor.cap(9).toInt(&ok3, 16))
@@ -676,6 +690,8 @@ void MainWindow::parseShadersForParameters(void)
         ui->paramLayout->setEnabled(true); // reactivate layout manager
     }
 }
+
+
 
 void MainWindow::processShaderChange(void)
 {

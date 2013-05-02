@@ -64,6 +64,8 @@ private slots:
     void valueChanged(double);
     void valueChanged(bool);
     void valueChanged(const QColor&);
+    void acceptColor(void);
+    void rejectColor(void);
     void imageDropped(const QImage&);
     void imageDropped(int index, const QImage&);
     void frameDropped(const uchar* data, int w, int h, int index, Project::SourceSelector);

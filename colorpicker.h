@@ -4,15 +4,15 @@
 #ifndef __COLORPICKER_H_
 #define __COLORPICKER_H_
 
-#include <QColorDialog>
 #include <QWidget>
-#include <QString>
 #include <QColor>
-#include <QCursor>
 #include <QEvent>
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QSize>
+#include <QScopedPointer>
+
+class ColorPickerPrivate;
 
 class ColorPicker : public QWidget
 {
@@ -33,13 +33,17 @@ protected:
 signals:
     void currentColorChanged(QColor);
     void colorSelected(QColor);
+    void accepted(void);
+    void rejected(void);
 
 public slots:
     void setColor(const QColor&);
     
 private:
-    QCursor mOldCursor;
-    QColorDialog* mColorDialog;
+    QScopedPointer<ColorPickerPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(ColorPicker)
+    Q_DISABLE_COPY(ColorPicker)
+
 };
 
 #endif // __COLORPICKER_H_
