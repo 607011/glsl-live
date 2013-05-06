@@ -103,8 +103,10 @@ void ChannelWidget::closeWebcam(void)
 {
     Q_D(ChannelWidget);
     if (d->isWebcamOpen()) {
-        QObject::disconnect(d->decoderThread(), SIGNAL(frameReady(QImage)), this, SLOT(setImage(QImage)));
-        QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)), this, SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+        QObject::disconnect(d->decoderThread(), SIGNAL(frameReady(QImage)),
+                            this, SLOT(setImage(QImage)));
+        QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
+                            this, SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
         d->turnOffWebcam();
     }
 }
@@ -225,8 +227,10 @@ void ChannelWidget::showContextMenu(const QPoint& p)
         clear();
     }
     else if (selectedItem->text() == tr("Use webcam")) {
-        QObject::connect(d->decoderThread(), SIGNAL(frameReady(QImage)), SLOT(setImage(QImage)));
-        QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)), SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+        QObject::connect(d->decoderThread(), SIGNAL(frameReady(QImage)),
+                         SLOT(setImage(QImage)));
+        QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
+                         SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
         if (d->isWebcamOpen()) {
             setImage(d->webcam->getFrame(), Volatile);
             emit camInitialized(d->index);

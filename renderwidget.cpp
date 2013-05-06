@@ -177,7 +177,9 @@ const int RenderWidgetPrivate::NumKineticDataSamples = 4;
 
 
 RenderWidget::RenderWidget(QWidget* parent)
-    : QGLWidget(QGLFormat(QGL::SingleBuffer | QGL::NoDepthBuffer | QGL::AlphaChannel | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers | QGL::HasOverlay | QGL::NoSampleBuffers), parent)
+    : QGLWidget(QGLFormat(QGL::SingleBuffer | QGL::NoDepthBuffer | QGL::AlphaChannel
+                          | QGL::NoAccumBuffer | QGL::NoStencilBuffer | QGL::NoStereoBuffers
+                          | QGL::HasOverlay | QGL::NoSampleBuffers), parent)
     , d_ptr(new RenderWidgetPrivate)
 {
     Q_D(RenderWidget);

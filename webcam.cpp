@@ -16,9 +16,7 @@ public:
         : webcam(NULL)
     { /* ... */ }
     ~WebcamPrivate()
-    {
-        // safeDelete(webcam);
-    }
+    { /* ... */ }
     cv::VideoCapture* webcam;
     QImage lastFrame;
     QSize frameSize;
@@ -28,9 +26,7 @@ public:
 Webcam::Webcam(QObject* parent)
     : QObject(parent)
     , d_ptr(new WebcamPrivate)
-{
-    /* ... */
-}
+{ /* ... */ }
 
 Webcam::~Webcam()
 {
@@ -53,13 +49,13 @@ bool Webcam::open(int deviceId)
 
 bool Webcam::isOpen(void) const
 {
-    return d_ptr->webcam->isOpened();
+    return d_ptr->webcam != NULL && d_ptr->webcam->isOpened();
 }
 
 void Webcam::close(void)
 {
     Q_D(Webcam);
-    if (d->webcam && d->webcam->isOpened())
+    if (isOpen())
         d->webcam->release();
 }
 
