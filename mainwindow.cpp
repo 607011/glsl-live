@@ -52,7 +52,7 @@ static void emptyLayout(QLayout*);
 
 class MainWindowPrivate {
 public:
-    explicit MainWindowPrivate(void)
+    explicit MainWindowPrivate(WId winId)
         : project(new Project)
         , colorDialog(new QColorDialog)
         , renderWidget(new RenderWidget)
@@ -62,12 +62,61 @@ public:
         , fragmentShaderEditor(new GLSLEdit)
         , docBrowser(new QTextBrowser)
         , programHasJustStarted(3) // dirty hack
+#if defined(WIN32)
+        , camDevices(NULL)
+        , devAttr(NULL)
+        , camCount(0)
+        , hr(S_OK)
+#endif
     {
+        Q_UNUSED(winId);
+
         for (int i = -9; i < 10; ++i)
             steps << qPow(10, i);
         docBrowser->setOpenExternalLinks(true);
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
+
+#if defined(WIN32)
+//        HDEVNOTIFY hdevnotify;
+//        DEV_BROADCAST_DEVICEINTERFACE di = { 0 };
+//        di.dbcc_size = sizeof(di);
+//        di.dbcc_devicetype  = DBT_DEVTYP_DEVICEINTERFACE;
+//        di.dbcc_classguid  = KSCATEGORY_CAPTURE;
+//        hdevnotify = RegisterDeviceNotification((HWND)winId, &di, DEVICE_NOTIFY_WINDOW_HANDLE);
+//        if (hdevnotify == NULL) {
+//            qWarning() << "RegisterDeviceNotification failed." << HRESULT_FROM_WIN32(GetLastError());
+//        }
+
+        hr = MFCreateAttributes(&devAttr, 1);
+        if (SUCCEEDED(hr))
+            hr = devAttr->SetGUID(
+                        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
+                        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID
+                        );
+        if (SUCCEEDED(hr))
+            hr = MFEnumDeviceSources(devAttr, &camDevices, &camCount);
+        if (SUCCEEDED(hr)) {
+            for (UINT32 i = 0; i < camCount; ++i) {
+                WCHAR* szFriendlyName = NULL;
+                hr = camDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &szFriendlyName, NULL);
+                if (SUCCEEDED(hr)) {
+                    qDebug() << "Webcam #" << i << ":" << QString::fromWCharArray(szFriendlyName);
+                    if (i == 0) {
+                        camDevices[i]->ActivateObject(__uuidof(IMFMediaSource),(void**)&mediaSource);
+                        qDebug() << "  activated" << mediaSource;
+                    }
+                    CoTaskMemFree(szFriendlyName);
+                }
+            }
+        }
+        SafeRelease(&devAttr);
+        for (DWORD i = 0; i < camCount; i++)
+            SafeRelease(&camDevices[i]);
+        CoTaskMemFree(camDevices);
+        if (FAILED(hr))
+            qWarning() << "Cannot create the video capture device";
+#endif
     }
     Project* project;
     QColorDialog* colorDialog;
@@ -106,6 +155,16 @@ public:
         safeDelete(scriptEditor);
         safeDelete(scriptRunner);
     }
+
+private:
+#if defined(WIN32)
+    IMFActivate** camDevices;
+    IMFAttributes* devAttr;
+    UINT32 camCount;
+    HRESULT hr;
+    IMFPMediaPlayer* mediaPlayer;
+    IMFMediaSource* mediaSource;
+#endif
 };
 
 
@@ -114,7 +173,7 @@ QScriptValue scriptPrintFunction(QScriptContext* context, QScriptEngine* engine)
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , d_ptr(new MainWindowPrivate)
+    , d_ptr(new MainWindowPrivate(winId()))
 {
     Q_D(MainWindow);
     ui->setupUi(this);
@@ -335,6 +394,18 @@ void MainWindow::closeEvent(QCloseEvent* e)
     else {
         e->ignore();
     }
+}
+
+bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, long* result)
+{
+#if defined(WIN32)
+    Q_UNUSED(eventType);
+    Q_UNUSED(message);
+    Q_UNUSED(result);
+    // MSG* msg = reinterpret_cast<MSG*>(message);
+    // qDebug() << *result << msg->message;
+#endif
+    return false;
 }
 
 void MainWindow::valueChanged(int v)

@@ -3,7 +3,16 @@
 
 QT += core gui opengl xml
 
-CONFIG += opencv scripting
+CONFIG += webcam scripting
+
+webcam:win32 {
+DEFINES += WITH_WEBCAM _CRT_SECURE_NO_WARNINGS
+SOURCES += webcamthread.cpp \
+    camera_win.cpp
+HEADERS += webcamthread.h \
+    camera_win.h
+LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfplay.lib mfuuid.lib
+}
 
 opencv {
 DEFINES += WITH_OPENCV

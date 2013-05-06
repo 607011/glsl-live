@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QCloseEvent>
 #include <QScopedPointer>
+#include <QByteArray>
 #include <QColor>
 #include <QImage>
 #include <QList>
@@ -15,6 +16,18 @@
 #include <QMenu>
 
 #include "project.h"
+
+#if defined(WIN32)
+#include <windows.h>
+#include <windowsx.h>
+#include <mfapi.h>
+#include <mfplay.h>
+#include <strsafe.h>
+#include <Dbt.h>
+#include <ks.h>
+#include <ksmedia.h>
+#endif // defined(WIN32)
+
 
 namespace Ui {
 class MainWindow;
@@ -35,6 +48,7 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent*);
+    bool nativeEvent(const QByteArray& eventType, void* message, long* result);
 
 private slots:
     void initAfterGL(void);
