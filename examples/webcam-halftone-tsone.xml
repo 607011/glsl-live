@@ -1,0 +1,112 @@
+<glsl-live-coder-project version="0.9.11">
+	<shaders>
+		<vertex><![CDATA[#version 130
+
+in vec2 aVertex;
+in vec2 aTexCoord;
+out vec2 vTexCoord;
+
+void main(void)
+{
+    vTexCoord = aTexCoord;
+    gl_Position = vec4(aVertex, 0.0, 1.0);
+}
+]]></vertex>
+		<fragment><![CDATA[// Haltfone  Fragment Shader
+// based on https://www.shadertoy.com/view/Mdf3Dn by tsone
+
+#version 130
+
+#pragma size(640, 480)
+
+in vec2 vTexCoord;
+out vec4 color;
+uniform sampler2D uChannel0;
+uniform float uT;
+uniform vec2 uResolution;
+uniform vec2 uMouse;
+
+uniform float DOTSIZE; // 0.5, 1.0, 0.5
+float MIN_S = 4.4 / uResolution.x;
+float MAX_S = 30.0 / uResolution.x;
+float SPEED = 0.57;
+
+const float SST = 0.888;
+const float SSQ = 0.288;
+
+vec2 ORIGIN = vec2(0.5, 0.5);
+
+uniform float uS; // 0.0, 1.0, 0.1
+uniform float R; // 0.0, 3.14, 0.0
+
+float S = uS / 10.0;
+
+vec4 rgb2cmyki(in vec4 c)
+{
+	float k = max(max(c.r, c.g), c.b);
+	return min(vec4(c.rgb/k, k), 1.0);
+}
+
+vec4 cmyki2rgb(in vec4 c)
+{
+	return vec4(c.rgb*c.a, 1.0);
+}
+
+vec2 grid(in vec2 px)
+{
+	return px - mod(px, S);
+}
+
+vec4 ss(in vec4 v)
+{
+	return smoothstep(SST - SSQ, SST + SSQ, v);
+}
+
+vec4 halftone(in vec2 fc, in mat2 m)
+{
+	vec2 smp = (grid(m*fc) + 0.5 * S) * m;
+	float s = min(length(fc - smp) / (DOTSIZE * S),1.0);
+	vec4 c = rgb2cmyki(texture2D(uChannel0, smp + ORIGIN));
+	return c+s;
+}
+
+mat2 rotm(in float r)
+{
+	float cr = cos(r);
+	float sr = sin(r);
+	return mat2(cr, -sr, sr, cr);
+}
+
+void main()
+{
+	vec2 fc = vTexCoord - ORIGIN;
+	mat2 mc = rotm(R + radians(15.0));
+	mat2 mm = rotm(R + radians(75.0));
+	mat2 my = rotm(R);
+	mat2 mk = rotm(R + radians(55.0));
+	float k = halftone(fc, mk).a;
+	color = cmyki2rgb(ss(vec4(
+		halftone(fc, mc).r,
+		halftone(fc, mm).g,
+		halftone(fc, my).b,
+		halftone(fc, mk).a
+	)));
+}
+]]></fragment>
+	</shaders>
+	<input>
+		<channel id="0" source="webcam"></channel>
+	</input>
+	<options>
+		<clamp>1</clamp>
+		<backgroundcolor>rgba(0,0,0,255)</backgroundcolor>
+		<instantupdate>0</instantupdate>
+		<imagerecycling>0</imagerecycling>
+		<alpha>1</alpha>
+	</options>
+	<uniforms>
+		<uniform type="double" name="DOTSIZE">1</uniform>
+		<uniform type="double" name="R">0.835413</uniform>
+		<uniform type="double" name="uS">0.11</uniform>
+	</uniforms>
+</glsl-live-coder-project>

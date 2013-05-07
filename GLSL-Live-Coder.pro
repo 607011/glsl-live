@@ -32,20 +32,20 @@ opencv:!windowsmediafoundation {
     HEADERS += webcamthread.h \
         videocapturedevice.h
 
-        win32 {
-            DEFINES += _CRT_SECURE_NO_WARNINGS
-            LIBS += opencv_core245.lib opencv_highgui245.lib
-            QMAKE_CXXFLAGS += -ID:/Developer/opencv/build/include \
-                -ID:/Developer/opencv/build/include/opencv \
-                -ID:/Developer/opencv/build/include/opencv2
-        }
-        macx {
-            LIBS += -L/opt/local/lib -lopencv_core -lopencv_highgui
-            QMAKE_CXXFLAGS += -I/opt/local/include -I/opt/local/include/opencv -I/opt/local/include/opencv2
-        }
-        unix {
-            LIBS += -lopencv_core -lopencv_highgui
-        }
+    win32 {
+        DEFINES += _CRT_SECURE_NO_WARNINGS
+        LIBS += opencv_core245.lib opencv_highgui245.lib
+        QMAKE_CXXFLAGS += -ID:/Developer/opencv/build/include \
+            -ID:/Developer/opencv/build/include/opencv \
+            -ID:/Developer/opencv/build/include/opencv2
+    }
+    macx {
+        LIBS += -L/opt/local/lib -lopencv_core -lopencv_highgui
+        QMAKE_CXXFLAGS += -I/opt/local/include -I/opt/local/include/opencv -I/opt/local/include/opencv2
+    }
+    unix {
+        LIBS += -lopencv_core -lopencv_highgui
+    }
 }
 
 win32 {
