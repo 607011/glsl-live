@@ -45,6 +45,7 @@
 #include "util.h"
 #include "editors/js/jsedit.h"
 #include "scriptrunner.h"
+#include "videocapturedevice.h"
 
 static void prepareEditor(AbstractEditor*);
 static void emptyLayout(QLayout*);
@@ -62,12 +63,6 @@ public:
         , fragmentShaderEditor(new GLSLEdit)
         , docBrowser(new QTextBrowser)
         , programHasJustStarted(3) // dirty hack
-#if defined(WIN32)
-        , camDevices(NULL)
-        , devAttr(NULL)
-        , camCount(0)
-        , hr(S_OK)
-#endif
     {
         Q_UNUSED(winId);
 
@@ -77,46 +72,15 @@ public:
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
 
-#if defined(WIN32)
-//        HDEVNOTIFY hdevnotify;
-//        DEV_BROADCAST_DEVICEINTERFACE di = { 0 };
-//        di.dbcc_size = sizeof(di);
-//        di.dbcc_devicetype  = DBT_DEVTYP_DEVICEINTERFACE;
-//        di.dbcc_classguid  = KSCATEGORY_CAPTURE;
-//        hdevnotify = RegisterDeviceNotification((HWND)winId, &di, DEVICE_NOTIFY_WINDOW_HANDLE);
-//        if (hdevnotify == NULL) {
-//            qWarning() << "RegisterDeviceNotification failed." << HRESULT_FROM_WIN32(GetLastError());
-//        }
-
-        hr = MFCreateAttributes(&devAttr, 1);
-        if (SUCCEEDED(hr))
-            hr = devAttr->SetGUID(
-                        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE,
-                        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID
-                        );
-        if (SUCCEEDED(hr))
-            hr = MFEnumDeviceSources(devAttr, &camDevices, &camCount);
-        if (SUCCEEDED(hr)) {
-            for (UINT32 i = 0; i < camCount; ++i) {
-                WCHAR* szFriendlyName = NULL;
-                hr = camDevices[i]->GetAllocatedString(MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME, &szFriendlyName, NULL);
-                if (SUCCEEDED(hr)) {
-                    qDebug() << "Webcam #" << i << ":" << QString::fromWCharArray(szFriendlyName);
-                    if (i == 0) {
-                        camDevices[i]->ActivateObject(__uuidof(IMFMediaSource),(void**)&mediaSource);
-                        qDebug() << "  activated" << mediaSource;
-                    }
-                    CoTaskMemFree(szFriendlyName);
-                }
-            }
-        }
-        SafeRelease(&devAttr);
-        for (DWORD i = 0; i < camCount; i++)
-            SafeRelease(&camDevices[i]);
-        CoTaskMemFree(camDevices);
-        if (FAILED(hr))
-            qWarning() << "Cannot create the video capture device";
-#endif
+        //        HDEVNOTIFY hdevnotify;
+        //        DEV_BROADCAST_DEVICEINTERFACE di = { 0 };
+        //        di.dbcc_size = sizeof(di);
+        //        di.dbcc_devicetype  = DBT_DEVTYP_DEVICEINTERFACE;
+        //        di.dbcc_classguid  = KSCATEGORY_CAPTURE;
+        //        hdevnotify = RegisterDeviceNotification((HWND)winId, &di, DEVICE_NOTIFY_WINDOW_HANDLE);
+        //        if (hdevnotify == NULL) {
+        //            qWarning() << "RegisterDeviceNotification failed." << HRESULT_FROM_WIN32(GetLastError());
+        //        }
     }
     Project* project;
     QColorDialog* colorDialog;
@@ -157,14 +121,6 @@ public:
     }
 
 private:
-#if defined(WIN32)
-    IMFActivate** camDevices;
-    IMFAttributes* devAttr;
-    UINT32 camCount;
-    HRESULT hr;
-    IMFPMediaPlayer* mediaPlayer;
-    IMFMediaSource* mediaSource;
-#endif
 };
 
 
@@ -176,6 +132,15 @@ MainWindow::MainWindow(QWidget* parent)
     , d_ptr(new MainWindowPrivate(winId()))
 {
     Q_D(MainWindow);
+
+    VideoCaptureDevice::startup();
+#ifndef QT_NO_DEBUG
+    QStringListIterator vidCapDev(VideoCaptureDevice::enumerate());
+    int i = 0;
+    while (vidCapDev.hasNext())
+        qDebug() << "Webcam" << i++ << ":" << vidCapDev.next();
+#endif
+
     ui->setupUi(this);
     QObject::connect(d->renderWidget, SIGNAL(ready()), SLOT(initAfterGL()));
 

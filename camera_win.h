@@ -14,12 +14,12 @@ class Webcam : public QObject
 {
     Q_OBJECT
 public:
-    explicit Webcam(QObject* parent = NULL);
+    explicit Webcam(int id = -1, QObject* parent = NULL);
     ~Webcam();
     bool open(int);
     bool isOpen(void) const;
     void close(void);
-    const QImage& getFrame(void);
+    const QImage& getFrame(void) const;
     void getRawFrame(const uchar*& data, int& w, int& h) const;
     QSize frameSize(void) const;
     void setSize(const QSize&);

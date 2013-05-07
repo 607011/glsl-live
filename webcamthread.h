@@ -11,14 +11,14 @@
 
 #include "project.h"
 
-class Webcam;
+class VideoCaptureDevice;
 class WebcamThreadPrivate;
 
 class WebcamThread : public QThread
 {
     Q_OBJECT
 public:
-    WebcamThread(Webcam* webcam = NULL, QObject* parent = NULL);
+    WebcamThread(VideoCaptureDevice* webcam = NULL, QObject* parent = NULL);
     ~WebcamThread();
     void startReading(void);
     void stopReading(void);

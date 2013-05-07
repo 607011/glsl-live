@@ -14,14 +14,14 @@ public:
     }
 
     QImage frame;
-
 };
 
-Webcam::Webcam(QObject* parent)
+Webcam::Webcam(int id, QObject* parent)
     : QObject(parent)
     , d_ptr(new WebcamPrivate)
 {
-    /* ... */
+    if (id >= 0)
+        open(id);
 }
 
 Webcam::~Webcam()
@@ -44,11 +44,10 @@ void Webcam::close(void)
     // TODO
 }
 
-const QImage& Webcam::getFrame(void)
+const QImage& Webcam::getFrame(void) const
 {
-    return d_ptr->frame; // XXX
+    return d_ptr->frame;
 }
-
 
 void Webcam::getRawFrame(const uchar*& data, int& w, int& h) const
 {
@@ -60,10 +59,10 @@ void Webcam::getRawFrame(const uchar*& data, int& w, int& h) const
 
 QSize Webcam::frameSize(void) const
 {
-    return QSize(640, 480);
+    return d_ptr->frame.size();
 }
 
 void Webcam::setSize(const QSize&)
 {
-
+    // TODO
 }

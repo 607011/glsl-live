@@ -5,23 +5,23 @@
 
 #include <QtCore/QDebug>
 
+#include "videocapturedevice.h"
 #include "webcamthread.h"
-#include "webcam.h"
 #include "util.h"
 
 class WebcamThreadPrivate {
 public:
-    WebcamThreadPrivate(Webcam* webcam)
+    WebcamThreadPrivate(VideoCaptureDevice* webcam)
         : webcam(webcam)
         , abort(false)
     { /* ... */ }
     ~WebcamThreadPrivate()
     { /* ... */ }
-    Webcam* webcam;
+    VideoCaptureDevice* webcam;
     bool abort;
 };
 
-WebcamThread::WebcamThread(Webcam* webcam, QObject* parent)
+WebcamThread::WebcamThread(VideoCaptureDevice* webcam, QObject* parent)
     : QThread(parent)
     , d_ptr(new WebcamThreadPrivate(webcam))
 {

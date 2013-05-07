@@ -16,7 +16,7 @@
 #include "channelwidget.h"
 #include "util.h"
 
-#include "webcam.h"
+#include "videocapturedevice.h"
 #include "webcamthread.h"
 
 class ChannelWidgetPrivate
@@ -44,13 +44,13 @@ public:
     ChannelWidget::Type type;
     QImage image;
     QString filename;
-    Webcam* webcam;
+    VideoCaptureDevice* webcam;
     WebcamThread* webcamThread;
 
-    inline Webcam* decoder(void)
+    inline VideoCaptureDevice* decoder(void)
     {
         if (webcam == NULL) {
-            webcam = new Webcam;
+            webcam = new VideoCaptureDevice;
             webcam->open(0);
         }
         return webcam;
@@ -232,7 +232,7 @@ void ChannelWidget::showContextMenu(const QPoint& p)
         QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
                          SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
         if (d->isWebcamOpen()) {
-            setImage(d->webcam->getFrame(), Volatile);
+            setImage(d->webcam->getLastFrame(), Volatile);
             emit camInitialized(d->index);
         }
         d->decoderThread()->startReading();

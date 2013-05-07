@@ -17,16 +17,6 @@
 
 #include "project.h"
 
-#if defined(WIN32)
-#include <windows.h>
-#include <windowsx.h>
-#include <mfapi.h>
-#include <mfplay.h>
-#include <strsafe.h>
-#include <Dbt.h>
-#include <ks.h>
-#include <ksmedia.h>
-#endif // defined(WIN32)
 
 
 namespace Ui {

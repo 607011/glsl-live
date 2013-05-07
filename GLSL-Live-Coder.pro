@@ -3,30 +3,26 @@
 
 QT += core gui opengl xml
 
-CONFIG += webcam scripting
+CONFIG += videocapture scripting
 
-webcam:win32 {
-DEFINES += WITH_WEBCAM _CRT_SECURE_NO_WARNINGS
-SOURCES += webcamthread.cpp \
-    camera_win.cpp
-HEADERS += webcamthread.h \
-    camera_win.h
-LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfplay.lib mfuuid.lib
+videocapture:win32 {
+DEFINES += _CRT_SECURE_NO_WARNINGS
+SOURCES += webcamthread.cpp
+HEADERS += webcamthread.h
+LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfplay.lib mfuuid.lib mfreadwrite.lib
 }
 
 opencv {
 DEFINES += WITH_OPENCV
 win32 {
+DEFINES += _CRT_SECURE_NO_WARNINGS
 LIBS += -lopencv_core245 -lopencv_highgui245
 }
 macx {
 LIBS += -L/opt/local/lib -lopencv_core -lopencv_highgui
 }
-DEFINES += _CRT_SECURE_NO_WARNINGS
-SOURCES += webcamthread.cpp \
-    webcam.cpp
-HEADERS += webcamthread.h \
-    webcam.h
+SOURCES += webcamthread.cpp
+HEADERS += webcamthread.h
 }
 
 TARGET = GLSL-Live-Coder
@@ -71,7 +67,8 @@ SOURCES += main.cpp\
     editors/glsl/glsldoclayout.cpp \
     editors/sidebarwidget.cpp \
     colorpicker.cpp \
-    channelwidget.cpp
+    channelwidget.cpp \
+    videocapturedevice.cpp
 
 HEADERS += main.h \
     mainwindow.h \
@@ -86,7 +83,8 @@ HEADERS += main.h \
     editors/sidebarwidget.h \
     editors/abstracteditor.h \
     colorpicker.h \
-    channelwidget.h
+    channelwidget.h \
+    videocapturedevice.h
 
 FORMS += mainwindow.ui
 
