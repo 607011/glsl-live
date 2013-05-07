@@ -29,12 +29,20 @@ const QString AppName = "GLSL Live Coder";
 const QString AppUrl = "http://code.google.com/p/glsl-live/";
 const QString AppAuthor = "Oliver Lau";
 const QString AppAuthorMail = "ola@ct.de";
-const QString AppVersionNoDebug = "0.9.10";
+const QString AppVersionNoDebug = "0.9.11";
 const QString AppMinorVersion = "";
+const QString AppFeatures = QString() +
+#ifdef WITH_OPENCV
+        "|OpenCV" +
+#endif
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+        "|WMF" +
+#endif
+        + "";
 #ifdef QT_NO_DEBUG
-const QString AppVersion = AppVersionNoDebug + AppMinorVersion;
+const QString AppVersion = AppVersionNoDebug + AppMinorVersion + AppFeatures;
 #else
-const QString AppVersion = AppVersionNoDebug + AppMinorVersion + " [DEBUG]";
+const QString AppVersion = AppVersionNoDebug + AppMinorVersion + AppFeatures + " [DEBUG]";
 #endif
 
 

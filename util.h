@@ -29,7 +29,7 @@ inline void safeRenew(T& a, T obj)
 }
 
 
-#if defined(WIN32)
+#if defined(Q_OS_WIN32) || defined(WIN32)
 template <class T>
 void SafeRelease(T** ppT)
 {
@@ -38,7 +38,7 @@ void SafeRelease(T** ppT)
         *ppT = NULL;
     }
 }
-#endif // defined(WIN32)
+#endif
 
 
 #endif // __UTIL_H_

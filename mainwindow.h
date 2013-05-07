@@ -7,16 +7,15 @@
 #include <QMainWindow>
 #include <QCloseEvent>
 #include <QScopedPointer>
-#include <QByteArray>
 #include <QColor>
 #include <QImage>
 #include <QList>
 #include <QString>
+#include <QStringList>
 #include <QAction>
 #include <QMenu>
 
 #include "project.h"
-
 
 
 namespace Ui {
@@ -38,7 +37,6 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent*);
-    bool nativeEvent(const QByteArray& eventType, void* message, long* result);
 
 private slots:
     void initAfterGL(void);
@@ -88,7 +86,6 @@ private slots:
 private: //methods
     void saveSettings(void);
     void restoreSettings(void);
-    void processBatch(const QList<QString>& filenames, const QString& outDir);
 
 private:
     Ui::MainWindow *ui;

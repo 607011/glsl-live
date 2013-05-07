@@ -581,8 +581,6 @@ void RenderWidget::initializeGL(void)
     glGetIntegerv(GL_MAJOR_VERSION, &d->glVersionMajor);
     glGetIntegerv(GL_MINOR_VERSION, &d->glVersionMinor);
     qglClearColor(d->backgroundColor);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
     glGenTextures(1, &d->textureHandle);
@@ -816,7 +814,7 @@ void RenderWidget::dropEvent(QDropEvent* e)
     if (e->mimeData()->hasUrls()) {
         QString fileUrl = e->mimeData()->urls().first().toString();
         if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
-#if defined(WIN32)
+#ifdef Q_OS_WIN32
             loadImage(fileUrl.remove("file:///"));
 #else
             loadImage(fileUrl.remove("file://"));

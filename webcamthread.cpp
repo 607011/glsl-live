@@ -24,9 +24,7 @@ public:
 WebcamThread::WebcamThread(VideoCaptureDevice* webcam, QObject* parent)
     : QThread(parent)
     , d_ptr(new WebcamThreadPrivate(webcam))
-{
-    /* ... */
-}
+{ /* ... */ }
 
 WebcamThread::~WebcamThread()
 {
@@ -36,7 +34,7 @@ WebcamThread::~WebcamThread()
 void WebcamThread::startReading(void)
 {
     Q_D(WebcamThread);
-    Q_ASSERT(d->webcam != NULL);
+    Q_ASSERT_X(d->webcam != NULL, "WebcamThread::startReading()", "d->webcam must not be NULL");
     stopReading();
     d->abort = false;
     start();
@@ -54,7 +52,7 @@ void WebcamThread::stopReading(void)
 void WebcamThread::run(void)
 {
     Q_D(WebcamThread);
-    Q_ASSERT(d->webcam != NULL);
+    Q_ASSERT_X(d->webcam != NULL, "WebcamThread::run()", "d->webcam must not be NULL");
     while (!d->abort) {
         int w = -1, h = -1;
         const uchar* data = NULL;

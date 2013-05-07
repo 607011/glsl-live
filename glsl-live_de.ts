@@ -16,7 +16,7 @@
         <translation>%1 verwenden</translation>
     </message>
     <message>
-        <location filename="channelwidget.cpp" line="236"/>
+        <location filename="channelwidget.cpp" line="237"/>
         <source>Use</source>
         <translation>verwenden</translation>
     </message>
@@ -632,6 +632,20 @@
         <location filename="scriptrunner.cpp" line="83"/>
         <source>`onFrame()` not defined. Ignoring function.</source>
         <translation>`onFrame()`ist nicht definiert. Ignoriere Funktion.</translation>
+    </message>
+</context>
+<context>
+    <name>VideoCaptureDevice</name>
+    <message>
+        <location filename="videocapturedevice.cpp" line="372"/>
+        <location filename="videocapturedevice.cpp" line="373"/>
+        <source>first webcam</source>
+        <translation>Erste Webcam</translation>
+    </message>
+    <message>
+        <location filename="videocapturedevice.cpp" line="372"/>
+        <source>There still is no function built into OpenCV to discover the available video input devices (see https://code.ros.org/trac/opencv/ticket/935). Assuming that there is at least one webcam connected and calling it `%1`.</source>
+        <translation type="unfinished">Es gibt in OpenCV immer noch keine Funktion, um die verfügbaren Videoeingabegeräte aufzulisten (siehe https://code.ros.org/trac/opencv/ticket/935). Es wird daher angenommen, dass mindestens eine Webcam mit dem Namen `%1` angeschlossen ist.</translation>
     </message>
 </context>
 </TS>

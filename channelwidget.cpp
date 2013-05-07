@@ -34,7 +34,6 @@ public:
 
     void reset(void)
     {
-        turnOffWebcam();
         type = ChannelWidget::None;
         image = QImage();
         filename = QString();
@@ -144,6 +143,7 @@ int ChannelWidget::index(void) const
 void ChannelWidget::clear(void)
 {
     Q_D(ChannelWidget);
+    closeWebcam();
     d->reset();
     emit imageDropped(d->index, QImage());
     update();
@@ -201,7 +201,7 @@ void ChannelWidget::dropEvent(QDropEvent* e)
     if (e->mimeData()->hasUrls()) {
         QString fileUrl = e->mimeData()->urls().first().toString();
         if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive))) {
-#if defined(WIN32)
+#ifdef Q_OS_WIN32
             const QString& filename = fileUrl.remove("file:///");
 #else
             const QString& filename = fileUrl.remove("file://");

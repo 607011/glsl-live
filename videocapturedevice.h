@@ -24,10 +24,10 @@ public:
     const QImage& getCurrentFrame(void);
     void getRawFrame(const uchar*& data, int& w, int& h);
     QSize frameSize(void) const;
-    bool requestFrameSize(const QSize&);
+    bool setFrameSize(const QSize&);
 
     static bool startup(void);
-    static QStringList enumerate(void);
+    static QStringList availableDevices(void);
 
 signals:
     

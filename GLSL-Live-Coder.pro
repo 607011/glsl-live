@@ -1,61 +1,70 @@
 # Copyright (c) 2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
 # All rights reserved.
 
-QT += core gui opengl xml
-
-CONFIG += videocapture scripting
-
-videocapture:win32 {
-DEFINES += _CRT_SECURE_NO_WARNINGS
-SOURCES += webcamthread.cpp
-HEADERS += webcamthread.h
-LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfplay.lib mfuuid.lib mfreadwrite.lib
-}
-
-opencv {
-DEFINES += WITH_OPENCV
-win32 {
-DEFINES += _CRT_SECURE_NO_WARNINGS
-LIBS += -lopencv_core245 -lopencv_highgui245
-}
-macx {
-LIBS += -L/opt/local/lib -lopencv_core -lopencv_highgui
-}
-SOURCES += webcamthread.cpp
-HEADERS += webcamthread.h
-}
-
 TARGET = GLSL-Live-Coder
 TEMPLATE = app
 
-win32 {
-RC_FILE = glsl-live.rc
-}
-
-macx {
-QMAKE_CXXFLAGS += -I/opt/local/include -I/opt/local/include/opencv -I/opt/local/include/opencv2
-}
-
-scripting {
-QT += script
-DEFINES += WITH_SCRIPTING
-SOURCES += editors/js/jsedit.cpp \
-    scriptrunner.cpp \
-    glclass.cpp \
-    imageclass.cpp
-HEADERS += editors/js/jsedit.h \
-    scriptrunner.h \
-    glclass.h \
-    imageclass.h
-OTHER_FILES += defaultscript.js
-}
-
+QT += core gui opengl xml
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+CONFIG += scripting
+
+# CONFIG += opencv
+CONFIG += windowsmediafoundation
 
 TRANSLATIONS = glsl-live_de.ts
 
 CODECFORTR = UTF-8
 
+windowsmediafoundation:!opencv {
+    DEFINES += WITH_WINDOWS_MEDIA_FOUNDATION _CRT_SECURE_NO_WARNINGS
+    SOURCES += webcamthread.cpp \
+        videocapturedevice.cpp
+    HEADERS += webcamthread.h \
+        videocapturedevice.h
+    LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfuuid.lib mfreadwrite.lib
+}
+
+opencv:!windowsmediafoundation {
+    DEFINES += WITH_OPENCV
+    SOURCES += webcamthread.cpp \
+        videocapturedevice.cpp
+    HEADERS += webcamthread.h \
+        videocapturedevice.h
+
+        win32 {
+            DEFINES += _CRT_SECURE_NO_WARNINGS
+            LIBS += opencv_core245.lib opencv_highgui245.lib
+            QMAKE_CXXFLAGS += -ID:/Developer/opencv/build/include \
+                -ID:/Developer/opencv/build/include/opencv \
+                -ID:/Developer/opencv/build/include/opencv2
+        }
+        macx {
+            LIBS += -L/opt/local/lib -lopencv_core -lopencv_highgui
+            QMAKE_CXXFLAGS += -I/opt/local/include -I/opt/local/include/opencv -I/opt/local/include/opencv2
+        }
+        unix {
+            LIBS += -lopencv_core -lopencv_highgui
+        }
+}
+
+win32 {
+    RC_FILE = glsl-live.rc
+}
+
+scripting {
+    QT += script
+    DEFINES += WITH_SCRIPTING
+    SOURCES += editors/js/jsedit.cpp \
+        scriptrunner.cpp \
+        glclass.cpp \
+        imageclass.cpp
+    HEADERS += editors/js/jsedit.h \
+        scriptrunner.h \
+        glclass.h \
+        imageclass.h
+    OTHER_FILES += defaultscript.js
+}
 
 SOURCES += main.cpp\
     mainwindow.cpp \
@@ -67,8 +76,7 @@ SOURCES += main.cpp\
     editors/glsl/glsldoclayout.cpp \
     editors/sidebarwidget.cpp \
     colorpicker.cpp \
-    channelwidget.cpp \
-    videocapturedevice.cpp
+    channelwidget.cpp
 
 HEADERS += main.h \
     mainwindow.h \
@@ -83,8 +91,7 @@ HEADERS += main.h \
     editors/sidebarwidget.h \
     editors/abstracteditor.h \
     colorpicker.h \
-    channelwidget.h \
-    videocapturedevice.h
+    channelwidget.h
 
 FORMS += mainwindow.ui
 

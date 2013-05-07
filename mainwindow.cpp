@@ -215,7 +215,7 @@ MainWindow::MainWindow(QWidget* parent)
     fPrint.setData(engine->newQObject(ui->logTextEdit));
     engine->globalObject().setProperty("print", fPrint);
 
-    const QStringList& webcamList = VideoCaptureDevice::enumerate();
+    const QStringList& webcamList = VideoCaptureDevice::availableDevices();
     for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
         d->channelWidget[i] = new ChannelWidget(i);
         d->channelWidget[i]->setAvailableWebcams(webcamList);
@@ -357,18 +357,6 @@ void MainWindow::closeEvent(QCloseEvent* e)
     }
 }
 
-bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, long* result)
-{
-#if defined(WIN32)
-    Q_UNUSED(eventType);
-    Q_UNUSED(message);
-    Q_UNUSED(result);
-    // MSG* msg = reinterpret_cast<MSG*>(message);
-    // qDebug() << *result << msg->message;
-#endif
-    return false;
-}
-
 void MainWindow::valueChanged(int v)
 {
     Q_D(MainWindow);
@@ -479,7 +467,7 @@ void MainWindow::saveImageSnapshot(void)
 void MainWindow::batchProcess(void)
 {
     Q_D(MainWindow);
-    const QList<QString>& filenames =
+    const QStringList& filenames =
             QFileDialog::getOpenFileNames(this,
                                           tr("Select images to load"),
                                           d->lastBatchOpenDir,
@@ -520,7 +508,6 @@ void MainWindow::batchProcess(void)
         renderer.process(QImage(fInfo.canonicalFilePath()), outFile);
     }
     ui->statusBar->showMessage(tr("Batch processing completed."), 3000);
-
 
     setCursor(oldCursor);
 }
@@ -1093,7 +1080,7 @@ static void prepareEditor(AbstractEditor* editor)
 {
     editor->setWordWrapMode(QTextOption::NoWrap);
     QFont monospace;
-#if defined(Q_OS_MAC)
+#ifdef Q_OS_MAC
     monospace.setPointSize(10);
     monospace.setFamily("Monaco");
 #else
