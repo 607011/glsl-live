@@ -28,10 +28,14 @@ class VideoCaptureDevicePrivate
 {
 public:
     VideoCaptureDevicePrivate(void)
-        : hr(S_OK)
+        : frameData(NULL)
+#if defined(WIN32)
+        , hr(S_OK)
+        , mediaType(NULL)
         , mediaPlayer(NULL)
         , mediaSource(NULL)
         , sourceReader(NULL)
+#endif
     {
         /* ... */
     }
@@ -43,10 +47,12 @@ public:
             SafeRelease(&camDevices[i]);
         CoTaskMemFree(camDevices);
 #endif
+        safeDelete(frameData);
     }
 
 #if defined(WIN32)
     HRESULT hr;
+    IMFMediaType* mediaType;
     IMFPMediaPlayer* mediaPlayer;
     IMFMediaSource* mediaSource;
     IMFSourceReader* sourceReader;
@@ -55,16 +61,25 @@ public:
     UINT32 camCount;
 #endif
 
+    uchar* frameData;
+    QSize frameSize;
     QImage lastFrame;
-
 
     void close(void)
     {
+#if defined(WIN32)
         SafeRelease(&sourceReader);
         SafeRelease(&mediaSource);
         SafeRelease(&mediaPlayer);
+#else
+        // ...
+#endif
     }
 };
+
+
+bool VideoCaptureDevice::startedUp = false;
+
 
 VideoCaptureDevice::VideoCaptureDevice(int id, QObject* parent)
     : QObject(parent)
@@ -91,18 +106,27 @@ bool VideoCaptureDevice::open(int deviceId)
         hr = d->devAttr->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
     if (SUCCEEDED(hr))
         hr = MFEnumDeviceSources(d->devAttr, &d->camDevices, &d->camCount);
-    if (FAILED(hr))
+    if (FAILED(hr)) {
         qWarning() << "Cannot create the video capture device";
+        return false;
+    }
     SafeRelease(&d->devAttr);
     if (deviceId <= int(d->camCount)) {
         d->camDevices[deviceId]->ActivateObject(__uuidof(IMFMediaSource),(void**)&d->mediaSource);
-        qDebug() << "  activated" << d->mediaSource;
         hr = MFCreateSourceReaderFromMediaSource(d->mediaSource, NULL, &d->sourceReader);
-        if (SUCCEEDED(hr)) {
-            qDebug() << "  d->sourceReader =" << d->sourceReader;
-        }
     }
-    return hr == S_OK;
+    if (FAILED(hr))
+        return false;
+    hr = d->sourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &d->mediaType);
+    if (FAILED(hr))
+        return false;
+    GUID subtype = { 0 };
+    hr = d->mediaType->GetGUID(MF_MT_SUBTYPE, &subtype);
+    if (subtype != MFVideoFormat_RGB24)
+        return false;
+    bool ok = requestFrameSize(QSize(1920, 1080));
+    qDebug() << "requestFrameSize(QSize(1920, 1080)) ->" << ok;
+    return SUCCEEDED(hr) && ok;
 #else
     return false;
 #endif
@@ -110,7 +134,11 @@ bool VideoCaptureDevice::open(int deviceId)
 
 bool VideoCaptureDevice::isOpen(void) const
 {
+#if defined(WIN32)
     return d_ptr->sourceReader != NULL;
+#else
+    return false;
+#endif
 }
 
 void VideoCaptureDevice::close(void)
@@ -121,120 +149,126 @@ void VideoCaptureDevice::close(void)
 
 const QImage& VideoCaptureDevice::getLastFrame(void) const
 {
+    qDebug() << "frame size =" << d_ptr->lastFrame.size();
     return d_ptr->lastFrame;
 }
 
-#if defined(WIN32)
-inline float OffsetToFloat(const MFOffset& offset)
+const QImage& VideoCaptureDevice::getCurrentFrame(void)
 {
-    return offset.value + (static_cast<float>(offset.fract) / 65536.0f);
-}
-
-RECT RectFromArea(const MFVideoArea& area)
-{
-    RECT rc;
-    rc.left = static_cast<LONG>(OffsetToFloat(area.OffsetX));
-    rc.top = static_cast<LONG>(OffsetToFloat(area.OffsetY));
-    rc.right = rc.left + area.Area.cx;
-    rc.bottom = rc.top + area.Area.cy;
-    return rc;
-}
-
-void GetPixelAspectRatio(IMFMediaType *pType, MFRatio *pPar)
-{
-    HRESULT hr = MFGetAttributeRatio(pType,
-        MF_MT_PIXEL_ASPECT_RATIO,
-        (UINT32*)&pPar->Numerator,
-        (UINT32*)&pPar->Denominator);
-    if (FAILED(hr))
-    {
-        pPar->Numerator = pPar->Denominator = 1;
+    Q_D(VideoCaptureDevice);
+    int w = -1, h = -1;
+    const uchar* data = NULL;
+    int Tries = 10;
+    while (data == NULL && --Tries)
+        getRawFrame(data, w, h);
+    if (data != NULL && w > 0 && h > 0) {
+        if (QSize(w, h) != d->lastFrame.size())
+            d->lastFrame = QImage(w, h, QImage::Format_ARGB32);
+        uchar* dst = const_cast<uchar*>(d->lastFrame.constBits());
+        const uchar* src = const_cast<uchar*>(data);
+        const uchar* const srcEnd = src + w * h * 3;
+        while (src < srcEnd) {
+            *dst++ = *src++;
+            *dst++ = *src++;
+            *dst++ = *src++;
+            *dst++ = 0xffU;
+        }
     }
+    return getLastFrame();
 }
-
-struct FormatInfo
-{
-    UINT32          imageWidthPels;
-    UINT32          imageHeightPels;
-    BOOL            bTopDown;
-    RECT            rcPicture;    // Corrected for pixel aspect ratio
-
-
-    FormatInfo() : imageWidthPels(0), imageHeightPels(0), bTopDown(FALSE)
-    {
-        SetRectEmpty(&rcPicture);
-    }
-};
-#endif
-
 
 void VideoCaptureDevice::getRawFrame(const uchar*& data, int& w, int& h)
 {
     Q_D(VideoCaptureDevice);
+    data = NULL;
+    w = -1;
+    h = -1;
+#if defined(WIN32)
     IMFMediaBuffer* pBuffer = NULL;
     IMFSample* pSample = NULL;
     BYTE* pBitmapData = NULL;
     DWORD cbBitmapData = 0;
-    UINT32 width = 0, height = 0;
     GUID subtype = { 0 };
-    IMFMediaType* pType = NULL;
-    data = NULL;
-    w = -1;
-    h = -1;
-    DWORD dwFlags = 0;
-    HRESULT hr = d->sourceReader->ReadSample(
-                (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM,
-                0,
-                NULL,
-                &dwFlags,
-                NULL,
-                &pSample
-                );
+    d->mediaType = NULL;
+    DWORD dwFlags = 0x00000000U;
+    HRESULT hr = d->sourceReader->ReadSample((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, NULL, &dwFlags, NULL, &pSample);
+    if (FAILED(hr) || (pSample == NULL) || ((dwFlags & MF_SOURCE_READERF_ENDOFSTREAM) != 0))
+        goto done;
+    hr = d->sourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &d->mediaType);
     if (FAILED(hr))
         goto done;
-    if (dwFlags & MF_SOURCE_READERF_ENDOFSTREAM)
+    hr = d->mediaType->GetGUID(MF_MT_SUBTYPE, &subtype);
+    if (subtype != MFVideoFormat_RGB24)
         goto done;
-    if (pSample == NULL)
-        goto done;
-
-
-    // Get the media type from the stream.
-    hr = d->sourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &pType);
+    hr = MFGetAttributeSize(d->mediaType, MF_MT_FRAME_SIZE, (UINT32*)&w, (UINT32*)&h);
     if (FAILED(hr))
         goto done;
-    hr = pType->GetGUID(MF_MT_SUBTYPE, &subtype);
-    if (subtype != MFVideoFormat_RGB24) {
-        hr = E_UNEXPECTED;
-        goto done;
-    }
-    hr = MFGetAttributeSize(pType, MF_MT_FRAME_SIZE, &width, &height);
-    if (FAILED(hr))
-        goto done;
-    w = int(width);
-    h = int(height);
-
     hr = pSample->ConvertToContiguousBuffer(&pBuffer);
     if (FAILED(hr))
         goto done;
     hr = pBuffer->Lock(&pBitmapData, NULL, &cbBitmapData);
     if (FAILED(hr))
         goto done;
+    if (cbBitmapData > 0 && w > 0 && h > 0) {
+        if (d->frameSize != QSize(w, h)) {
+            d->frameSize = QSize(w, h);
+            safeDeleteArray(d->frameData);
+            d->frameData = new uchar[cbBitmapData];
+        }
+        data = d->frameData;
+        uchar* dst = const_cast<uchar*>(data);
+        const uchar* const dstEnd = dst + cbBitmapData;
+        LONG stride = (LONG)MFGetAttributeUINT32(d->mediaType, MF_MT_DEFAULT_STRIDE, 1);
+        bool upsideDown = (stride < 0);
+        if (upsideDown) {
+            stride = -stride;
+            if (stride != w*3)
+                goto done;
+            for (int scanLine = h-1; scanLine >= 0; --scanLine) {
+                const uchar* src = pBitmapData + scanLine * stride;
+                const uchar* const srcEnd = src + w * 3;
+                while (src < srcEnd) {
+                    *dst++ = *src++;
+                    *dst++ = *src++;
+                    *dst++ = *src++;
+                }
+            }
+        }
+        else {
+            const uchar* src = pBitmapData;
+            while (dst < dstEnd) {
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = *src++;
+            }
+        }
+    }
     pBuffer->Unlock();
 
 done:
     SafeRelease(&pBuffer);
     SafeRelease(&pSample);
-    qDebug() << cbBitmapData << w << h;
+#endif
 }
 
-void VideoCaptureDevice::setSize(const QSize&)
+bool VideoCaptureDevice::requestFrameSize(const QSize& requestedSize)
 {
-    // TODO
+#if defined(WIN32)
+    if (d_ptr->mediaType == NULL) {
+        qWarning() << "mediaType is null";
+        return false;
+    }
+    HRESULT hr = MFSetAttributeSize(d_ptr->mediaType, MF_MT_FRAME_SIZE, (UINT32)requestedSize.width(), (UINT32)requestedSize.height());
+    return SUCCEEDED(hr);
+#else
+#endif
+    return false;
 }
 
 bool VideoCaptureDevice::startup(void)
 {
-    return MFStartup(MF_VERSION) == S_OK;
+    startedUp = (MFStartup(MF_VERSION) == S_OK);
+    return startedUp;
 }
 
 QSize VideoCaptureDevice::frameSize(void) const
@@ -244,6 +278,8 @@ QSize VideoCaptureDevice::frameSize(void) const
 
 QStringList VideoCaptureDevice::enumerate(void)
 {
+    if (!startedUp)
+        startup();
     IMFActivate** dev = NULL;
     IMFAttributes* devAttr = NULL;
     UINT32 nDev = 0;

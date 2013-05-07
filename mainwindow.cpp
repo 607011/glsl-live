@@ -134,12 +134,6 @@ MainWindow::MainWindow(QWidget* parent)
     Q_D(MainWindow);
 
     VideoCaptureDevice::startup();
-#ifndef QT_NO_DEBUG
-    QStringListIterator vidCapDev(VideoCaptureDevice::enumerate());
-    int i = 0;
-    while (vidCapDev.hasNext())
-        qDebug() << "Webcam" << i++ << ":" << vidCapDev.next();
-#endif
 
     ui->setupUi(this);
     QObject::connect(d->renderWidget, SIGNAL(ready()), SLOT(initAfterGL()));
@@ -221,8 +215,10 @@ MainWindow::MainWindow(QWidget* parent)
     fPrint.setData(engine->newQObject(ui->logTextEdit));
     engine->globalObject().setProperty("print", fPrint);
 
+    const QStringList& webcamList = VideoCaptureDevice::enumerate();
     for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
         d->channelWidget[i] = new ChannelWidget(i);
+        d->channelWidget[i]->setAvailableWebcams(webcamList);
         QObject::connect(d->channelWidget[i], SIGNAL(imageDropped(int, QImage)), SLOT(imageDropped(int, QImage)));
         QObject::connect(d->channelWidget[i],
                          SIGNAL(rawFrameReady(const uchar*, int, int, int, Project::SourceSelector)),

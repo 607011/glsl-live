@@ -160,8 +160,6 @@ bool Project::save(const QString& filename)
                     else
                         qWarning() << "Project::save(): saving image to buffer failed. no <channel> written.";
                 }
-                else
-                    qWarning() << "Project::save(): invalid source (" << source << ") for type " << ch.type();
                 break;
             }
             default:

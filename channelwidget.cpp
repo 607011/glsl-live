@@ -46,20 +46,21 @@ public:
     QString filename;
     VideoCaptureDevice* webcam;
     WebcamThread* webcamThread;
+    QStringList webcamList;
 
-    inline VideoCaptureDevice* decoder(void)
+    inline VideoCaptureDevice* decoder(int camId)
     {
         if (webcam == NULL) {
             webcam = new VideoCaptureDevice;
-            webcam->open(0);
+            webcam->open(camId);
         }
         return webcam;
     }
 
-    inline WebcamThread* decoderThread(void)
+    inline WebcamThread* decoderThread(int camId = -1)
     {
         if (webcamThread == NULL)
-            webcamThread = new WebcamThread(decoder());
+            webcamThread = new WebcamThread(decoder(camId));
         return webcamThread;
     }
 
@@ -218,28 +219,43 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     QMenu menu;
     if (!d->image.isNull())
         menu.addAction(tr("Remove"));
-    if (d->webcam == NULL)
-        menu.addAction(tr("Use webcam"));
+    if (d->webcam == NULL) {
+        int i = 0;
+        QStringListIterator cam(d->webcamList);
+        while (cam.hasNext()) {
+            QAction* action = new QAction(tr("Use %1").arg(cam.next()), NULL);
+            action->setData(i++);
+            menu.addAction(action);
+        }
+    }
     QAction* selectedItem = menu.exec(globalPos);
     if (selectedItem == NULL)
         return;
     if (selectedItem->text() == tr("Remove")) {
         clear();
     }
-    else if (selectedItem->text() == tr("Use webcam")) {
-        QObject::connect(d->decoderThread(), SIGNAL(frameReady(QImage)),
+    else if (selectedItem->text().contains(tr("Use"))) {
+        int camId = selectedItem->data().toInt();
+        QObject::connect(d->decoderThread(camId), SIGNAL(frameReady(QImage)),
                          SLOT(setImage(QImage)));
-        QObject::connect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
+        QObject::connect(d->decoderThread(camId), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
                          SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
         if (d->isWebcamOpen()) {
-            setImage(d->webcam->getLastFrame(), Volatile);
+            setImage(d->webcam->getCurrentFrame(), Volatile);
             emit camInitialized(d->index);
         }
         d->decoderThread()->startReading();
     }
 }
 
+void ChannelWidget::setAvailableWebcams(const QStringList& camlist)
+{
+    Q_D(ChannelWidget);
+    d->webcamList = camlist;
+}
+
 QString ChannelWidget::channelName(int index)
 {
     return QString("uChannel%1").arg(index);
 }
+

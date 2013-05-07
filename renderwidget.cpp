@@ -324,6 +324,8 @@ void RenderWidget::setImage(const QImage& img)
 void RenderWidget::setChannel(int index, const uchar* data, int w, int h)
 {
     Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::setChannel()", "image index out of bounds");
+    if (data == NULL)
+        return;
     Q_D(RenderWidget);
     makeCurrent();
     glActiveTexture(GL_TEXTURE1 + index);

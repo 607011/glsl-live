@@ -40,6 +40,7 @@ public:
     void clear(void);
 
     static QString channelName(int);
+    void setAvailableWebcams(const QStringList&);
 
 protected:
     void paintEvent(QPaintEvent*);

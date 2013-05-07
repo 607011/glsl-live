@@ -21,9 +21,10 @@ public:
     bool isOpen(void) const;
     void close(void);
     const QImage& getLastFrame(void) const;
+    const QImage& getCurrentFrame(void);
     void getRawFrame(const uchar*& data, int& w, int& h);
     QSize frameSize(void) const;
-    void setSize(const QSize&);
+    bool requestFrameSize(const QSize&);
 
     static bool startup(void);
     static QStringList enumerate(void);
@@ -36,6 +37,8 @@ private:
     QScopedPointer<VideoCaptureDevicePrivate> d_ptr;
     Q_DECLARE_PRIVATE(VideoCaptureDevice)
     Q_DISABLE_COPY(VideoCaptureDevice)
+
+    static bool startedUp;
 };
 
 #endif // __VIDEOCAPTUREDEVICE_H_
