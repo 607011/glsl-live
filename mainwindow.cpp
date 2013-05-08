@@ -47,6 +47,11 @@
 #include "scriptrunner.h"
 #include "videocapturedevice.h"
 
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+#include <Dbt.h>
+#include <Ks.h>
+#endif
+
 static void prepareEditor(AbstractEditor*);
 static void emptyLayout(QLayout*);
 
@@ -72,15 +77,17 @@ public:
         docBrowser->setOpenLinks(true);
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
 
-        //        HDEVNOTIFY hdevnotify;
-        //        DEV_BROADCAST_DEVICEINTERFACE di = { 0 };
-        //        di.dbcc_size = sizeof(di);
-        //        di.dbcc_devicetype  = DBT_DEVTYP_DEVICEINTERFACE;
-        //        di.dbcc_classguid  = KSCATEGORY_CAPTURE;
-        //        hdevnotify = RegisterDeviceNotification((HWND)winId, &di, DEVICE_NOTIFY_WINDOW_HANDLE);
-        //        if (hdevnotify == NULL) {
-        //            qWarning() << "RegisterDeviceNotification failed." << HRESULT_FROM_WIN32(GetLastError());
-        //        }
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+        HDEVNOTIFY hdevnotify;
+        DEV_BROADCAST_DEVICEINTERFACE di = { 0 };
+        di.dbcc_size = sizeof(di);
+        di.dbcc_devicetype  = DBT_DEVTYP_DEVICEINTERFACE;
+        di.dbcc_classguid  = KSCATEGORY_CAPTURE;
+        hdevnotify = RegisterDeviceNotification((HWND)winId, &di, DEVICE_NOTIFY_WINDOW_HANDLE);
+        if (hdevnotify == NULL) {
+            qWarning() << "RegisterDeviceNotification failed." << HRESULT_FROM_WIN32(GetLastError());
+        }
+#endif
     }
     Project* project;
     QColorDialog* colorDialog;
@@ -119,8 +126,6 @@ public:
         safeDelete(scriptEditor);
         safeDelete(scriptRunner);
     }
-
-private:
 };
 
 
@@ -356,6 +361,42 @@ void MainWindow::closeEvent(QCloseEvent* e)
         e->ignore();
     }
 }
+
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, long* result)
+{
+    Q_UNUSED(eventType);
+    Q_UNUSED(result);
+    MSG* msg = reinterpret_cast<MSG*>(message);
+    switch (msg->message)
+    {
+    case WM_DEVICECHANGE:
+    {
+        qDebug() << "WM_DEVICECHANGE";
+        PDEV_BROADCAST_HDR pHdr = (PDEV_BROADCAST_HDR)msg->lParam;
+        qDebug() << (pHdr->dbch_devicetype != DBT_DEVTYP_DEVICEINTERFACE);
+        switch (msg->wParam)
+        {
+        case DBT_DEVICEARRIVAL:
+            qDebug() << "  DBT_DEVICEARRIVAL";
+            break;
+        case DBT_DEVICEQUERYREMOVE:
+            qDebug() << "  DBT_DEVICEQUERYREMOVE";
+            break;
+        case DBT_DEVICEREMOVECOMPLETE:
+            qDebug() << "  DBT_DEVICEREMOVECOMPLETE";
+            break;
+        default:
+            qDebug() << msg->wParam << msg->lParam;
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    return false;
+}
+#endif
 
 void MainWindow::valueChanged(int v)
 {

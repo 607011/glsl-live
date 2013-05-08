@@ -6,6 +6,7 @@
 
 #include <QMainWindow>
 #include <QCloseEvent>
+#include <QByteArray>
 #include <QScopedPointer>
 #include <QColor>
 #include <QImage>
@@ -37,6 +38,9 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent*);
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+    bool nativeEvent(const QByteArray&, void*, long*);
+#endif
 
 private slots:
     void initAfterGL(void);
