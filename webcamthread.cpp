@@ -1,7 +1,5 @@
-/* Copyright (c) 2011 Oliver Lau <oliver@von-und-fuer-lau.de>
- * All rights reserved.
- * $Id: webcamthread.cpp ce61935ee133 2011/06/28 16:08:54 Oliver Lau <oliver@von-und-fuer-lau.de> $
- */
+// Copyright (c) 2011-2013 Oliver Lau <ola@ct.de>, Heise Zeitschriften Verlag
+// All rights reserved.
 
 #include <QtCore/QDebug>
 
