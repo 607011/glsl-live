@@ -45,9 +45,10 @@
 #include "util.h"
 #include "editors/js/jsedit.h"
 #include "scriptrunner.h"
-#include "videocapturedevice.h"
+#include "mediainput.h"
 
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+#include <Windows.h>
 #include <Dbt.h>
 #include <Ks.h>
 #endif
@@ -57,6 +58,11 @@ static void emptyLayout(QLayout*);
 
 
 class MainWindowPrivate {
+private:
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+    DEV_BROADCAST_DEVICEINTERFACE di;
+#endif
+
 public:
     explicit MainWindowPrivate(WId winId)
         : project(new Project)
@@ -69,7 +75,9 @@ public:
         , docBrowser(new QTextBrowser)
         , programHasJustStarted(3) // dirty hack
     {
+#ifndef WITH_WINDOWS_MEDIA_FOUNDATION
         Q_UNUSED(winId);
+#endif
 
         for (int i = -9; i < 10; ++i)
             steps << qPow(10, i);
@@ -78,17 +86,16 @@ public:
         docBrowser->setSource(QUrl("qrc:/doc/index.html"));
 
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
-        HDEVNOTIFY hdevnotify;
-        DEV_BROADCAST_DEVICEINTERFACE di = { 0 };
         di.dbcc_size = sizeof(di);
-        di.dbcc_devicetype  = DBT_DEVTYP_DEVICEINTERFACE;
-        di.dbcc_classguid  = KSCATEGORY_CAPTURE;
-        hdevnotify = RegisterDeviceNotification((HWND)winId, &di, DEVICE_NOTIFY_WINDOW_HANDLE);
-        if (hdevnotify == NULL) {
-            qWarning() << "RegisterDeviceNotification failed." << HRESULT_FROM_WIN32(GetLastError());
+        di.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+        di.dbcc_classguid = KSCATEGORY_CAPTURE;
+        di.dbcc_name[0] = 0;
+        if (RegisterDeviceNotification((HANDLE)winId, (LPVOID)&di, (DWORD)DEVICE_NOTIFY_WINDOW_HANDLE) == NULL) {
+            qWarning() << "RegisterDeviceNotification failed. Error:" << HRESULT_FROM_WIN32(GetLastError());
         }
 #endif
     }
+
     Project* project;
     QColorDialog* colorDialog;
     RenderWidget* renderWidget;
@@ -138,7 +145,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
     Q_D(MainWindow);
 
-    VideoCaptureDevice::startup();
+    MediaInput::startup();
 
     ui->setupUi(this);
     QObject::connect(d->renderWidget, SIGNAL(ready()), SLOT(initAfterGL()));
@@ -199,14 +206,6 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->renderWidget, SLOT(clampToBorder(bool)));
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->project, SLOT(enableBorderClamping(bool)));
     QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
-    QObject::connect(ui->actionZoom5, SIGNAL(triggered()), SLOT(zoom()));
-    QObject::connect(ui->actionZoom10, SIGNAL(triggered()), SLOT(zoom()));
-    QObject::connect(ui->actionZoom25, SIGNAL(triggered()), SLOT(zoom()));
-    QObject::connect(ui->actionZoom50, SIGNAL(triggered()), SLOT(zoom()));
-    QObject::connect(ui->actionZoom100, SIGNAL(triggered()), SLOT(zoom()));
-    QObject::connect(ui->actionZoom150, SIGNAL(triggered()), SLOT(zoom()));
-    QObject::connect(ui->actionZoom200, SIGNAL(triggered()), SLOT(zoom()));
-    QObject::connect(ui->actionZoom500, SIGNAL(triggered()), SLOT(zoom()));
     QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->project, SLOT(setBackgroundColor(QColor)));
@@ -220,7 +219,7 @@ MainWindow::MainWindow(QWidget* parent)
     fPrint.setData(engine->newQObject(ui->logTextEdit));
     engine->globalObject().setProperty("print", fPrint);
 
-    const QStringList& webcamList = VideoCaptureDevice::availableDevices();
+    const QStringList& webcamList = MediaInput::availableDevices();
     for (int i = 0; i < Project::MAX_CHANNELS; ++i) {
         d->channelWidget[i] = new ChannelWidget(i);
         d->channelWidget[i]->setAvailableWebcams(webcamList);
@@ -551,15 +550,6 @@ void MainWindow::batchProcess(void)
     ui->statusBar->showMessage(tr("Batch processing completed."), 3000);
 
     setCursor(oldCursor);
-}
-
-void MainWindow::zoom(void)
-{
-    if (sender()) {
-        QRegExp re("(\\d+)$");
-        re.indexIn(sender()->objectName());
-        d_ptr->renderWidget->setScale(1e-2 * re.cap(1).toDouble());
-    }
 }
 
 void MainWindow::chooseBackgroundColor(void)

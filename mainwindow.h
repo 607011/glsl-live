@@ -79,7 +79,6 @@ private slots:
     void reloadImage(void);
     void saveImageSnapshot(void);
     void batchProcess(void);
-    void zoom(void);
     void chooseBackgroundColor(void);
     void setTimerActive(bool);
     void setFPS(double);

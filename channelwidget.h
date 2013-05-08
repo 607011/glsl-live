@@ -21,11 +21,10 @@ class ChannelWidget : public QWidget
 public:
     enum Type {
         None = 0,
-        Volatile,
         Auto,
         Image,
         Video,
-        Sound,
+        Audio,
         Data2D,
         Data3D
     };
@@ -35,6 +34,7 @@ public:
     QSize sizeHint(void) const { return QSize(80, 80); }
 
     void load(const QString& filename, Type = Auto);
+    void stream(const QString& filename, Type = Video);
     int index(void) const;
 
     void clear(void);

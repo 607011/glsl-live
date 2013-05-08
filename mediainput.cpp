@@ -3,7 +3,7 @@
 
 #include <QtCore/QDebug>
 #include <QImage>
-#include "videocapturedevice.h"
+#include "mediainput.h"
 #include "util.h"
 
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
@@ -20,10 +20,10 @@
 #include <opencv/highgui.h>
 #endif
 
-class VideoCaptureDevicePrivate
+class MediaInputPrivate
 {
 public:
-    VideoCaptureDevicePrivate(void)
+    MediaInputPrivate(void)
         : frameData(NULL)
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
         , hr(S_OK)
@@ -31,6 +31,9 @@ public:
         , mediaPlayer(NULL)
         , mediaSource(NULL)
         , sourceReader(NULL)
+        , camDevices(NULL)
+        , devAttr(NULL)
+        , camCount(0)
 #endif
 #ifdef WITH_OPENCV
         , webcam(NULL)
@@ -39,7 +42,7 @@ public:
         /* ... */
     }
 
-    ~VideoCaptureDevicePrivate()
+    ~MediaInputPrivate()
     {
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
         for (DWORD i = 0; i < camCount; i++)
@@ -84,25 +87,33 @@ public:
 };
 
 
-bool VideoCaptureDevice::startedUp = false;
+bool MediaInput::startedUp = false;
 
 
-VideoCaptureDevice::VideoCaptureDevice(int id, QObject* parent)
+MediaInput::MediaInput(int id, QObject* parent)
     : QObject(parent)
-    , d_ptr(new VideoCaptureDevicePrivate)
+    , d_ptr(new MediaInputPrivate)
 {
     if (id >= 0)
         open(id);
 }
 
-VideoCaptureDevice::~VideoCaptureDevice()
+MediaInput::MediaInput(const QString& filename, QObject* parent)
+    : QObject(parent)
+    , d_ptr(new MediaInputPrivate)
+{
+    if (!filename.isEmpty())
+        open(filename);
+}
+
+MediaInput::~MediaInput()
 {
     /* ... */
 }
 
-bool VideoCaptureDevice::open(int deviceId)
+bool MediaInput::open(int deviceId)
 {
-    Q_D(VideoCaptureDevice);
+    Q_D(MediaInput);
     close();
 
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
@@ -145,7 +156,38 @@ bool VideoCaptureDevice::open(int deviceId)
 #endif
 }
 
-bool VideoCaptureDevice::isOpen(void) const
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+bool MediaInput::open(const QString& filename)
+{
+    Q_D(MediaInput);
+    close();
+    HRESULT hr;
+    hr = MFCreateAttributes(&d->devAttr, 1);
+    if (SUCCEEDED(hr))
+        hr = d->devAttr->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
+    if (FAILED(hr)) {
+        qWarning() << "Cannot create the video capture device";
+        SafeRelease(&d->devAttr);
+        return false;
+    }
+    hr = MFCreateSourceReaderFromURL((LPCWSTR)filename.utf16(), d->devAttr, &d->sourceReader);
+    SafeRelease(&d->mediaType);
+    hr = MFCreateMediaType(&d->mediaType);
+    if (SUCCEEDED(hr))
+        hr = d->mediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+    if (SUCCEEDED(hr))
+        hr = d->mediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB24);
+    if (SUCCEEDED(hr))
+        hr = d->sourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, d->mediaType);
+    if (SUCCEEDED(hr))
+        hr = d->sourceReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
+    SafeRelease(&d->devAttr);
+    SafeRelease(&d->mediaType);
+    return SUCCEEDED(hr);
+}
+#endif
+
+bool MediaInput::isOpen(void) const
 {
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
     return d_ptr->sourceReader != NULL;
@@ -155,20 +197,20 @@ bool VideoCaptureDevice::isOpen(void) const
 #endif
 }
 
-void VideoCaptureDevice::close(void)
+void MediaInput::close(void)
 {
-    Q_D(VideoCaptureDevice);
+    Q_D(MediaInput);
     d->closeWebcam();
 }
 
-const QImage& VideoCaptureDevice::getLastFrame(void) const
+const QImage& MediaInput::getLastFrame(void) const
 {
     return d_ptr->lastFrame;
 }
 
-const QImage& VideoCaptureDevice::getCurrentFrame(void)
+const QImage& MediaInput::getCurrentFrame(void)
 {
-    Q_D(VideoCaptureDevice);
+    Q_D(MediaInput);
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
     int w = -1, h = -1;
     const BYTE* data = NULL;
@@ -210,9 +252,9 @@ const QImage& VideoCaptureDevice::getCurrentFrame(void)
     return getLastFrame();
 }
 
-void VideoCaptureDevice::getRawFrame(const uchar*& data, int& w, int& h)
+void MediaInput::getRawFrame(const uchar*& data, int& w, int& h)
 {
-    Q_D(VideoCaptureDevice);
+    Q_D(MediaInput);
     data = NULL;
     w = -1;
     h = -1;
@@ -293,9 +335,9 @@ done:
 #endif
 }
 
-bool VideoCaptureDevice::setFrameSize(const QSize& requestedSize)
+bool MediaInput::setFrameSize(const QSize& requestedSize)
 {
-    Q_D(VideoCaptureDevice);
+    Q_D(MediaInput);
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
     if (d->mediaType == NULL) {
         qWarning() << "media type is null";
@@ -311,7 +353,7 @@ bool VideoCaptureDevice::setFrameSize(const QSize& requestedSize)
     return false;
 }
 
-bool VideoCaptureDevice::startup(void)
+bool MediaInput::startup(void)
 {
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
     startedUp = (MFStartup(MF_VERSION) == S_OK);
@@ -322,12 +364,12 @@ bool VideoCaptureDevice::startup(void)
 #endif
 }
 
-QSize VideoCaptureDevice::frameSize(void) const
+QSize MediaInput::frameSize(void) const
 {
     return d_ptr->lastFrame.size();
 }
 
-QStringList VideoCaptureDevice::availableDevices(void)
+QStringList MediaInput::availableDevices(void)
 {
     if (!startedUp)
         startup();

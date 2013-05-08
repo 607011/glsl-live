@@ -5,19 +5,27 @@
 #define __VIDEOCAPTUREDEVICE_H_
 
 #include <QObject>
+#include <QString>
 #include <QScopedPointer>
 #include <QStringList>
 
-class VideoCaptureDevicePrivate;
+class MediaInputPrivate;
 
-class VideoCaptureDevice : public QObject
+class MediaInput : public QObject
 {
     Q_OBJECT
 public:
-    explicit VideoCaptureDevice(int id = -1, QObject* parent = NULL);
-    ~VideoCaptureDevice();
+    explicit MediaInput(int id = -1, QObject* parent = NULL);
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+    explicit MediaInput(const QString& filename, QObject* parent = NULL);
+#endif
+    ~MediaInput();
     
     bool open(int);
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+    bool open(const QString& filename);
+#endif
+
     bool isOpen(void) const;
     void close(void);
     const QImage& getLastFrame(void) const;
@@ -34,9 +42,9 @@ signals:
 public slots:
 
 private:
-    QScopedPointer<VideoCaptureDevicePrivate> d_ptr;
-    Q_DECLARE_PRIVATE(VideoCaptureDevice)
-    Q_DISABLE_COPY(VideoCaptureDevice)
+    QScopedPointer<MediaInputPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(MediaInput)
+    Q_DISABLE_COPY(MediaInput)
 
     static bool startedUp;
 };

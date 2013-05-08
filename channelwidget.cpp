@@ -16,8 +16,8 @@
 #include "channelwidget.h"
 #include "util.h"
 
-#include "videocapturedevice.h"
-#include "webcamthread.h"
+#include "mediainput.h"
+#include "mediainputthread.h"
 
 class ChannelWidgetPrivate
 {
@@ -25,8 +25,10 @@ public:
     ChannelWidgetPrivate(int idx)
         : index(idx)
         , type(ChannelWidget::None)
-        , webcam(NULL)
-        , webcamThread(NULL)
+        , videoInput(NULL)
+        , videoInputThread(NULL)
+        , isPlaying(false)
+        , reFileTypes(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?|wmv|mp3)$", Qt::CaseInsensitive))
     { /* ... */ }
 
     ~ChannelWidgetPrivate()
@@ -43,40 +45,69 @@ public:
     ChannelWidget::Type type;
     QImage image;
     QString filename;
-    VideoCaptureDevice* webcam;
-    WebcamThread* webcamThread;
+    MediaInput* videoInput;
+    MediaInputThread* videoInputThread;
+    bool isPlaying;
     QStringList webcamList;
+    QRegExp reFileTypes;
 
-    inline VideoCaptureDevice* decoder(int camId)
+    inline MediaInput* decoder(int camId)
     {
-        if (webcam == NULL) {
-            webcam = new VideoCaptureDevice;
-            webcam->open(camId);
+        if (videoInput == NULL) {
+            videoInput = new MediaInput;
+            videoInput->open(camId);
         }
-        return webcam;
+        return videoInput;
     }
 
-    inline WebcamThread* decoderThread(int camId = -1)
+    inline MediaInputThread* decoderThread(int camId = -1)
     {
-        if (webcamThread == NULL)
-            webcamThread = new WebcamThread(decoder(camId));
-        return webcamThread;
+        if (videoInputThread == NULL)
+            videoInputThread = new MediaInputThread(decoder(camId));
+        return videoInputThread;
     }
 
-    void turnOffWebcam(void)
+    inline MediaInput* decoder(const QString& filename)
     {
-        if (webcamThread)
-            webcamThread->stopReading();
-        if (isWebcamOpen())
-            webcam->close();
-        safeDelete(webcam);
-        safeDelete(webcamThread);
+        if (videoInput == NULL) {
+            videoInput = new MediaInput;
+            videoInput->open(filename);
+        }
+        return videoInput;
     }
 
-    bool isWebcamOpen(void)
+    inline MediaInputThread* decoderThread(const QString& filename)
     {
-        return webcam != NULL && webcam->isOpen();
+        if (videoInputThread == NULL)
+            videoInputThread = new MediaInputThread(decoder(filename));
+        return videoInputThread;
     }
+
+    void stopStream(void)
+    {
+        if (videoInputThread)
+            videoInputThread->stopReading();
+        if (isStreamOpen())
+            videoInput->close();
+        safeDelete(videoInput);
+        safeDelete(videoInputThread);
+    }
+
+    void pauseStream(void)
+    {
+        qDebug() << "PAUSE";
+    }
+
+    void startStream(void)
+    {
+        qDebug() << "START";
+    }
+
+    inline bool isStreamOpen(void)
+    {
+        return videoInput != NULL && videoInput->isOpen();
+    }
+
 };
 
 
@@ -102,12 +133,12 @@ ChannelWidget::~ChannelWidget()
 void ChannelWidget::closeWebcam(void)
 {
     Q_D(ChannelWidget);
-    if (d->isWebcamOpen()) {
+    if (d->isStreamOpen()) {
         QObject::disconnect(d->decoderThread(), SIGNAL(frameReady(QImage)),
                             this, SLOT(setImage(QImage)));
         QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
                             this, SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
-        d->turnOffWebcam();
+        d->stopStream();
     }
 }
 
@@ -129,10 +160,30 @@ void ChannelWidget::load(const QString& filename, ChannelWidget::Type type)
     Q_D(ChannelWidget);
     if (filename.isEmpty())
         return;
+    clear();
     d->image.load(filename);
     d->type = type;
     setToolTip(filename);
     update();
+}
+
+void ChannelWidget::stream(const QString& filename, ChannelWidget::Type type)
+{
+    Q_D(ChannelWidget);
+    if (filename.isEmpty())
+        return;
+    clear();
+    d->type = type;
+    setToolTip(filename);
+    QObject::connect(d->decoderThread(filename), SIGNAL(frameReady(QImage)),
+                     SLOT(setImage(QImage)));
+    QObject::connect(d->decoderThread(filename), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
+                     SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+    if (d->isStreamOpen()) {
+        setImage(d->videoInput->getCurrentFrame(), type);
+        emit camInitialized(d->index);
+    }
+    d->decoderThread()->startReading();
 }
 
 int ChannelWidget::index(void) const
@@ -156,7 +207,7 @@ void ChannelWidget::paintEvent(QPaintEvent*)
     switch (d->type) {
     case Auto:
         // fall-through
-    case Volatile:
+    case Video:
         // fall-through
     case Image:
     {
@@ -184,7 +235,7 @@ void ChannelWidget::paintEvent(QPaintEvent*)
 
 void ChannelWidget::dragEnterEvent(QDragEnterEvent* e)
 {
-    if (e->mimeData()->hasUrls() && e->mimeData()->urls().first().toString().contains(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive)))
+    if (e->mimeData()->hasUrls() && e->mimeData()->urls().first().toString().contains(d_ptr->reFileTypes))
         e->acceptProposedAction();
     else
         e->ignore();
@@ -200,13 +251,18 @@ void ChannelWidget::dropEvent(QDropEvent* e)
     Q_D(ChannelWidget);
     if (e->mimeData()->hasUrls()) {
         QString fileUrl = e->mimeData()->urls().first().toString();
-        if (fileUrl.contains(QRegExp("file://.*\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?)$", Qt::CaseInsensitive))) {
+        if (fileUrl.contains(d_ptr->reFileTypes)) {
 #ifdef Q_OS_WIN32
             const QString& filename = fileUrl.remove("file:///");
 #else
             const QString& filename = fileUrl.remove("file://");
 #endif
-            load(filename);
+            if (fileUrl.contains(QRegExp("(wmv)$")))
+                stream(filename, Video);
+            else if (fileUrl.contains(QRegExp("(mp3|wav)$")))
+                stream(filename, Audio);
+            else
+                load(filename);
             emit imageDropped(d->index, d->image);
         }
     }
@@ -219,13 +275,20 @@ void ChannelWidget::showContextMenu(const QPoint& p)
     QMenu menu;
     if (!d->image.isNull())
         menu.addAction(tr("Remove"));
-    if (d->webcam == NULL) {
-        int i = 0;
-        QStringListIterator cam(d->webcamList);
-        while (cam.hasNext()) {
-            QAction* action = new QAction(tr("Use %1").arg(cam.next()), NULL);
-            action->setData(i++);
-            menu.addAction(action);
+    int i = 0;
+    QStringListIterator cam(d->webcamList);
+    while (cam.hasNext()) {
+        QAction* action = new QAction(tr("Use %1").arg(cam.next()), NULL);
+        action->setData(i++);
+        menu.addAction(action);
+    }
+    if ((d->type == Video || d->type == Audio) && d->isStreamOpen()) {
+        if (d->isPlaying) {
+            menu.addAction(tr("Pause"));
+            menu.addAction(tr("Stop"));
+        }
+        else {
+            menu.addAction(tr("Play"));
         }
     }
     QAction* selectedItem = menu.exec(globalPos);
@@ -240,8 +303,8 @@ void ChannelWidget::showContextMenu(const QPoint& p)
                          SLOT(setImage(QImage)));
         QObject::connect(d->decoderThread(camId), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
                          SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
-        if (d->isWebcamOpen()) {
-            setImage(d->webcam->getCurrentFrame(), Volatile);
+        if (d->isStreamOpen()) {
+            setImage(d->videoInput->getCurrentFrame(), Video);
             emit camInitialized(d->index);
         }
         d->decoderThread()->startReading();

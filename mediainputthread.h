@@ -1,8 +1,8 @@
 // Copyright (c) 2011-2013 Oliver Lau <oliver@von-und-fuer-lau.de>
 // All rights reserved.
 
-#ifndef __WEBCAMTHREAD_H_
-#define __WEBCAMTHREAD_H_
+#ifndef __MEDIAINPUTTHREAD_H_
+#define __MEDIAINPUTTHREAD_H_
 
 #include <QObject>
 #include <QThread>
@@ -11,15 +11,15 @@
 
 #include "project.h"
 
-class VideoCaptureDevice;
-class WebcamThreadPrivate;
+class MediaInputThreadPrivate;
+class MediaInput;
 
-class WebcamThread : public QThread
+class MediaInputThread : public QThread
 {
     Q_OBJECT
 public:
-    WebcamThread(VideoCaptureDevice* webcam = NULL, QObject* parent = NULL);
-    ~WebcamThread();
+    MediaInputThread(MediaInput* = NULL, QObject* parent = NULL);
+    ~MediaInputThread();
     void startReading(void);
     void stopReading(void);
 
@@ -31,9 +31,9 @@ protected:
     void run(void);
 
 private: // methods
-    QScopedPointer<WebcamThreadPrivate> d_ptr;
-    Q_DECLARE_PRIVATE(WebcamThread)
-    Q_DISABLE_COPY(WebcamThread)
+    QScopedPointer<MediaInputThreadPrivate> d_ptr;
+    Q_DECLARE_PRIVATE(MediaInputThread)
+    Q_DISABLE_COPY(MediaInputThread)
 };
 
-#endif // __WEBCAMTHREAD_H_
+#endif // __MEDIAINPUTTHREAD_H_

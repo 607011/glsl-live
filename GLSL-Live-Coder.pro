@@ -18,20 +18,15 @@ CODECFORTR = UTF-8
 
 windowsmediafoundation:!opencv {
     DEFINES += WITH_WINDOWS_MEDIA_FOUNDATION _CRT_SECURE_NO_WARNINGS
-    SOURCES += webcamthread.cpp \
-        videocapturedevice.cpp
-    HEADERS += webcamthread.h \
-        videocapturedevice.h
+    SOURCES += mediainput.cpp mediainputthread.cpp
+    HEADERS += mediainput.h mediainputthread.h
     LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfuuid.lib mfreadwrite.lib
 }
 
 opencv:!windowsmediafoundation {
     DEFINES += WITH_OPENCV
-    SOURCES += webcamthread.cpp \
-        videocapturedevice.cpp
-    HEADERS += webcamthread.h \
-        videocapturedevice.h
-
+    SOURCES += mediainput.cpp mediainputthread.cpp
+    HEADERS += mediainput.h mediainputthread.h
     win32 {
         DEFINES += _CRT_SECURE_NO_WARNINGS
         LIBS += opencv_core245.lib opencv_highgui245.lib
