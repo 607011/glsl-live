@@ -71,7 +71,8 @@ SOURCES += main.cpp\
     editors/glsl/glsldoclayout.cpp \
     editors/sidebarwidget.cpp \
     colorpicker.cpp \
-    channelwidget.cpp
+    channelwidget.cpp \
+    fft.cpp
 
 HEADERS += main.h \
     mainwindow.h \
@@ -86,7 +87,8 @@ HEADERS += main.h \
     editors/sidebarwidget.h \
     editors/abstracteditor.h \
     colorpicker.h \
-    channelwidget.h
+    channelwidget.h \
+    fft.h
 
 FORMS += mainwindow.ui
 

@@ -75,6 +75,7 @@ private slots:
     void imageDropped(const QImage&);
     void imageDropped(int index, const QImage&);
     void frameDropped(const uchar* data, int w, int h, int index, Project::SourceSelector);
+    void frameDropped(const uchar* data, int length, int index, Project::SourceSelector);
     void setCamReady(int);
     void reloadImage(void);
     void saveImageSnapshot(void);

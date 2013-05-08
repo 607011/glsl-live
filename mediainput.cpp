@@ -2,6 +2,7 @@
 // All rights reserved.
 
 #include <QtCore/QDebug>
+#include <QRegExp>
 #include <QImage>
 #include "mediainput.h"
 #include "util.h"
@@ -25,6 +26,7 @@ class MediaInputPrivate
 public:
     MediaInputPrivate(void)
         : frameData(NULL)
+        , frameLength(0)
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
         , hr(S_OK)
         , mediaType(NULL)
@@ -34,6 +36,7 @@ public:
         , camDevices(NULL)
         , devAttr(NULL)
         , camCount(0)
+        , inputType(MediaInput::None)
 #endif
 #ifdef WITH_OPENCV
         , webcam(NULL)
@@ -52,6 +55,11 @@ public:
         safeDelete(frameData);
     }
 
+    uchar* frameData;
+    int frameLength;
+    QSize frameSize;
+    QImage lastFrame;
+
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
     HRESULT hr;
     IMFMediaType* mediaType;
@@ -61,16 +69,13 @@ public:
     IMFActivate** camDevices;
     IMFAttributes* devAttr;
     UINT32 camCount;
+    MediaInput::InputType inputType;
 #endif
 
 #ifdef WITH_OPENCV
     cv::VideoCapture* webcam;
     cv::Mat frame;
 #endif
-
-    uchar* frameData;
-    QSize frameSize;
-    QImage lastFrame;
 
     void closeWebcam(void)
     {
@@ -88,6 +93,7 @@ public:
 
 
 bool MediaInput::startedUp = false;
+
 
 
 MediaInput::MediaInput(int id, QObject* parent)
@@ -141,6 +147,7 @@ bool MediaInput::open(int deviceId)
     hr = d->mediaType->GetGUID(MF_MT_SUBTYPE, &subtype);
     if (subtype != MFVideoFormat_RGB24)
         return false;
+    d->inputType = SUCCEEDED(hr)? Video : None;
     return SUCCEEDED(hr);
 #endif
 
@@ -163,24 +170,42 @@ bool MediaInput::open(const QString& filename)
     close();
     HRESULT hr;
     hr = MFCreateAttributes(&d->devAttr, 1);
-    if (SUCCEEDED(hr))
-        hr = d->devAttr->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
-    if (FAILED(hr)) {
-        qWarning() << "Cannot create the video capture device";
-        SafeRelease(&d->devAttr);
-        return false;
+    if (filename.contains(QRegExp("(wmv)$", Qt::CaseInsensitive))) {
+        if (SUCCEEDED(hr))
+            hr = d->devAttr->SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING, TRUE);
+        if (FAILED(hr)) {
+            qWarning() << "Cannot create the video input";
+            SafeRelease(&d->devAttr);
+            return false;
+        }
+        hr = MFCreateSourceReaderFromURL((LPCWSTR)filename.utf16(), d->devAttr, &d->sourceReader);
+        SafeRelease(&d->mediaType);
+        hr = MFCreateMediaType(&d->mediaType);
+        if (SUCCEEDED(hr))
+            hr = d->mediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
+        if (SUCCEEDED(hr))
+            hr = d->mediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB24);
+        if (SUCCEEDED(hr))
+            hr = d->sourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, d->mediaType);
+        if (SUCCEEDED(hr))
+            hr = d->sourceReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
+        d->inputType = SUCCEEDED(hr)? Video : None;
     }
-    hr = MFCreateSourceReaderFromURL((LPCWSTR)filename.utf16(), d->devAttr, &d->sourceReader);
-    SafeRelease(&d->mediaType);
-    hr = MFCreateMediaType(&d->mediaType);
-    if (SUCCEEDED(hr))
-        hr = d->mediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
-    if (SUCCEEDED(hr))
-        hr = d->mediaType->SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB24);
-    if (SUCCEEDED(hr))
-        hr = d->sourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, d->mediaType);
-    if (SUCCEEDED(hr))
-        hr = d->sourceReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, TRUE);
+    else if (filename.contains(QRegExp("(mp3|wav)$", Qt::CaseInsensitive))) {
+        if (SUCCEEDED(hr))
+            hr = MFCreateSourceReaderFromURL((LPCWSTR)filename.utf16(), d->devAttr, &d->sourceReader);
+        SafeRelease(&d->mediaType);
+        hr = MFCreateMediaType(&d->mediaType);
+        if (SUCCEEDED(hr))
+            hr = d->mediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+        if (SUCCEEDED(hr))
+            hr = d->mediaType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_MP3);
+        if (SUCCEEDED(hr))
+            hr = d->sourceReader->SetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, NULL, d->mediaType);
+        if (SUCCEEDED(hr))
+            hr = d->sourceReader->SetStreamSelection((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, TRUE);
+        d->inputType = SUCCEEDED(hr)? Audio : None;
+    }
     SafeRelease(&d->devAttr);
     SafeRelease(&d->mediaType);
     return SUCCEEDED(hr);
@@ -212,24 +237,37 @@ const QImage& MediaInput::getCurrentFrame(void)
 {
     Q_D(MediaInput);
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
-    int w = -1, h = -1;
-    const BYTE* data = NULL;
-    int Tries = 10;
-    while (data == NULL && --Tries)
-        getRawFrame(data, w, h);
-    if (data != NULL && w > 0 && h > 0) {
-        if (QSize(w, h) != d->lastFrame.size())
-            d->lastFrame = QImage(QSize(w, h), QImage::Format_ARGB32);
-        BYTE* dst = const_cast<BYTE*>(d->lastFrame.constBits());
-        const BYTE* src = const_cast<BYTE*>(data);
-        const BYTE* const srcEnd = src + w * h * 3;
-        while (src < srcEnd) {
-            *dst++ = *src++;
-            *dst++ = *src++;
-            *dst++ = *src++;
-            *dst++ = 0xffU;
+    switch (d->inputType)
+    {
+    case Video:
+    {
+        int w = -1, h = -1;
+        const BYTE* data = NULL;
+        int Tries = 10;
+        while (data == NULL && --Tries)
+            getRawFrame(data, w, h);
+        if (data != NULL && w > 0 && h > 0) {
+            if (QSize(w, h) != d->lastFrame.size())
+                d->lastFrame = QImage(QSize(w, h), QImage::Format_ARGB32);
+            BYTE* dst = const_cast<BYTE*>(d->lastFrame.constBits());
+            const BYTE* src = const_cast<BYTE*>(data);
+            const BYTE* const srcEnd = src + w * h * 3;
+            while (src < srcEnd) {
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = *src++;
+                *dst++ = 0xffU;
+            }
         }
+        break;
     }
+    case Audio:
+    {
+        d->lastFrame = QImage();
+        break;
+    }
+    }
+
 #endif
 #ifdef WITH_OPENCV
     d->webcam->read(d->frame);
@@ -252,6 +290,58 @@ const QImage& MediaInput::getCurrentFrame(void)
     return getLastFrame();
 }
 
+void MediaInput::getRawFrame(const uchar*& data, int& length)
+{
+    Q_D(MediaInput);
+    data = NULL;
+    length = -1;
+#ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+    HRESULT hr;
+    IMFMediaBuffer* buffer = NULL;
+    IMFSample* sample = NULL;
+    GUID subtype = { 0 };
+    d->mediaType = NULL;
+    DWORD dwFlags = 0x00000000U;
+
+    BYTE* samples = NULL;
+    DWORD nSamples = 0;
+    hr = d->sourceReader->ReadSample((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, NULL, &dwFlags, NULL, &sample);
+    if (FAILED(hr) || (sample == NULL) || ((dwFlags & MF_SOURCE_READERF_ENDOFSTREAM) != 0))
+        goto done;
+    hr = d->sourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_AUDIO_STREAM, &d->mediaType);
+    if (FAILED(hr))
+        goto done;
+    hr = d->mediaType->GetGUID(MF_MT_SUBTYPE, &subtype);
+    if (subtype != MFAudioFormat_MP3)
+        goto done;
+    hr = sample->ConvertToContiguousBuffer(&buffer);
+    if (FAILED(hr))
+        goto done;
+    hr = buffer->Lock(&samples, NULL, &nSamples);
+    if (FAILED(hr))
+        goto done;
+    if (nSamples > 0) {
+        if (d->frameLength != nSamples) {
+            d->frameLength = nSamples;
+            safeDeleteArray(d->frameData);
+            d->frameData = new uchar[nSamples];
+        }
+        length = d->frameLength;
+        data = d->frameData;
+        const uchar* src = samples;
+        uchar* dst = const_cast<uchar*>(data);
+        const uchar* const dstEnd = dst + nSamples;
+        while (dst < dstEnd)
+            *dst++ = *src++;
+    }
+    buffer->Unlock();
+
+done:
+    SafeRelease(&buffer);
+    SafeRelease(&sample);
+#endif
+}
+
 void MediaInput::getRawFrame(const uchar*& data, int& w, int& h)
 {
     Q_D(MediaInput);
@@ -259,14 +349,15 @@ void MediaInput::getRawFrame(const uchar*& data, int& w, int& h)
     w = -1;
     h = -1;
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
+    HRESULT hr;
     IMFMediaBuffer* buffer = NULL;
     IMFSample* sample = NULL;
-    BYTE* pixels = NULL;
-    DWORD nPixels = 0;
     GUID subtype = { 0 };
     d->mediaType = NULL;
     DWORD dwFlags = 0x00000000U;
-    HRESULT hr = d->sourceReader->ReadSample((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, NULL, &dwFlags, NULL, &sample);
+    BYTE* pixels = NULL;
+    DWORD nPixels = 0;
+    hr = d->sourceReader->ReadSample((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, NULL, &dwFlags, NULL, &sample);
     if (FAILED(hr) || (sample == NULL) || ((dwFlags & MF_SOURCE_READERF_ENDOFSTREAM) != 0))
         goto done;
     hr = d->sourceReader->GetCurrentMediaType((DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM, &d->mediaType);
@@ -334,7 +425,6 @@ done:
     }
 #endif
 }
-
 bool MediaInput::setFrameSize(const QSize& requestedSize)
 {
     Q_D(MediaInput);
@@ -351,6 +441,11 @@ bool MediaInput::setFrameSize(const QSize& requestedSize)
     d->webcam->set(CV_CAP_PROP_FRAME_HEIGHT, requestedSize.height());
 #endif
     return false;
+}
+
+MediaInput::InputType MediaInput::type(void) const
+{
+    return d_ptr->inputType;
 }
 
 bool MediaInput::startup(void)

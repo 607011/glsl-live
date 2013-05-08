@@ -227,6 +227,9 @@ MainWindow::MainWindow(QWidget* parent)
         QObject::connect(d->channelWidget[i],
                          SIGNAL(rawFrameReady(const uchar*, int, int, int, Project::SourceSelector)),
                          SLOT(frameDropped(const uchar*, int, int, int, Project::SourceSelector)));
+        QObject::connect(d->channelWidget[i],
+                         SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
+                         SLOT(frameDropped(const uchar*, int, int, Project::SourceSelector)));
         QObject::connect(d->channelWidget[i], SIGNAL(camInitialized(int)), SLOT(setCamReady(int)));
         ui->channelLayout->addWidget(d->channelWidget[i]);
     }
@@ -475,6 +478,12 @@ void MainWindow::frameDropped(const uchar* data, int w, int h, int index, Projec
 {
     Q_D(MainWindow);
     d->renderWidget->setChannel(index, data, w, h);
+}
+
+void MainWindow::frameDropped(const uchar* data, int length, int index, Project::SourceSelector)
+{
+    Q_D(MainWindow);
+    d->renderWidget->setChannel(index, data, length);
 }
 
 void MainWindow::setCamReady(int index)

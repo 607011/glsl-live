@@ -334,6 +334,22 @@ void RenderWidget::setChannel(int index, const uchar* data, int w, int h)
     update();
 }
 
+void RenderWidget::setChannel(int index, const uchar* data, int length)
+{
+    Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::setChannel()", "image index out of bounds");
+    if (data == NULL || length <= 0)
+        return;
+    Q_D(RenderWidget);
+    makeCurrent();
+    glActiveTexture(GL_TEXTURE1 + index);
+    glBindTexture(GL_TEXTURE_2D, d->channelHandle[index]);
+    configureAudioTexture(index);
+    int wavLen = qMin(length, MaxWaveLength);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, MaxWaveLength, 1, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 1, wavLen,        1, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+    update();
+}
+
 void RenderWidget::setChannel(int index, const QImage& img)
 {
     Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::setChannel()", "image index out of bounds");
@@ -567,6 +583,20 @@ void RenderWidget::configureTexture(void)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
+}
+
+void RenderWidget::configureAudioTexture(int index)
+{
+    Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::configureAudioTexture()", "index out of bounds");
+    Q_D(RenderWidget);
+    makeCurrent();
+    glActiveTexture(GL_TEXTURE1 + index);
+    glBindTexture(GL_TEXTURE_2D, d->channelHandle[index]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, MaxWaveLength, 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 }
 
 void RenderWidget::resizeGL(int w, int h)

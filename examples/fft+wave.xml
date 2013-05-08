@@ -33,11 +33,10 @@ void main(void)
   vec2 iuv = floor(uv * res) / res;
   float f = 1.0 - abs(-1.0 + 2.0 * fract(uv.x * res.x));
   float g = 1.0 - abs(-1.0 + 2.0 * fract(uv.y * res.y));
-  float fft = texture2D(uChannel0, vec2(iuv.x, 0.25) ).x; 
-  fft = fft * fft;
-  if (iuv.y < fft)
-    col = vec3(0.3,0.1,0.0);
-  float wave = texture2D(uChannel0, vec2(iuv.x*0.5,0.75) ).x;
+  float fft = texture2D(uChannel0, vec2(iuv.x, 0.25)).x;
+  if (iuv.y < fft * fft)
+    col = vec3(0.9, 0.9, 0.6);
+  float wave = texture2D(uChannel0, vec2(iuv.x * 0.5, 0.75)).x;
   if (abs(iuv.y-wave) <= (1.0/res.y))
     col = vec3(0.6, 0.2, 0.2);
   color = mix(vec4(col, 1.0), texture2D(uChannel0, vTexCoord), uBlend);
@@ -54,6 +53,6 @@ void main(void)
 		<alpha>1</alpha>
 	</options>
 	<uniforms>
-		<uniform type="double" name="uBlend">0.247706</uniform>
+		<uniform type="double" name="uBlend">0.27</uniform>
 	</uniforms>
 </glsl-live-coder-project>

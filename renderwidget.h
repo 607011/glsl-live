@@ -45,6 +45,7 @@ public:
     const QImage& image(void) const;
     void setImage(const QImage& = QImage());
     void setChannel(int index, const uchar* data, int w, int h);
+    void setChannel(int index, const uchar* data, int length);
     void setUniformValue(const QString& name, int value);
     void setUniformValue(const QString& name, double value);
     void setUniformValue(const QString& name, bool value);
@@ -107,12 +108,14 @@ private: // methods
     void buildProgram(const QString& vs, const QString& fs);
     void makeImageFBO(void);
     void configureTexture(void);
+    void configureAudioTexture(int index);
     void updateViewport(const QSize&);
     void updateViewport(int w, int h);
     void scrollBy(const QPoint&);
     void startMotion(const QPointF& velocity);
     void stopMotion(void);
 
+    static const int MaxWaveLength = 2048;
 
 private:
 

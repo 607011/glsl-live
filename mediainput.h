@@ -20,7 +20,9 @@ public:
     explicit MediaInput(const QString& filename, QObject* parent = NULL);
 #endif
     ~MediaInput();
-    
+
+    enum InputType { None, Audio, Video };
+
     bool open(int);
 #ifdef WITH_WINDOWS_MEDIA_FOUNDATION
     bool open(const QString& filename);
@@ -30,9 +32,11 @@ public:
     void close(void);
     const QImage& getLastFrame(void) const;
     const QImage& getCurrentFrame(void);
+    void getRawFrame(const uchar*& data, int& length);
     void getRawFrame(const uchar*& data, int& w, int& h);
     QSize frameSize(void) const;
     bool setFrameSize(const QSize&);
+    InputType type(void) const;
 
     static bool startup(void);
     static QStringList availableDevices(void);

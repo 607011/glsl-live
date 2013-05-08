@@ -127,17 +127,23 @@ ChannelWidget::ChannelWidget(int index, QWidget* parent)
 
 ChannelWidget::~ChannelWidget()
 {
-    closeWebcam();
+    closeMediaInput();
 }
 
-void ChannelWidget::closeWebcam(void)
+void ChannelWidget::closeMediaInput(void)
 {
     Q_D(ChannelWidget);
     if (d->isStreamOpen()) {
-        QObject::disconnect(d->decoderThread(), SIGNAL(frameReady(QImage)),
-                            this, SLOT(setImage(QImage)));
-        QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
-                            this, SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+        if (d->type == Video) {
+            QObject::disconnect(d->decoderThread(), SIGNAL(frameReady(QImage)),
+                                this, SLOT(setImage(QImage)));
+            QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
+                                this, SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+        }
+        else if (d->type == Audio) {
+            QObject::disconnect(d->decoderThread(), SIGNAL(rawFrameReady(const uchar*, int, Project::SourceSelector)),
+                                this, SLOT(relayFrame(const uchar*, int, Project::SourceSelector)));
+        }
         d->stopStream();
     }
 }
@@ -153,6 +159,11 @@ void ChannelWidget::setImage(const QImage& img, Type type)
 void ChannelWidget::relayFrame(const uchar* data, int w, int h, Project::SourceSelector source)
 {
     emit rawFrameReady(data, w, h, d_ptr->index, source);
+}
+
+void ChannelWidget::relayFrame(const uchar* data, int length, Project::SourceSelector source)
+{
+    emit rawFrameReady(data, length, d_ptr->index, source);
 }
 
 void ChannelWidget::load(const QString& filename, ChannelWidget::Type type)
@@ -175,10 +186,16 @@ void ChannelWidget::stream(const QString& filename, ChannelWidget::Type type)
     clear();
     d->type = type;
     setToolTip(filename);
-    QObject::connect(d->decoderThread(filename), SIGNAL(frameReady(QImage)),
-                     SLOT(setImage(QImage)));
-    QObject::connect(d->decoderThread(filename), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
-                     SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+    if (d->type == Video) {
+        QObject::connect(d->decoderThread(filename), SIGNAL(frameReady(QImage)),
+                         SLOT(setImage(QImage)));
+        QObject::connect(d->decoderThread(filename), SIGNAL(rawFrameReady(const uchar*, int, int, Project::SourceSelector)),
+                         SLOT(relayFrame(const uchar*, int, int, Project::SourceSelector)));
+    }
+    else if (d->type == Audio) {
+        QObject::connect(d->decoderThread(filename), SIGNAL(rawFrameReady(const uchar*, int, Project::SourceSelector)),
+                         SLOT(relayFrame(const uchar*, int, Project::SourceSelector)));
+    }
     if (d->isStreamOpen()) {
         setImage(d->videoInput->getCurrentFrame(), type);
         emit camInitialized(d->index);
@@ -194,7 +211,7 @@ int ChannelWidget::index(void) const
 void ChannelWidget::clear(void)
 {
     Q_D(ChannelWidget);
-    closeWebcam();
+    closeMediaInput();
     d->reset();
     emit imageDropped(d->index, QImage());
     update();

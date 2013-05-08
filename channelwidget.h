@@ -51,17 +51,19 @@ protected:
 signals:
     void imageDropped(int index, const QImage&);
     void rawFrameReady(const uchar* data, int w, int h, int index, Project::SourceSelector);
+    void rawFrameReady(const uchar* data, int length, int index, Project::SourceSelector);
     void camInitialized(int index);
 
 public slots:
     void setImage(const QImage&, Type = Image);
     void relayFrame(const uchar*, int, int, Project::SourceSelector);
+    void relayFrame(const uchar*, int, Project::SourceSelector);
 
 private slots:
     void showContextMenu(const QPoint&);
 
 private: // methods
-    void closeWebcam(void);
+    void closeMediaInput(void);
 
 private: // variables
     QScopedPointer<ChannelWidgetPrivate> d_ptr;

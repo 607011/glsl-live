@@ -26,6 +26,7 @@ public:
 signals:
     void frameReady(QImage);
     void rawFrameReady(const uchar* data, int w, int h, Project::SourceSelector);
+    void rawFrameReady(const uchar* data, int length, Project::SourceSelector);
 
 protected:
     void run(void);
