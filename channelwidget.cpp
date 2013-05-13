@@ -28,7 +28,7 @@ public:
         , videoInput(NULL)
         , videoInputThread(NULL)
         , isPlaying(false)
-        , reFileTypes(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?|wmv|mp3)$", Qt::CaseInsensitive))
+        , reFileTypes(QRegExp("\\.(png|jpg|jpeg|gif|ico|mng|tga|tiff?|wmv|wma|asf|avi|m4v|mov|mp4|aac|adts|mp3|wav)$", Qt::CaseInsensitive))
     { /* ... */ }
 
     ~ChannelWidgetPrivate()
@@ -95,12 +95,12 @@ public:
 
     void pauseStream(void)
     {
-        qDebug() << "PAUSE";
+        qWarning() << "PAUSE not implemented yet";
     }
 
     void startStream(void)
     {
-        qDebug() << "START";
+        qWarning() << "START not implemented yet";
     }
 
     inline bool isStreamOpen(void)

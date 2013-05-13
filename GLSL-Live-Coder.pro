@@ -20,7 +20,7 @@ windowsmediafoundation:!opencv {
     DEFINES += WITH_WINDOWS_MEDIA_FOUNDATION _CRT_SECURE_NO_WARNINGS
     SOURCES += mediainput.cpp mediainputthread.cpp
     HEADERS += mediainput.h mediainputthread.h
-    LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfuuid.lib mfreadwrite.lib
+    LIBS += ole32.lib oleaut32.lib mfplat.lib mf.lib mfuuid.lib mfreadwrite.lib shlwapi.lib strmiids.lib
 }
 
 opencv:!windowsmediafoundation {
@@ -71,8 +71,7 @@ SOURCES += main.cpp\
     editors/glsl/glsldoclayout.cpp \
     editors/sidebarwidget.cpp \
     colorpicker.cpp \
-    channelwidget.cpp \
-    fft.cpp
+    channelwidget.cpp
 
 HEADERS += main.h \
     mainwindow.h \

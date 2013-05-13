@@ -18,6 +18,7 @@
 #include "renderwidget.h"
 #include "channelwidget.h"
 #include "project.h"
+#include "fft.h"
 #include "util.h"
 
 enum { AVERTEX, ATEXCOORD };
@@ -108,6 +109,7 @@ public:
     QRect viewport;
     QMap<QString, QVariant> uniforms;
     QVector<QVector2D> marks;
+    FFT<GLfloat> fft;
 
     struct KineticData {
         KineticData(void) : t(0) { /* ... */ }
@@ -344,9 +346,18 @@ void RenderWidget::setChannel(int index, const uchar* data, int length)
     glActiveTexture(GL_TEXTURE1 + index);
     glBindTexture(GL_TEXTURE_2D, d->channelHandle[index]);
     configureAudioTexture(index);
-    int wavLen = qMin(length, MaxWaveLength);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, MaxWaveLength, 1, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 1, wavLen,        1, GL_LUMINANCE, GL_UNSIGNED_BYTE, data);
+    int wavLen = qMin(length, d->fft.size());
+    GLushort* wave = new GLushort[wavLen];
+    for (int j = 0; j < wavLen; ++j) {
+        GLfloat x = GLfloat(j) / wavLen;
+        GLfloat f = (0.75f + 0.25f * qSin(10.0f * j + 13.0f * d->totalTime.elapsed() / 1000)) * qExp(-3.0f * x);
+        wave[j] = GLushort(f * 65536.0f);
+    }
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, MaxWaveLength, 1, GL_LUMINANCE, GL_SHORT, wave);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 1, wavLen,        1, GL_LUMINANCE, GL_SHORT, wave);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 2, MaxWaveLength, 1, GL_LUMINANCE, GL_SHORT, wave);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 3, wavLen,        1, GL_LUMINANCE, GL_SHORT, wave);
+    delete [] wave;
     update();
 }
 
@@ -587,16 +598,21 @@ void RenderWidget::configureTexture(void)
 
 void RenderWidget::configureAudioTexture(int index)
 {
-    Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS, "RenderWidget::configureAudioTexture()", "index out of bounds");
+    Q_ASSERT_X(index >= 0 && index < Project::MAX_CHANNELS,
+               "RenderWidget::configureAudioTexture()", "index out of bounds");
     Q_D(RenderWidget);
     makeCurrent();
     glActiveTexture(GL_TEXTURE1 + index);
     glBindTexture(GL_TEXTURE_2D, d->channelHandle[index]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, MaxWaveLength, 2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    // y = 0: FFT left channel
+    // y = 1: wave left channel
+    // y = 2: FFT right channel
+    // y = 3: wave right channel
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, MaxWaveLength, 4, 0, GL_LUMINANCE, GL_UNSIGNED_SHORT, NULL);
 }
 
 void RenderWidget::resizeGL(int w, int h)
