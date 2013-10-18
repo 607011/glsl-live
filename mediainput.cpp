@@ -44,6 +44,7 @@ public:
         , camCount(0)
         , inputType(MediaInput::None)
         , cRef(1)
+        , hrStatus(S_OK)
         , state(MediaInput::Closed)
         , hEvent(NULL)
         , hCloseEvent(NULL)
@@ -61,7 +62,7 @@ public:
         for (DWORD i = 0; i < camCount; i++)
             SafeRelease(&camDevices[i]);
         CoTaskMemFree(camDevices);
-        pStream->Release();
+        SafeRelease(&pStream);
         CloseHandle(hEvent);
         CloseHandle(hCloseEvent);
 #endif
