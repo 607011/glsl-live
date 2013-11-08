@@ -42,6 +42,7 @@ public:
     const QString& fragmentShaderSource(void) const;
     const QString& imageFileName(void) const;
     bool loadImage(const QString& fileName);
+    bool loadImage(const QImage&);
     const QImage& image(void) const;
     void setImage(const QImage& = QImage());
     void setChannel(int index, const uchar* data, int w, int h);

@@ -10,3 +10,6 @@ ui_*.h
 *.dmg
 qrc_*.cpp
 *.qm
+audio/*
+videos/*
+examples/*

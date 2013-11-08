@@ -397,7 +397,15 @@
     <addaction name="actionTimerActive"/>
     <addaction name="actionClampToBorder"/>
    </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionCopyImageToClipboard"/>
+    <addaction name="actionPasteImageFromClipboard"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
    <addaction name="menuView"/>
    <addaction name="menuOptions"/>
    <addaction name="menuHelp"/>
@@ -672,6 +680,25 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionCopyImageToClipboard">
+   <property name="text">
+    <string>Copy image to clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionPasteImageFromClipboard">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Paste image from clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
    </property>
   </action>
  </widget>

@@ -29,7 +29,7 @@ const QString AppName = "GLSL Live Coder";
 const QString AppUrl = "http://code.google.com/p/glsl-live/";
 const QString AppAuthor = "Oliver Lau";
 const QString AppAuthorMail = "ola@ct.de";
-const QString AppVersionNoDebug = "0.9.11";
+const QString AppVersionNoDebug = "0.9.12";
 const QString AppMinorVersion = "";
 const QString AppFeatures = QString() +
 #ifdef WITH_OPENCV

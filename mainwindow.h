@@ -86,6 +86,8 @@ private slots:
     void setMousePos(const QPointF&);
     void processScriptChange(void);
     void executeScript(void);
+    void copyToClipboard(void);
+    void pasteFromClipboard(void);
 
 private: //methods
     void saveSettings(void);

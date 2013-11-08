@@ -873,12 +873,21 @@ bool RenderWidget::loadImage(const QString& filename)
     Q_D(RenderWidget);
     if (filename.isEmpty())
         return false;
-    QImage image(filename);
+    const QImage &image = QImage(filename);
+    bool ok = loadImage(image);
+    if (ok)
+        d->imgFilename = filename;
+    return ok;
+}
+
+bool RenderWidget::loadImage(const QImage &image)
+{
+    Q_D(RenderWidget);
     if (image.isNull())
         return false;
     setImage(image);
     fitImageToWindow();
-    d->imgFilename = filename;
+    d->imgFilename = QString();
     emit imageDropped(d->img);
     return true;
 }

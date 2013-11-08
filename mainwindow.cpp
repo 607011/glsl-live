@@ -31,6 +31,7 @@
 #include <QEvent>
 #include <QMimeData>
 #include <QListView>
+#include <QClipboard>
 #include <qmath.h>
 #include "main.h"
 #include "mainwindow.h"
@@ -207,6 +208,8 @@ MainWindow::MainWindow(QWidget* parent)
     QObject::connect(ui->actionClampToBorder, SIGNAL(toggled(bool)), d->project, SLOT(enableBorderClamping(bool)));
     QObject::connect(ui->actionNextFrame, SIGNAL(triggered()), d->renderWidget, SLOT(feedbackOneFrame()));
     QObject::connect(ui->actionChooseBackgroundColor, SIGNAL(triggered()), SLOT(chooseBackgroundColor()));
+    QObject::connect(ui->actionCopyImageToClipboard, SIGNAL(triggered()), SLOT(copyToClipboard()));
+    QObject::connect(ui->actionPasteImageFromClipboard, SIGNAL(triggered()), SLOT(pasteFromClipboard()));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(colorSelected(QColor)), d->project, SLOT(setBackgroundColor(QColor)));
     QObject::connect(d->colorDialog, SIGNAL(currentColorChanged(QColor)), d->renderWidget, SLOT(setBackgroundColor(QColor)));
@@ -1067,6 +1070,27 @@ void MainWindow::updateShaderSources(void)
     Q_D(MainWindow);
     d->renderWidget->setShaderSources(d->vertexShaderEditor->toPlainText(),
                                       d->fragmentShaderEditor->toPlainText());
+}
+
+void MainWindow::copyToClipboard(void)
+{
+    Q_D(MainWindow);
+    QApplication::clipboard()->setImage(d->renderWidget->resultImage(), QClipboard::Clipboard);
+    ui->statusBar->showMessage(tr("Image copied to clipboard."), 5000);
+}
+
+void MainWindow::pasteFromClipboard(void)
+{
+    Q_D(MainWindow);
+    if (QApplication::clipboard()->mimeData()->hasImage()) {
+        const QPixmap &pix = QApplication::clipboard()->pixmap(QClipboard::Clipboard);
+        if (!pix.isNull()) {
+            const QImage& img = pix.toImage();
+            d->project->setImage(img);
+            d->renderWidget->loadImage(img);
+            processShaderChange();
+        }
+    }
 }
 
 void MainWindow::updateWindowTitle()
